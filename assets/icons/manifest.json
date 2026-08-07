@@ -1,0 +1,38 @@
+{
+  "family": "room17-yaru-hybrid-v3",
+  "size": 96,
+  "format": "png",
+  "system": {
+    "mail": "mail.png",
+    "folder": "files.png",
+    "globe": "browser.png",
+    "grid": "applications.png",
+    "terminal": "terminal.png",
+    "package": "software.png",
+    "network": "network.png",
+    "trash": "trash.png"
+  },
+  "generated": {
+    "notebook": "case-notes.png",
+    "archive": "restored-archive.png",
+    "radio": "relay-console.png",
+    "receipt": "transfer-receipt.png",
+    "fayble": "fayble.png",
+    "fayble-cli": "fayble-cli.png"
+  },
+  "sources": {
+    "cloud": "cloud-drive.png",
+    "chat": "group-chat.png",
+    "github": "github-mirror.png"
+  },
+  "vendors": {
+    "dipsik": "dipsik.png",
+    "glem": "glem.png",
+    "kemy": "kemy.png",
+    "groke": "groke.png",
+    "lunet": "lunet.png",
+    "gamini": "gamini.png",
+    "fayble": "fayble.png",
+    "compatible": "compatible.png"
+  }
+}

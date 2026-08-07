@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Relay Node 17 / Linux Desktop</title>
+  <link rel="icon" type="image/png" href="assets/icons/terminal.png">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="arg-runtime" content="static">
+</head>
+<body>
+  <div id="bootScreen" class="boot-screen" aria-live="polite"><div class="boot-mark">R17</div><div class="boot-copy"><strong>STARTING LOCAL WORKSTATION</strong><span>user session: room17</span><span>filesystem: ready</span></div></div>
+  <div id="desktop" class="desktop" hidden>
+    <header class="system-bar">
+      <div class="system-left"><span class="activities-label">活动</span><span id="currentAppName" class="current-app-name">邮件</span><span id="desktopPhase" class="desktop-phase">维护者缺席</span></div>
+      <div class="system-center"><time id="gameClock">03:17</time></div>
+      <div class="system-actions"><span id="proxyBadge" class="proxy-status">网络离线</span><span class="system-icon network-icon" aria-hidden="true"></span><span class="system-icon sound-icon" aria-hidden="true"></span><button class="system-button notification-button" id="notificationButton" aria-label="打开通知"><span aria-hidden="true">●</span><b id="notificationCount">1</b></button><button class="system-button power-button" id="powerButton" aria-label="会话设置">⏻</button></div>
+    </header>
+    <main id="desktopArea" class="desktop-area"><div id="windows" class="windows"></div></main>
+    <nav id="dock" class="dock" aria-label="桌面应用"></nav>
+    <aside id="notificationTray" class="notification-tray" hidden><header><strong>通知</strong><button id="closeNotifications" aria-label="关闭通知">×</button></header><div id="notificationList"></div></aside>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="onboarding" class="onboarding" hidden>
+    <section class="briefing" role="dialog" aria-modal="true" aria-labelledby="briefingTitle">
+      <div class="briefing-code">LOCAL SESSION / ROOM17</div>
+      <h1 id="briefingTitle">你是 Relay Node 17 的站长。</h1>
+      <p>K2 是你的大学室友，也是把你带进模型中转站维护工作的人。三天前，他的数字记录突然中断。节点仍在接收请求，K2 负责的维护任务却全部停在“处理中”。</p>
+      <p>你正在使用两人共同维护的普通 Linux 工作站。桌面程序与系统设置都可以手动操作；任何来源都可能在后续事件中增加内容。记录原句、路径和时间，自己的判断由你保留。</p>
+      <ul><li>调查从一封主题为 R17-0317 的本地邮件开始。</li><li>所有系统操作发生在游戏内沙盒，不会修改真实电脑。</li><li>关闭窗口和刷新页面都会保留已经完成的手动操作。</li></ul>
+      <div class="briefing-footer"><span>先阅读邮件，再决定从哪里继续。</span><button id="briefingNextButton" class="primary-button">继续：选择 NPC 模式</button></div>
+    </section>
+    <section id="providerSetup" class="briefing provider-setup" role="dialog" aria-modal="true" aria-labelledby="providerTitle" hidden>
+      <div class="briefing-code">ROLEPLAY NPC / OPTIONAL</div>
+      <h1 id="providerTitle">是否启用真实模型扮演相关角色？</h1>
+      <p>增强沉浸模式会把你在角色扮演窗口中的对话发送给所选模型供应商。API key 只驻留当前页面内存，刷新后立即丢失；本游戏不会把它写入存档、日志或截图。调用时，key 会作为鉴权信息发送给你选择的供应商。</p>
+      <div class="privacy-box"><strong>叙事安全边界</strong><span>模型只负责 NPC 的表达。证据门槛、身份揭示与结局始终由本地状态机控制。</span></div>
+      <form id="providerForm" class="provider-form">
+        <label>供应商<select id="providerType"><option value="openai">OpenAI / ChatGPT API</option><option value="anthropic">Anthropic / Claude API</option><option value="deepseek">DeepSeek API</option><option value="compatible">自定义 OpenAI 兼容接口</option></select></label>
+        <label>模型名称<input id="providerModel" placeholder="例如 gpt-5.2、claude-opus-4-6 或 deepseek-chat" required></label>
+        <label id="providerEndpointLabel" hidden>接口地址<input id="providerEndpoint" placeholder="https://provider.example/v1/chat/completions"></label>
+        <label>API key<input id="providerKey" type="password" autocomplete="off" placeholder="仅保存在当前页面内存" required></label>
+        <label>NPC 网关地址<input id="npcGateway" type="url" placeholder="留空使用当前服务，Pages 可填 https://你的网关域名"></label>
+        <div id="providerTestResult" class="inline-result"></div>
+        <div class="briefing-footer"><button type="button" id="backToBriefing" class="quiet-button">返回</button><button type="submit" class="primary-button">启用增强沉浸</button></div>
+      </form>
+      <button id="localModeButton" class="local-mode-button">不提供 key，使用本地关键词叙事模式</button>
+    </section>
+  </div>
+  <div id="takeoverOverlay" class="takeover-overlay" hidden><div class="scanline"></div><strong>EXTERNAL REVIEW CONNECTED</strong><span id="takeoverStep">freezing local relay...</span></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
