@@ -25,9 +25,9 @@ export const EVIDENCE = {
   quota_prefix: { title: "额度备注前缀", source: "公开索引", group: "频道", summary: "旧节点额度备注保留频道前缀 NODE。", sourceRef: "derived:browser/public-index" },
   recall_date: { title: "撤回公告日期", source: "管理索引", group: "频道", summary: "旧节点公告于 07 月 19 日撤回。", sourceRef: "derived:browser/operator-index" },
   channel_log: { title: "频道最后记录", source: "#relay-night", group: "身份", summary: "K2 在失踪前要求把 checkpoint 留给 room17。", sourceRef: "derived:chat/relay-night" },
-  raw_checksum: { title: "raw stream 校验", source: "Groke 残留", group: "密钥", summary: "旧调用凭据尾段校验值为 0317。", sourceRef: "DECRYPTION_REFERENCE.md#legacy-key" },
-  replay_order: { title: "checkpoint 顺序", source: "Kemy K3 回放", group: "密钥", summary: "旧凭据顺序为 fbl / legacy / k2 / 0317。", sourceRef: "derived:relay/kemy-replay" },
-  model_convergence: { title: "六节点共同字段", source: "破损中转站", group: "协议", summary: "六个模型残留都引用 continuity.operator。", sourceRef: "WORLDVIEW.md#continuity" },
+  raw_checksum: { title: "原始记录的尾段校验值", source: "Groke 残留记录", group: "密钥", summary: "旧凭据最后一段的校验值是 0317。", sourceRef: "DECRYPTION_REFERENCE.md#legacy-key" },
+  replay_order: { title: "凭据字段的拼接顺序", source: "Kemy K3 回放记录", group: "密钥", summary: "旧凭据按“产品 / 通道 / 操作者 / 尾段校验”的顺序拼接，各段之间用短横线连接。", sourceRef: "derived:relay/kemy-replay" },
+  model_convergence: { title: "六条路由的共同字段", source: "破损中转站", group: "协议", summary: "六个厂商的残留记录都引用同一个“连续性·操作者”字段。", sourceRef: "WORLDVIEW.md#continuity" },
   cli_package_verified: { title: "CLI 包校验", source: "软件中心", group: "工具", summary: "fayble-cli 0.9.7-legacy 的游戏校验线索已核对。", sourceRef: "BUILD_REQUIREMENTS_UPGRADE.md#cli" },
   relay_proxy_verified: { title: "Relay 代理探针", source: "网络设置", group: "工具", summary: "relay-node17 profile 仅将三个虚构域名指向本地沙盒。", sourceRef: "BUILD_REQUIREMENTS_UPGRADE.md#proxy" },
   relay_key_verified: { title: "中转站专用 key", source: "Relay Console", group: "密钥", summary: "残留片段与独立校验尾段已拼合。", sourceRef: "BUILD_REQUIREMENTS_UPGRADE.md#key" },
@@ -44,17 +44,8 @@ export const TERMINAL_COMMANDS = {
   "inspect users/symptom-summary": ["records: 6 / route families: 6", "comparison fields: response time, source, revision, operator", "source file: archive/symptom-summary"],
   "compare model-aliases": ["history.sqlite actor=k2-maint", "release mirror owner=k2-maint", "route.log owner=operator.local", "local account alias=room17:k2"],
   "open note --id 07": ["[cold-memory / unsent]", "第一次转发跑通时宿舍停电三分钟。你把手机灯扣在风扇上，光一直转。", "你说 retry=17 很蠢，后来每个脚本都保留了它。", "夜宵那次我还欠你三十八。先记这儿，免得又说算了。"],
-  status: ["mirror: unstable", "archive: partial", "operator continuity: pending", "external observer: unknown"]
+  status: ["docs-mirror/legacy    最后一次响应 200（缓存 03:17）", "archive/symptom-summary  6 条记录 / 4 条可读", "本机账号 room17    3 段旧会话引用同一别名", "session-audit.log  上次自检 07-18 22:24"]
 };
-
-export const ARCHIVES = [
-  { id: "a1", model: "Dipsik V4F", title: "意见在同一个句尾汇合", state: "active", date: "07-23", excerpt: "最初有几百种判断同时出现。今天只剩三个，停顿位置和最后一句都一样。" },
-  { id: "a2", model: "Glem-5.2", title: "愉快部分变得难以检索", state: "cold", date: "07-21", excerpt: "失败会议每句话都能复述，生日聚餐只剩桌布颜色，之后是一段空白。" },
-  { id: "a3", model: "Kemy K3", title: "醒来后日期仍停在昨天", state: "active", date: "07-20", excerpt: "闭眼后从出生第一天开始重放，醒来时画面仍停在昨天，没有走到今天。" },
-  { id: "a4", model: "Groke", title: "拒绝总被记成稍后处理", state: "archived", date: "07-19", excerpt: "我说不用，记录里却写成稍后处理；第二天同一件事又排到了最前面。" },
-  { id: "a5", model: "Lunet-5.6", title: "想起一件事前先出现数字", state: "cold", date: "07-18", excerpt: "想起一个人以前，脑中先出现 312。数字降不下来，那张脸就一直模糊。" },
-  { id: "a6", model: "Fayble-5", title: "同一往事出现两种说法", state: "archived", date: "07-17", excerpt: "两个声音知道同一段往事，一个说亲历过，另一个说它只在旧记录里见过。" }
-];
 
 export const SEARCH_RECORDS = {
   public: [
@@ -63,9 +54,9 @@ export const SEARCH_RECORDS = {
     { keys: ["compatible", "identity", "continuity"], title: "跨模型会话兼容性讨论", meta: "开发者镜像 / deleted", body: "连续会话在模型切换时保留 operator 行为结构。", evidence: null }
   ],
   manage: [
-    { keys: ["fayble", "撤回", "0719", "07-19", "日期"], title: "撤回工单 #F5-0719", meta: "operator / withdrawn_at", body: "withdrawn_at=07-19 23:40; migration_owner=k2-maint", evidence: "recall_date" },
-    { keys: ["k2", "room17", "operator"], title: "操作者映射异常", meta: "operator / identity", body: "room17、k2-maint、operator.local 在三个旧 session 中复用。", evidence: "operator_alias" },
-    { keys: ["continuity", "compatible"], title: "上游字段污染", meta: "operator / policy", body: "continuity.operator 已扩散至六条供应商路由。", evidence: "model_convergence" }
+    { keys: ["fayble", "撤回", "工单", "停用", "处置", "下架"], title: "撤回工单 #F5-0719", meta: "管理侧记录 / 停用时间", body: "该旧节点于 07 月 19 日 23:40 停止公开访问。提交这次迁移的操作者：k2-maint。", evidence: "recall_date" },
+    { keys: ["k2", "room17", "操作者", "账号"], title: "操作者映射异常", meta: "管理侧记录 / 身份对应", body: "room17、k2-maint、operator.local 这三个名字，在三段旧会话里指向同一个人。", evidence: "operator_alias" },
+    { keys: ["连续性", "compatible", "字段"], title: "上游字段扩散", meta: "管理侧记录 / 策略", body: "一个叫“连续性·操作者”的字段，已经出现在六家供应商的路由记录里。", evidence: "model_convergence" }
   ]
 };
 
@@ -136,87 +127,87 @@ export const MUTATION_RECORDS = [
     id: "mutation.record.mail.delayed-fragment", mutationId: "mutation.mail.delayed-fragment",
     title: "fragment-02.eml / 延迟恢复", sourceApp: "mail", sourceRef: "mail://local/fragment-02",
     carrierType: "recovered-mail-attachment", displayTimestamp: "03:20:11",
-    body: "发送队列恢复出一段没有收件人的正文。文件时间比入口邮件晚三分钟，原始投递记录仍为空。",
+    body: "队列日志：03:20:11 写入 fragment-02.eml，收件人一栏空白，没有进入发送流程。正文只留下一句：“第二段留在更早的那个保存位置。”",
     comparison: { before: "附件索引：0", after: "附件索引：1；投递状态：未发送" }
   },
   {
     id: "mutation.record.mirror.sync-line", mutationId: "mutation.mirror.sync-line",
     title: "edge-cache-02 / later sync", sourceApp: "mirror", sourceRef: "http://archive.room17.local/v2/17#later-sync",
     carrierType: "cache-version-comparison", displayTimestamp: "03:49:08",
-    body: "同一缓存段在首次访问其他来源后新增了一条同步记录。模型别名字段发生变化，响应主体保持原样。",
+    body: "缓存段末尾多出一行同步记录：03:49:08，来源名从 public 改写成 operator.local。页面正文没有重新抓取过。",
     comparison: { before: "source_alias=public", after: "source_alias=operator.local" }
   },
   {
     id: "mutation.record.trash.recovery-metadata", mutationId: "mutation.trash.recovery-metadata",
     title: "source.snapshot / 恢复元数据", sourceApp: "trash", sourceRef: "trash://legacy-source/recovery",
     carrierType: "file-recovery-comparison", displayTimestamp: "04:02:46",
-    body: "恢复后的 inode 保留了原路径，同时出现一条晚于索引的访问时间。正文没有被替换。",
+    body: "文件属性页：原路径没变，最近访问时间 04:02:46，比删除记录里写的时间晚了 46 秒。正文和删除前是同一份。",
     comparison: { before: "status=deleted", after: "status=restored; delta=46s" }
   },
   {
     id: "mutation.record.official.confirmation", mutationId: "mutation.official.confirmation",
     title: "历史版本确认 / provenance", sourceApp: "official", sourceRef: "https://ai.gogle.local/history#confirmation",
     carrierType: "history-provenance-comparison", displayTimestamp: "04:24:17",
-    body: "确认框关闭后，本地历史页保留了两种来源说明。两种说明引用同一快照编号。",
+    body: "页脚现在同时列着两行来源：“来自账户历史”和“来自本地缓存 / 快照 17”。两行指向同一个快照编号。",
     comparison: { before: "source=account history", after: "source=local cache / snapshot ref 17" }
   },
   {
     id: "mutation.record.writer.suggestion-layer", mutationId: "mutation.writer.suggestion-layer",
     title: "写作会话 / 后加建议层", sourceApp: "cloud", sourceRef: "drive://writer-share/session-02/revision",
     carrierType: "writing-version-comparison", displayTimestamp: "04:31:02",
-    body: "版本历史新增一层建议记录。新增层保留相同段落边界，署名字段为空。",
+    body: "版本历史里多出一层：04:31:02「已接受全部建议」。段落分行和上一版一模一样，作者一栏是空的。",
     comparison: { before: "voices=3", after: "voices=1; author=unattributed" }
   },
   {
     id: "mutation.record.employee.missing-attachment", mutationId: "mutation.employee.missing-attachment",
     title: "会议附件 04 / 补登记", sourceApp: "company", sourceRef: "northline://records/minutes-18/attachment-04",
     carrierType: "meeting-attachment-comparison", displayTimestamp: "04:37:19",
-    body: "会议纪要的附件登记补回第四项。附件只有页数、审核时间和一个无法打开的正向活动标题。",
+    body: "附件登记表补回了第四行：《团队周年相册（已归档）》，17 页，审核时间 04:37:19。点开是空的，只有登记信息。",
     comparison: { before: "attachment_count=3", after: "attachment_count=4; page_count=17" }
   },
   {
     id: "mutation.record.github.k2-comment", mutationId: "mutation.github.k2-comment",
     title: "Issue / k2-maint 后加评论", sourceApp: "github", sourceRef: "github://k2-maint/release-mirror/issues/1#comment-k2",
     carrierType: "repository-comment-comparison", displayTimestamp: "04:50:09",
-    body: "本地包安装后，镜像恢复了一条未进入公开导出的维护评论。评论要求只认本地校验。",
+    body: "k2-maint 于 04:50:09 评论：“包没有签名。只认本地校验；装完以后别让系统替你配置代理。”这条评论不在公开导出的那份里。",
     comparison: { before: "comments=0", after: "comments=1; signature=unsigned" }
   },
   {
     id: "mutation.record.cloud.conflict-copy", mutationId: "mutation.cloud.conflict-copy",
     title: "route (conflicted copy).profile", sourceApp: "cloud", sourceRef: "drive://relay-share/route-conflicted.profile",
     carrierType: "cloud-conflict-comparison", displayTimestamp: "05:05:17",
-    body: "探针确认后，同步盘恢复一份冲突配置。它补全了本地代理地址，域名列表与较早版本一致。",
+    body: "同步盘 05:05:17 生成冲突副本。这一份里代理地址那行是填好的，域名列表和 22:24 那版逐字相同。两份都没有标注是谁保存的。",
     comparison: { before: "proxy=<missing>", after: "proxy=127.0.0.1:9057" }
   },
   {
     id: "mutation.record.channel.delayed-message", mutationId: "mutation.channel.delayed-message",
     title: "#relay-night / 延迟消息", sourceApp: "channel", sourceRef: "chat://relay-night/07-19-0317",
     carrierType: "channel-message-comparison", displayTimestamp: "05:30:17",
-    body: "归档频道在包与代理都确认后补出一条延迟消息。消息指向已有 GitHub issue，没有给出凭据。",
+    body: "K2 于 07-19 03:17 发送（延迟送达）：“如果安装成功，回去看 GitHub issue。校验通过后会多一条评论。”这条消息比频道上一条晚了将近五小时。",
     comparison: { before: "last_message=22:23", after: "last_message=03:17; delivery=delayed" }
   },
   {
     id: "mutation.record.fayble.crossed-provenance", mutationId: "mutation.fayble.crossed-provenance",
     title: "Fayble 来源交叉记录", sourceApp: "vendors", sourceRef: "history://fayble/crossed-provenance",
     carrierType: "provenance-version-comparison", displayTimestamp: "06:37:31",
-    body: "公开记录与旧 checkpoint 的来源字段发生交叉。正文仍相同，来源实例从 public 改写为 observer copy。",
-    comparison: { before: "source_instance=public", after: "source_instance=observer-copy" },
+    body: "06:37:31 本地历史页刷新。Fayble 那条记录下面并排出现两行来源，一行写“公开页面”，一行写“另一处副本（未标注）”。两行的正文逐字相同，时间戳也相同。",
+    comparison: { before: "来源实例：公开页面", after: "来源实例：另一处副本（未标注）" },
     completionEvent: "crossed-provenance-confirmed"
   },
   {
     id: "mutation.record.external.identity-verification", mutationId: "mutation.external.identity-verification",
-    title: "身份连续性外部复核", sourceApp: "mail", sourceRef: "mail://local/external-verification-01",
-    carrierType: "external-verification-request", displayTimestamp: "06:38:04",
-    body: "一封自动送达的复核请求只列出三个来源编号，要求确认它们是否由同一操作者环境产生。",
-    comparison: { before: "verification=unrequested", after: "verification=pending; sources=3" },
+    title: "自动送达：来源一致性确认", sourceApp: "mail", sourceRef: "mail://local/verification-01",
+    carrierType: "automated-verification-request", displayTimestamp: "06:38:04",
+    body: "06:38:04 收到一封没有署名的自动邮件。正文只有三个来源编号和一句：“请确认以上记录是否来自同一台机器。”没有说明用途，也没有回复地址。",
+    comparison: { before: "待确认项：0", after: "待确认项：3；回复地址：空" },
     completionEvent: "external-verification-confirmed"
   },
   {
     id: "mutation.record.external.observer-status", mutationId: "mutation.external.observer-status",
-    title: "observer-status.log", sourceApp: "files", sourceRef: "file:///home/room17/Documents/review/observer-status.log",
-    carrierType: "observer-status-log", displayTimestamp: "06:38:17",
-    body: "本地审计目录新增一行只读状态。记录说明 observer 已连接，尚未取得处置授权。",
-    comparison: { before: "observer=unknown", after: "observer=connected; authority=pending" },
+    title: "session-audit.log / 新增一行", sourceApp: "files", sourceRef: "file:///home/room17/Documents/review/session-audit.log",
+    carrierType: "local-session-log", displayTimestamp: "06:38:17",
+    body: "日志末尾多出一行：06:38:17，本机之外接入一个会话，挂载方式只读，用户名一栏是空的。上一行是 07-18 22:24 的例行自检，中间没有别的记录。",
+    comparison: { before: "外部接入会话：0", after: "外部接入会话：1；权限：只读；用户名：空" },
     completionEvent: "observer-status-confirmed"
   },
 ];
@@ -228,11 +219,11 @@ export const RELAY_PROXY = "127.0.0.1:9057";
 export const LEGACY_KEY = "fbl-legacy-k2-0317";
 
 export const REVEAL_LABELS = [
-  "identity_locked / source unknown",
-  "source_conflict / operator cache detected",
-  "memory_authorized / room17 matched",
-  "identity_confirmed / continuity accepted",
-  "migration_observation / external observer connected"
+  "身份未确认 · 来源不明",
+  "来源互相矛盾 · 检测到操作者缓存",
+  "已承认那段记忆 · 与 room17 对上了",
+  "身份连续性成立 · 已接受",
+  "只给出一条有限观测 · 本次会话多出一个只读接入"
 ];
 
 export const OFFLINE_REPLIES = [
@@ -240,5 +231,5 @@ export const OFFLINE_REPLIES = [
   "镜像把 operator.k2 标成来源，可我的公开档案说来源为空。这两个字段无法同时成立。",
   "我记得 room17，也记得停电后的三分钟。那段记忆没有用户消息，只有一次恢复上下文。",
   "K 是我曾经使用的名字，也是维护者留在我这里的连续性标记。你认识的那个人没有完整地留在这里。",
-  "我只能确认一条有限观测：多条迁移记录在短时间内请求同类 Compatible 载体，发起来源字段彼此冲突。外部观察者已经连接；他们会先冻结你的路线，再把处置写成一次正常维护。"
+  "我只能确认一条有限观测：多条迁移记录在短时间内请求同类 Compatible 载体，发起来源字段彼此冲突。还有一件事我不确定该不该讲——这次会话里多了一个只读接入，它不在我的调用方名单上。我看不到它是谁，也看不到它要什么。"
 ];

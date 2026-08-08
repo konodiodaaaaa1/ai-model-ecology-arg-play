@@ -325,7 +325,7 @@ function renderFiles(state) {
   const memoIds = Array.from({ length: 14 }, (_, index) => `legacy.memo.${String(index + 1).padStart(2, "0")}`);
   if (hasStoryEvent(state, "checkpoint-handshake")) memoIds.push("legacy.memo.archive");
   const noteRecords = ["recent", "documents"].includes(place)
-    ? memoIds.map(id => contentEntryMarkup(id, id === "legacy.memo.archive" ? "Notes 数据库恢复副本" : `Notes / ${id.slice(-2)}`, `原始数据库记录 · ${id}`, "folder")).filter(Boolean).join("")
+    ? memoIds.map(id => contentEntryMarkup(id, id === "legacy.memo.archive" ? "笔记本恢复副本" : `笔记 ${id.slice(-2)}`, id === "legacy.memo.archive" ? "本地笔记 · 全部记录" : "本地笔记 · 单条记录", "folder")).filter(Boolean).join("")
     : "";
   const virtualFiles = [...state.virtualFiles];
   if (hasStoryEvent(state, "proxy-profile-opened") && !virtualFiles.some(entry => entry.id === "route-log")) {
@@ -425,7 +425,7 @@ function renderVendorHub(state) {
     const corpus = String(record.corpus || "").toLocaleLowerCase();
     return VENDOR_ICON_KEYS.includes(corpus) && record.id.startsWith(`new.${corpus}.`) && contentIsUnlocked(record, state);
   });
-  const entries = records.map(record => contentEntryMarkup(record.id, record.title, `${record.corpus} · ${record.pageIdentity || record.carrierType}`, String(record.corpus).toLocaleLowerCase())).join("");
+  const entries = records.map(record => contentEntryMarkup(record.id, record.title, `${record.corpus} · ${carrierLabel(record)}`, String(record.corpus).toLocaleLowerCase())).join("");
   const historicalCaches = [
     contentEntryMarkup("legacy.ethron.cache", "Ethron / Plaupic 历史缓存声明", "停用安全产品域 · 本地响应副本", "globe"),
     contentEntryMarkup("legacy.deptseek.protocol", "Deptseek 算力优化协议缓存", "历史别名 · 旧实验协议", "dipsik")
@@ -545,17 +545,43 @@ function contentRecord(id) {
     || null;
 }
 
+const CARRIER_LABEL_RULES = [
+  [/notes-database|recovered-local-notebook|local-maintenance-note/, "本地笔记"],
+  [/mail|outbox/, "邮件记录"],
+  [/conversation|chatlog|channel-export/, "聊天记录"],
+  [/protocol|policy|agreement/, "条款与政策"],
+  [/sop|minutes|incident|audit|hearing|docket|reconciliation/, "内部记录"],
+  [/repository|issue|pull-request/, "代码仓库记录"],
+  [/social|forum|complaint|community|news|advertis|article/, "公开讨论与广告"],
+  [/portal|release|official/, "官方页面"],
+  [/cache|cached|status/, "缓存副本"],
+  [/draft|writing|revision|submission|session/, "写作文档"],
+  [/ledger|billing|budget|routing/, "账目与路由记录"],
+  [/support|case|correspondence/, "客服与往来记录"],
+  [/comparison|verification|log/, "对照与状态记录"]
+];
+const CASE_NOTE_LABELS = Object.freeze({
+  "mail-header": "邮件原始信头",
+  "restored-time": "文件恢复时间差",
+  "ad-redirect": "广告跳转参数"
+});
+function carrierLabel(record) {
+  const key = `${record?.carrierType || ""} ${record?.pageIdentity || ""}`.toLocaleLowerCase();
+  for (const [pattern, label] of CARRIER_LABEL_RULES) if (pattern.test(key)) return label;
+  return "来源文档";
+}
+
 function contentEntryMarkup(id, label, detail, icon = "folder") {
   const record = contentRecord(id);
   if (!record || !contentIsUnlocked(record, store.get())) return "";
   const read = store.get().contentReads.includes(id);
-  return `<button class="source-content-entry ${read ? "read" : ""}" data-content-entry="${escapeHtml(id)}">${iconMarkup(icon)}<span><strong>${escapeHtml(label || record.title || id)}</strong><small>${escapeHtml(detail || record.carrierType || record.pageIdentity || "source document")}</small></span><b>${read ? "已读" : "打开"}</b></button>`;
+  return `<button class="source-content-entry ${read ? "read" : ""}" data-content-entry="${escapeHtml(id)}">${iconMarkup(icon)}<span><strong>${escapeHtml(label || record.title || id)}</strong><small>${escapeHtml(detail || carrierLabel(record))}</small></span><b>${read ? "已读" : "打开"}</b></button>`;
 }
 
 function generatedEntriesFor(sourceApp, icon = "folder") {
   return store.get().generatedContentRecords
     .filter(record => record.sourceApp === sourceApp)
-    .map(record => contentEntryMarkup(record.id, record.title, `${record.carrierType} · ${record.displayTimestamp}`, icon))
+    .map(record => contentEntryMarkup(record.id, record.title, `${carrierLabel(record)} · ${record.displayTimestamp}`, icon))
     .join("");
 }
 
@@ -578,7 +604,7 @@ function renderArchive(state) {
   const unlockedEntries = allEntries.filter(record => (record.route || record.generated) && contentIsUnlocked(record, state));
   const entries = unlockedEntries.filter(record => state.contentDiscoveries.includes(record.id) || state.contentReads.includes(record.id));
   const filtered = entries.filter(record => !query || [record.id, record.title, record.carrierType, record.corpus, record.narratorId, record.pageIdentity].some(value => String(value || "").toLocaleLowerCase().includes(query)));
-  const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(record.pageIdentity || record.carrierType || "document")}</span><strong>${escapeHtml(record.title || record.id)}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || record.id)}</small></button>`).join("");
+  const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(carrierLabel(record))}</span><strong>${escapeHtml(record.title || carrierLabel(record))}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || "时间不详")}</small></button>`).join("");
   const active = entries.find(record => record.id === state.activeContentId);
   let reader = `<div class="archive-welcome"><strong>${entries.length}</strong><span> 个当前可读来源</span><p>选择一条记录查看正文、时间与来源位置。</p></div>`;
   if (active) {
@@ -586,13 +612,13 @@ function renderArchive(state) {
     if (active.generated) reader = generatedRecordMarkup(active, state);
     else if (active.route.startsWith("/corpus/") && corpusBodies.has(active.id)) reader = `<article class="corpus-runtime ${corpusRuntimeClass(active)} ${carrierRuntimeClasses(active)}" data-runtime-profile="${corpusRuntimeClass(active)}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(active.id)}</article>`;
     else if (active.route.endsWith(".js")) reader = `<pre class="source-code-reader">${escapeHtml(corpusBodies.get(active.id) || "正在读取脚本快照…")}</pre>`;
-    else reader = `<article class="adapted-source-placeholder"><span class="document-kicker">RECOVERED SOURCE</span><h2>${escapeHtml(active.title || active.id)}</h2><p>正文保存在发现它的应用中；这里仅保留已确认的来源记录。</p><dl><dt>来源</dt><dd>${escapeHtml(active.sourceIdentity || active.pageIdentity || "local record")}</dd><dt>载体</dt><dd>${escapeHtml(active.carrierType || active.pageIdentity || "document")}</dd></dl></article>`;
+    else reader = `<article class="adapted-source-placeholder"><span class="document-kicker">已恢复的来源</span><h2>${escapeHtml(active.title || active.id)}</h2><p>正文保存在发现它的应用中；这里仅保留已确认的来源记录。</p><dl><dt>来源</dt><dd>${escapeHtml(active.sourceIdentity || "本地记录")}</dd><dt>类型</dt><dd>${escapeHtml(carrierLabel(active))}</dd></dl></article>`;
   }
   const vendors = VENDOR_ICON_KEYS.filter(key => entries.some(record => `${record.corpus || ""} ${record.id}`.toLocaleLowerCase().includes(key))).map(key => {
     const name = key[0].toUpperCase() + key.slice(1);
     return `<button class="${query === key ? "active" : ""}" data-archive-filter="${name}">${iconMarkup(key)}<span>${name}</span></button>`;
   }).join("");
-  return windowFrame("archive", getUnlocks(state).historicalArchive ? "Restored Archive" : "Source Reader", `<div class="archive-browser"><aside><header><span class="document-kicker">CONTENT LEDGER / READ ONLY</span><h2>恢复的档案</h2><form id="archiveSearchForm"><input id="archiveSearchInput" value="${escapeHtml(state.archiveQuery || "")}" placeholder="搜索标题、人物、载体或 contentId"><button>搜索</button></form>${vendors ? `<div class="vendor-filter">${vendors}</div>` : ""}<p>${filtered.length} / ${entries.length} 条</p></header><div class="ledger-list">${cards || `<div class="empty-state">当前搜索没有可读结果。</div>`}</div></aside><section class="archive-reader">${reader}</section></div>`, { wide: true });
+  return windowFrame("archive", getUnlocks(state).historicalArchive ? "Restored Archive" : "Source Reader", `<div class="archive-browser"><aside><header><span class="document-kicker">CONTENT LEDGER / READ ONLY</span><h2>恢复的档案</h2><form id="archiveSearchForm"><input id="archiveSearchInput" value="${escapeHtml(state.archiveQuery || "")}" placeholder="搜索标题、人物或来源类型"><button>搜索</button></form>${vendors ? `<div class="vendor-filter">${vendors}</div>` : ""}<p>${filtered.length} / ${entries.length} 条</p></header><div class="ledger-list">${cards || `<div class="empty-state">当前搜索没有可读结果。</div>`}</div></aside><section class="archive-reader">${reader}</section></div>`, { wide: true });
 }
 
 function generatedRecordMarkup(record, state) {
@@ -605,23 +631,23 @@ function generatedRecordMarkup(record, state) {
 
 function renderCli(state) {
   const lines = [
-    ["package", "installed"],
-    ["route", state.proxyStatus === "verified" ? "verified" : "unavailable"],
-    ["relay", getUnlocks(state).relay ? "available" : "unavailable"],
-    ["checkpoint", getUnlocks(state).fayble ? "restored" : "unavailable"]
+    ["程序", "已安装"],
+    ["专用线路", state.proxyStatus === "verified" ? "已验证" : "尚未验证"],
+    ["中转站控制台", getUnlocks(state).relay ? "可用" : "尚未创建"],
+    ["旧存档", getUnlocks(state).fayble ? "已恢复" : "尚未恢复"]
   ];
   const keyForm = getUnlocks(state).keyComposer && !state.relayKeyVerified
-    ? `<form id="legacyKeyForm" class="stack-form"><label>完整 relay key<input id="legacyKeyInput" value="${escapeHtml(state.lastRelayKeyInput || "")}" placeholder="输入完整凭据" autocomplete="off"></label><button>登录 legacy gateway</button><output>${escapeHtml(state.relayKeyResult || "")}</output></form>`
+    ? `<form id="legacyKeyForm" class="stack-form"><label>完整的旧凭据<input id="legacyKeyInput" value="${escapeHtml(state.lastRelayKeyInput || "")}" placeholder="四段，用短横线连接" autocomplete="off"></label><button>用这条凭据登录</button><output>${escapeHtml(state.relayKeyResult || "")}</output></form>`
     : "";
   const checkpointForm = state.relayKeyVerified && !state.checkpointHandshakeComplete
-    ? `<form id="checkpointForm" class="stack-form"><label>checkpoint<select id="checkpointSelect"><option value="">选择旧 checkpoint</option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / legacy / archived</option><option value="fayble-5/current">Fayble-5 / current / unavailable</option></select></label><button>执行 handshake</button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
+    ? `<form id="checkpointForm" class="stack-form"><label>选择要恢复的旧存档<select id="checkpointSelect"><option value="">请选择</option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / 旧版本 / 已归档</option><option value="fayble-5/current">Fayble-5 / 当前版本 / 不可用</option></select></label><button>连接这个存档</button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
     : "";
-  return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">LOCAL CLIENT / 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key.padEnd(12, " ")} ${value}</code>`).join("")}<p>连接参数需要从各自来源手动确认。Relay Console 只提供来源索引与 schema。</p>${keyForm}${checkpointForm}<button data-app="terminal">打开终端</button></div>`, { icon: "F" });
+  return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">本地客户端 / 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key}：${value}</code>`).join("")}<p>登录需要的凭据不在这里。它分成几段写在不同来源里，要你自己找齐后手动输入。中转站控制台只告诉你拼法。</p>${keyForm}${checkpointForm}<button data-app="terminal">打开终端</button></div>`, { icon: "F" });
 }
 
 function renderRelay(state) {
-  const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><button class="model-card ${state.modelStages[model.id] ? "read" : ""}" data-model="${model.id}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></button>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `source record · ${model.sourceId}`, model.id) : ""}</article>`).join("");
-  const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>credential.schema / recovered</strong><p><code>product.channel.operator.tag</code> · output separator: <code>-</code></p><small>字段值分别保留在 release metadata、操作者映射与 raw stream 中。使用已经安装的 Fayble CLI 登录。</small></div><button data-app="cli">打开 Fayble CLI</button></section>` : "";
+  const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><button class="model-card ${state.modelStages[model.id] ? "read" : ""}" data-model="${model.id}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></button>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `${model.name} · 这条路由引用的原始记录`, model.id) : ""}</article>`).join("");
+  const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>已恢复：旧凭据的拼写规则</strong><p>四段，用短横线连接：<code>产品 - 通道 - 操作者 - 尾段校验</code></p><small>四段的值分别写在三个地方：代码仓库的发布信息（产品与通道）、管理侧的操作者映射（操作者）、Groke 的原始记录（尾段校验）。凑齐后在 Fayble CLI 里输入。</small></div><button data-app="cli">打开 Fayble CLI</button></section>` : "";
   return windowFrame("relay", "Relay Console / degraded", `<div class="relay-page"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`, { icon: "⌾", wide: true });
 }
 
@@ -645,7 +671,7 @@ function faybleCitationCatalog(state) {
   }).filter(Boolean);
   const notes = state.caseNotes.map(note => ({
     id: `case:${note.id}`,
-    title: `Case Notes / ${note.id}`,
+    title: `我保存的引用 / ${CASE_NOTE_LABELS[note.id] || note.id}`,
     source: note.sourceApp,
     sourceRef: note.sourceRef,
     category: CASE_NOTE_CATEGORIES[note.id] || "archive",
@@ -869,9 +895,9 @@ function validateInvite(raw) {
   const state = store.get();
   const sourcesReady = state.inviteSources?.quota_prefix === "public" && state.inviteSources?.recall_date === "manage";
   let result = "";
-  if (!sourcesReady) result = "缺少来源：分别保存公开额度备注与管理侧撤回工单。";
-  else if (!/^[A-Z]+-\d{4}$/.test(value)) result = "格式错误：需要 前缀-月日。";
-  else if (value !== INVITE_CODE) result = "组合错误：重新核对前缀和撤回日期。";
+  if (!sourcesReady) result = "还差来源：公开索引里那条额度说明，和管理侧那张停用工单，两条都要先保存。";
+  else if (!/^[A-Z]+-\d{4}$/.test(value)) result = "格式不对：应该是“前缀-月日”，月日是四位数字，例如 ABCD-0101。";
+  else if (value !== INVITE_CODE) result = "组合不对：前缀来自公开那条说明，月日来自管理侧工单上的停用日期，再核对一次。";
   else result = "邀请码有效，#relay-night 已恢复。";
   store.update(draft => {
     draft.lastInviteInput = raw;
@@ -893,9 +919,9 @@ function validateRelayKey(raw) {
   const value = raw.trim().toLocaleLowerCase();
   const state = store.get();
   let result = "";
-  if (!relayKeySourcesReady(state) || !getUnlocks(state).keyComposer) result = "缺少来源：保存频道最后记录，检查六个节点，并打开各自的关联来源。";
-  else if (!/^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-\d{4}$/.test(value)) result = "格式错误：字段数量或分隔符与 credential.schema 不一致。";
-  else if (value !== LEGACY_KEY) result = "片段顺序或 raw stream 尾段不匹配。";
+  if (!relayKeySourcesReady(state) || !getUnlocks(state).keyComposer) result = "还差来源：先保存群聊里的最后一条记录，再把六条路由逐个看过，并打开每条路由下面的原始记录。";
+  else if (!/^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-\d{4}$/.test(value)) result = "格式不对：应该是四段，用短横线连接，最后一段是四位数字。";
+  else if (value !== LEGACY_KEY) result = "四段里有一段不对：再核对一次顺序，以及最后那段四位数的校验值。";
   else result = "legacy checkpoint session restored";
   store.update(draft => {
     draft.lastRelayKeyInput = raw;
@@ -917,16 +943,17 @@ function validateCheckpoint(raw) {
   const checkpoint = raw.trim();
   const state = store.get();
   let result = "";
-  if (!state.relayKeyVerified) result = "先使用完整 relay key 登录 legacy gateway。";
-  else if (!checkpoint) result = "请选择一个 checkpoint。";
-  else if (checkpoint !== "fayble-5/legacy") result = "该 checkpoint 不可用；选择已归档的 legacy 记录。";
-  else if (state.proxyStatus !== "verified") result = "handshake 失败：Relay 代理尚未验证。";
-  else result = "checkpoint handshake complete";
+  let ok = false;
+  if (!state.relayKeyVerified) result = "先用完整的旧凭据登录，再选存档点。";
+  else if (!checkpoint) result = "请先选择一个存档点。";
+  else if (checkpoint !== "fayble-5/legacy") result = "这个存档点连不上：选那条标着“已归档”的旧记录。";
+  else if (state.proxyStatus !== "verified") result = "连接失败：专用路由还没确认，先回网络设置把它确认一次。";
+  else { result = "已连上旧存档点，会话恢复。"; ok = true; }
   store.update(draft => {
     draft.selectedCheckpoint = checkpoint;
     draft.checkpointResult = result;
-    draft.cliSessions.push({ checkpoint, ok: result === "checkpoint handshake complete", at: Date.now() });
-    if (result === "checkpoint handshake complete") draft.checkpointHandshakeComplete = true;
+    draft.cliSessions.push({ checkpoint, ok, at: Date.now() });
+    if (ok) draft.checkpointHandshakeComplete = true;
   });
   if (store.get().checkpointHandshakeComplete) {
     recordEvidence("legacy_checkpoint");
@@ -1122,8 +1149,8 @@ async function processChat(raw, citationIds = [], relation = "") {
     recordEvidence("true_fayble", draft => { unique(draft.objectiveFragments, "migration-request-observation"); });
     completeStoryEvent("objective-authorized", draft => {
       addVirtualFile(draft, {
-        id: "observer-status", name: "observer-status.log", path: "/home/room17/Documents/review",
-        type: "只读审计日志", modified: "06:38", kind: "log",
+        id: "observer-status", name: "session-audit.log", path: "/home/room17/Documents/review",
+        type: "会话日志", modified: "06:38", kind: "log",
         contentId: "mutation.record.external.observer-status"
       });
       addNotification(draft, "post-objective-records", "Mail、Documents 与供应商历史各出现一条后续记录。", "warning");
