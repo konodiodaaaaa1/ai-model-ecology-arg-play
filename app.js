@@ -214,6 +214,17 @@ function showToast(text, tone = "info") {
   toastTimer = setTimeout(() => node.classList.remove("show"), 3200);
 }
 
+function setPurgeConfirmVisible(visible, message = "") {
+  const confirmButton = $("#purgeConfirmButton");
+  const cancelButton = $("#purgeCancelButton");
+  const startButton = $("#purgeDataButton");
+  const result = $("#purgeResult");
+  if (confirmButton) confirmButton.hidden = !visible;
+  if (cancelButton) cancelButton.hidden = !visible;
+  if (startButton) startButton.hidden = visible;
+  if (result) result.textContent = message;
+}
+
 function addNotification(draft, id, text, level = "info") {
   if (!draft.desktopNotifications.some(item => item.id === id)) draft.desktopNotifications.push({ id, text, level, read: false });
 }
@@ -1299,6 +1310,19 @@ document.addEventListener("click", event => {
     draft.npcMode = "local";
     draft.npcProviderLabel = "本地关键词叙事";
   });
+  if (button.id === "purgeDataButton") setPurgeConfirmVisible(true, "确认后无法找回。");
+  if (button.id === "purgeCancelButton") setPurgeConfirmVisible(false, "");
+  if (button.id === "purgeConfirmButton") {
+    const removed = store.purge();
+    npcConfig = null;
+    corpusBodies = new Map();
+    setPurgeConfirmVisible(false, `已清除 ${removed.length} 项本地存档，调查从头开始。`);
+    $("#notificationTray").hidden = true;
+    $("#providerSetup").hidden = true;
+    $("#onboarding").hidden = false;
+    $("#onboarding > .briefing:first-child").hidden = false;
+    showToast("本地存档已清除。", "warning");
+  }
   if (button.id === "reopenBriefing") {
     $("#onboarding").hidden = false;
     $("#onboarding > .briefing:first-child").hidden = false;

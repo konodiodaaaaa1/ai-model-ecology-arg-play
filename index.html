@@ -47,6 +47,16 @@
         <div class="briefing-footer"><button type="button" id="backToBriefing" class="quiet-button">返回</button><button type="submit" class="primary-button">测试连接并启用</button></div>
       </form>
       <button id="localModeButton" class="local-mode-button">不提供 key，使用本地关键词叙事模式</button>
+      <section class="local-data-panel">
+        <strong>本地存档</strong>
+        <p>进度只保存在这台浏览器里。清除后本次调查的全部进度、已保存的引用和已恢复的记录都会消失，无法找回。</p>
+        <div class="local-data-actions">
+          <button type="button" id="purgeDataButton" class="quiet-button">清除本地存档与缓存</button>
+          <button type="button" id="purgeConfirmButton" class="danger-button" hidden>确认清除，重新开始</button>
+          <button type="button" id="purgeCancelButton" class="quiet-button" hidden>取消</button>
+        </div>
+        <div id="purgeResult" class="inline-result" role="status" aria-live="polite"></div>
+      </section>
     </section>
   </div>
   <div id="takeoverOverlay" class="takeover-overlay" hidden><div class="scanline"></div><strong>EXTERNAL REVIEW CONNECTED</strong><span id="takeoverStep">freezing local relay...</span></div>

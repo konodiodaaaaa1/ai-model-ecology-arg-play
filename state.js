@@ -1,6 +1,32 @@
 const STORAGE_KEY = "ai-model-ecology-arg-state-v3";
 const LEGACY_STORAGE_KEYS = ["ai-model-ecology-arg-state-v2", "ai-model-ecology-arg-state-v1"];
 const CHANNEL_NAME = "ai-model-ecology-arg-sync";
+const OWNED_KEY_PREFIX = "ai-model-ecology-arg-";
+
+function ownedKeys(storage) {
+  const keys = [];
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+    if (key && key.startsWith(OWNED_KEY_PREFIX)) keys.push(key);
+  }
+  return keys;
+}
+
+export function purgeLocalData() {
+  const removed = [];
+  for (const storage of [globalThis.localStorage, globalThis.sessionStorage]) {
+    try {
+      if (!storage) continue;
+      for (const key of ownedKeys(storage)) {
+        storage.removeItem(key);
+        removed.push(key);
+      }
+    } catch (_) {
+      // Storage may be blocked by browser settings; nothing else to remove.
+    }
+  }
+  return removed;
+}
 
 export const DEFAULT_STATE = Object.freeze({
   version: 3,
@@ -261,12 +287,18 @@ export class GameStore {
   reset() {
     this.state = clone(DEFAULT_STATE);
     this.state.lastUpdated = Date.now();
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      LEGACY_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
-    } catch (_) { /* no-op */ }
+    purgeLocalData();
     this.channel?.postMessage(this.state);
     this.emit();
+  }
+
+  purge() {
+    const removed = purgeLocalData();
+    this.state = clone(DEFAULT_STATE);
+    this.state.lastUpdated = Date.now();
+    this.channel?.postMessage(this.state);
+    this.emit();
+    return removed;
   }
 
   addEvidence(id, mutator) {
