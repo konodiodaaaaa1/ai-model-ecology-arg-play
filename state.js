@@ -148,8 +148,8 @@ const hasArtifact = (state, id) => state.unlockedArtifacts.includes(id) || state
 
 export function getUnlocks(state) {
   return {
-    mailSource: hasMilestone(state, "mail-source-inspected"),
-    mirror: hasMilestone(state, "mail-source-inspected"),
+    mailSource: true,
+    mirror: true,
     scriptDownload: hasMilestone(state, "cached-response-saved"),
     terminalTrace: hasMilestone(state, "local-script-run"),
     trashRecovery: hasMilestone(state, "cache-index-opened"),

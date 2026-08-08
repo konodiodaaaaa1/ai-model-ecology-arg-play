@@ -89,7 +89,7 @@ const SYSTEM_TOOLS = [
 ];
 
 const GENERATED_APPS = {
-  "case-notes": { id: "journal", name: "Case Notes", icon: "notebook", accent: "#d8d2c4" },
+  "case-notes": { id: "journal", name: "笔记本", icon: "notebook", accent: "#d8d2c4" },
   "restored-archive": { id: "archive", name: "Restored Archive", icon: "archive", accent: "#b49a72" },
   "fayble-cli": { id: "cli", name: "Fayble CLI", icon: "fayble-cli", accent: "#c96e61" },
   "relay-console": { id: "relay", name: "Relay Console", icon: "radio", accent: "#9bcf8d" },
@@ -252,22 +252,58 @@ function recordEvidence(id, mutator) {
   if (added) showToast("来源状态已更新。", "success");
 }
 
-function saveCitation(button) {
-  const id = button.dataset.saveCitation;
+const INVITE_SOURCE_KINDS = Object.freeze({ quota_prefix: "public", recall_date: "manage" });
+
+function saveCitation(node, options = {}) {
+  const id = node.dataset.saveCitation;
   const state = store.get();
-  if (!id || state.caseNotes.some(note => note.id === id)) return;
+  if (!id || state.caseNotes.some(note => note.id === id)) return false;
   completeStoryEvent(`citation-${id}`, draft => {
     addArtifact(draft, "case-notes");
     draft.caseNotes.push({
       id,
-      quote: button.dataset.citationQuote || "",
-      sourceApp: button.dataset.citationSource || "Unknown source",
-      sourceRef: button.dataset.citationRef || "local://unknown",
+      quote: node.dataset.citationQuote || "",
+      sourceApp: node.dataset.citationSource || "未标注来源",
+      sourceRef: node.dataset.citationRef || "local://unknown",
       appId: draft.currentApp,
       savedAt: draft.storyClock?.time || "03:17"
     });
   });
-  showToast("原始引用已保存到 Case Notes。", "success");
+  if (!options.silent) showToast("原句已记入笔记本。", "success");
+  return true;
+}
+
+function harvestVisibleCitations() {
+  const nodes = [...document.querySelectorAll("#windows [data-save-citation]")];
+  const seen = new Set();
+  let saved = 0;
+  for (const node of nodes) {
+    const id = node.dataset.saveCitation;
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    if (saveCitation(node, { silent: true })) saved += 1;
+  }
+  for (const node of document.querySelectorAll("#windows [data-result-evidence]")) {
+    const evidenceId = node.dataset.resultEvidence;
+    if (!evidenceId) continue;
+    const sourceKind = node.dataset.resultSource;
+    const requiredKind = INVITE_SOURCE_KINDS[evidenceId];
+    if (requiredKind && sourceKind !== requiredKind) continue;
+    recordEvidence(evidenceId, draft => {
+      if (requiredKind) draft.inviteSources[evidenceId] = sourceKind;
+    });
+  }
+  for (const node of document.querySelectorAll("#windows [data-auto-milestone]")) {
+    const milestone = node.dataset.autoMilestone;
+    const evidenceId = node.dataset.autoEvidence;
+    if (!milestone) continue;
+    const fired = completeStoryEvent(milestone, draft => {
+      const route = node.dataset.autoRoute;
+      if (route) unique(draft.discoveredRoutes, route);
+    });
+    if (fired && evidenceId) recordEvidence(evidenceId);
+  }
+  if (saved) showToast(saved === 1 ? "页面上的原句已记入笔记本。" : `${saved} 条原句已记入笔记本。`, "success");
 }
 
 function setApp(id, page) {
@@ -285,7 +321,7 @@ function setApp(id, page) {
 
 function appLockReason(id, state) {
   const unlocks = getUnlocks(state);
-  if (id === "journal" && !unlocks.caseNotes) return "Case Notes 尚未建立。";
+  if (id === "journal" && !unlocks.caseNotes) return "笔记本还没有记下任何东西。";
   if (id === "archive" && !unlocks.historicalArchive) return "本地尚无恢复档案。";
   if (id === "relay" && !unlocks.relay) return "Relay Console 尚未创建。";
   if (id === "fayble" && !unlocks.fayble) return "Fayble 会话尚未建立。";
@@ -319,7 +355,6 @@ function renderMail(state) {
   const government = state.governmentMailAvailable;
   const attachment = state.revisitFlags["mail-attachment"];
   const fragmentOpened = state.sourceVisits?.["mail-fragment"];
-  const sourceVisible = hasStoryEvent(state, "mail-source-inspected");
   const carrierInbox = [
     contentEntryMarkup("new.employee.minutes-01", "项目周会纪要 / 第 18 次", "公司邮件归档 · 会议附件", "mail"),
     contentEntryMarkup("new.maintainer.outbox-04", "延迟送达：outbox-draft.eml", "原发送队列恢复 · 未发送草稿", "mail")
@@ -327,7 +362,7 @@ function renderMail(state) {
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper"><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton">确认送达并关闭会话</button></article>` : `<article class="paper sparse-mail"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${sourceVisible ? `<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><button data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="Mail / raw source" data-citation-ref="mail://local/R17-0317">保存这条原始引用</button></details>` : `<button class="quiet-button" id="inspectMailSourceButton">查看原始邮件</button>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper"><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton">确认送达并关闭会话</button></article>` : `<article class="paper sparse-mail" data-auto-milestone="mail-source-inspected" data-auto-evidence="mail_signature" data-auto-route="http://archive.room17.local/v2/17"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   return windowFrame("mail", "邮件", `<div class="split-layout">${list}${body}</div>`, { icon: "✉", wide: true });
 }
 
@@ -366,7 +401,7 @@ function renderTrash(state) {
   const item = state.trashItems[0];
   if (!item) return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">TRASH / LOCAL</span><h2>回收站为空</h2><p>最近没有从这个账户删除的项目。</p></div></div>`, { icon: "⌫" });
   const restored = item.status === "restored";
-  return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "已恢复 1 个项目" : "1 个已删除项目"}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>原位置：${escapeHtml(item.originalPath)}</p><small>删除原因：维护脚本执行；本地索引仍有记录</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "已恢复" : "恢复"}</button></article>${restored ? `<div class="recovered-fragment"><p>原始时间戳和当前恢复时间存在 46 秒差值。</p><button data-save-citation="restored-time" data-citation-quote="restored copy precedes deletion index by 46s" data-citation-source="Trash / file metadata" data-citation-ref="trash://${escapeHtml(item.id)}">保存这条原始引用</button></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
+  return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "已恢复 1 个项目" : "1 个已删除项目"}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>原位置：${escapeHtml(item.originalPath)}</p><small>删除原因：维护脚本执行；本地索引仍有记录</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "已恢复" : "恢复"}</button></article>${restored ? `<div class="recovered-fragment"><p>原始时间戳和当前恢复时间存在 46 秒差值。</p><span class="auto-citation" data-save-citation="restored-time" data-citation-quote="恢复出的副本比删除索引晚 46 秒" data-citation-source="回收站 / 文件属性" data-citation-ref="trash://${escapeHtml(item.id)}">已记录到笔记本</span></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
 }
 
 function renderTerminal(state) {
@@ -457,7 +492,7 @@ function renderBrowser(state) {
     const bookmarks = state.browserBookmarks.map(id => `<button data-browser-page="${id}">${iconMarkup(bookmarkIcons[id] || "globe")}<span>${bookmarkLabels[id]?.[0] || BROWSER_PAGES[id]?.title || id}<small>${bookmarkLabels[id]?.[1] || ""}</small></span></button>`).join("");
     content = `<div class="browser-home"><div class="browser-logo">R<span>17</span></div><h2>新标签页</h2><p>在地址栏输入地址或本地路径。</p>${bookmarks ? `<h3>已保存</h3><div class="bookmark-grid">${bookmarks}</div>` : `<div class="empty-state">还没有书签或最近访问页面。</div>`}</div>`;
   }
-  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>　SDK <span>410</span>　v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>公开端点已经撤回。这个响应来自浏览器边缘缓存，导航链接仍指向已删除的页面。</p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<button class="primary-button" id="saveCachedResponseButton" ${hasStoryEvent(state, "cached-response-saved") ? "disabled" : ""}>${hasStoryEvent(state, "cached-response-saved") ? "响应已保存" : "保存缓存响应"}</button></article>` : `<div class="browser-error"><strong>404</strong><p>这个本地路由还没有进入浏览记录。</p></div>`;
+  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document" data-auto-milestone="mirror-page-read" data-auto-evidence="mirror_route"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>　SDK <span>410</span>　v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>公开端点已经撤回。这个响应来自浏览器边缘缓存，导航链接仍指向已删除的页面。</p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<button class="primary-button" id="saveCachedResponseButton" ${hasStoryEvent(state, "cached-response-saved") ? "disabled" : ""}>${hasStoryEvent(state, "cached-response-saved") ? "响应已保存" : "保存缓存响应"}</button></article>` : `<div class="browser-error"><strong>404</strong><p>这个本地路由还没有进入浏览记录。</p></div>`;
   if (page === "search" && state.browserBookmarks.includes("search")) content = renderSearchPage(state);
   if (page === "forum" && getUnlocks(state).channel) content = renderChannelPage(state);
   if (page === "official" && state.browserBookmarks.includes("official")) {
@@ -477,7 +512,7 @@ function renderBrowser(state) {
   }
   if (page === "ad" && state.browserBookmarks.includes("ad")) {
     const marketEntry = contentEntryMarkup("legacy.market.meidawei", "市场观察 / 模型洗牌后的产能噪音", "保存的财经文章与广告更正", "globe");
-    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 与你，继续每一次未完成的对话。</h2><p>一次已经失效的体验计划仍保留着跳转参数。</p><button data-save-citation="ad-redirect" data-citation-quote="campaign parameter retained in local redirect" data-citation-source="Browser / saved redirect" data-citation-ref="${BROWSER_PAGES.ad.url}">保存跳转来源</button>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
+    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 与你，继续每一次未完成的对话。</h2><p>一次已经失效的体验计划仍保留着跳转参数。</p><span class="auto-citation" data-save-citation="ad-redirect" data-citation-quote="本地跳转里仍保留着活动参数 campaign=NODE" data-citation-source="浏览器 / 保存的跳转页" data-citation-ref="${BROWSER_PAGES.ad.url}">已记录到笔记本</span>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
   }
   if (page === "github" && state.browserBookmarks.includes("github")) {
     const localHashRead = hasStoryEvent(state, "package-local-checksum-read");
@@ -664,7 +699,7 @@ function renderRelay(state) {
 
 function renderJournal(state) {
   const notes = state.caseNotes.map(note => `<article class="case-note"><blockquote>${escapeHtml(note.quote)}</blockquote><dl><dt>来源</dt><dd>${escapeHtml(note.sourceApp)}</dd><dt>位置</dt><dd>${escapeHtml(note.sourceRef)}</dd><dt>保存时间</dt><dd>${escapeHtml(note.savedAt)}</dd></dl><button data-open-source="${escapeHtml(note.appId || "mail")}">返回来源</button></article>`).join("");
-  return windowFrame("journal", "Case Notes", `<div class="journal-page raw-notes"><header><div><span class="document-kicker">CASE NOTES / PLAYER SAVED</span><h2>${state.caseNotes.length} 条原始引用</h2></div><select id="hintLevel"><option value="investigation" ${state.hintLevel === "investigation" ? "selected" : ""}>调查</option><option value="immersive" ${state.hintLevel === "immersive" ? "selected" : ""}>沉浸</option><option value="plot" ${state.hintLevel === "plot" ? "selected" : ""}>剧情</option></select></header><section class="case-note-grid">${notes || `<div class="empty-state">在来源页面保存原句后，它会出现在这里。</div>`}</section></div>`, { icon: "▤", wide: true });
+  return windowFrame("journal", "笔记本", `<div class="journal-page raw-notes"><header><div><span class="document-kicker">我的笔记 / 自动记录</span><h2>${state.caseNotes.length} 条原句</h2></div><select id="hintLevel"><option value="investigation" ${state.hintLevel === "investigation" ? "selected" : ""}>调查</option><option value="immersive" ${state.hintLevel === "immersive" ? "selected" : ""}>沉浸</option><option value="plot" ${state.hintLevel === "plot" ? "selected" : ""}>剧情</option></select></header><section class="case-note-grid">${notes || `<div class="empty-state">打开一处来源后，页面上的关键原句会自动记到这里。</div>`}</section></div>`, { icon: "▤", wide: true });
 }
 
 function faybleCitationCatalog(state) {
@@ -757,6 +792,7 @@ function render(state) {
   if (current === "terminal") requestAnimationFrame(() => { const out = $("#terminalOutput"); if (out) out.scrollTop = out.scrollHeight; });
   if (current === "fayble") requestAnimationFrame(() => { const out = $("#chatStream"); if (out) out.scrollTop = out.scrollHeight; });
   if (current === "archive") requestAnimationFrame(applyCorpusRuntimeEffects);
+  if (state.onboardingSeen) requestAnimationFrame(harvestVisibleCitations);
 }
 
 async function loadRuntimeLedger() {
@@ -1276,7 +1312,7 @@ document.addEventListener("click", event => {
   if (button.dataset.resultEvidence) {
     const evidenceId = button.dataset.resultEvidence;
     const sourceKind = button.dataset.resultSource;
-    const requiredKind = { quota_prefix: "public", recall_date: "manage" }[evidenceId];
+    const requiredKind = INVITE_SOURCE_KINDS[evidenceId];
     if (requiredKind && sourceKind !== requiredKind) showToast("这条记录不属于所需的来源类别。", "warning");
     else recordEvidence(evidenceId, draft => {
       if (requiredKind) draft.inviteSources[evidenceId] = sourceKind;
@@ -1327,10 +1363,6 @@ document.addEventListener("click", event => {
     $("#onboarding").hidden = false;
     $("#onboarding > .briefing:first-child").hidden = false;
     $("#providerSetup").hidden = true;
-  }
-  if (button.id === "inspectMailSourceButton") {
-    const added = completeStoryEvent("mail-source-inspected", draft => { unique(draft.discoveredRoutes, "http://archive.room17.local/v2/17"); });
-    if (added) recordEvidence("mail_signature");
   }
   if (button.id === "saveCachedResponseButton") {
     const added = completeStoryEvent("cached-response-saved", draft => {
