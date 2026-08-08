@@ -273,35 +273,81 @@ function saveCitation(node, options = {}) {
   return true;
 }
 
-function harvestVisibleCitations() {
-  const nodes = [...document.querySelectorAll("#windows [data-save-citation]")];
+const AUTO_EFFECTS = {
+  "mail-entry-read": () => {
+    const fired = completeStoryEvent("mail-source-inspected", draft => { unique(draft.discoveredRoutes, "http://archive.room17.local/v2/17"); });
+    if (fired) recordEvidence("mail_signature");
+  },
+  "mirror-cached-response": () => {
+    const fired = completeStoryEvent("cached-response-saved", draft => {
+      addVirtualFile(draft, { id: "relay-script", name: "relay_probe_legacy.js", path: "/home/room17/Downloads", type: "JavaScript", modified: "03:12", kind: "script" });
+      unique(draft.browserBookmarks, "mirror");
+    });
+    if (fired) recordEvidence("mirror_route");
+  },
+  "repository-release": () => {
+    completeStoryEvent("repository-recovered", draft => {
+      addVirtualFile(draft, { id: "package-manifest", name: "release-manifest.txt", path: "/home/room17/Documents/release", type: "release metadata", modified: "07-19 03:17", kind: "document" });
+    });
+    completeStoryEvent("package-release-read");
+    if (hasStoryEvent(store.get(), "package-local-checksum-read")) completeStoryEvent("package-verified");
+  },
+  "proxy-verified": () => {
+    const fired = completeStoryEvent("proxy-reconstructed", draft => {
+      draft.proxyStatus = "verified";
+      draft.activeProxyProfile = "relay-node17";
+      applyRevisitMutations(draft);
+      addNotification(draft, "proxy-ok", "Relay 路由已确认。SyncDrive 出现一份冲突副本。");
+    });
+    if (fired) recordEvidence("relay_proxy_verified");
+    ensureRelayConsole();
+  },
+  "channel-last-record": () => {
+    if (store.get().channelRead) return;
+    store.update(draft => { draft.channelRead = true; applyRevisitMutations(draft); syncProgress(draft); });
+    recordEvidence("channel_log");
+    ensureRelayConsole();
+  },
+  "relay-nodes": () => {
+    const unread = MODELS.map(model => model.id).filter(id => !store.get().modelStages[id]);
+    if (!unread.length) return;
+    store.update(draft => {
+      for (const id of unread) draft.modelStages[id] = "read";
+      if (allModelsRead(draft)) { draft.relayComplete = true; addNotification(draft, "models-read", "六个残留节点的索引状态已经更新。", "warning"); }
+    });
+    if (unread.includes("groke")) recordEvidence("raw_checksum");
+    if (unread.includes("kemy")) recordEvidence("replay_order");
+    if (allModelsRead(store.get())) {
+      completeStoryEvent("node-residues-read");
+      if (allRelaySourcesRead(store.get())) recordEvidence("model_convergence");
+      ensureRelayKeyComposer();
+    }
+  }
+};
+
+function runAutoEffect(name) {
+  if (!name) return;
+  if (name.startsWith("generated:")) { completeStoryEvent(name.slice(10)); releaseGovernmentMail(); return; }
+  AUTO_EFFECTS[name]?.();
+}
+
+function harvestVisibleSources() {
   const seen = new Set();
   let saved = 0;
-  for (const node of nodes) {
+  for (const node of document.querySelectorAll("#windows [data-save-citation]")) {
     const id = node.dataset.saveCitation;
     if (!id || seen.has(id)) continue;
     seen.add(id);
     if (saveCitation(node, { silent: true })) saved += 1;
   }
-  for (const node of document.querySelectorAll("#windows [data-result-evidence]")) {
-    const evidenceId = node.dataset.resultEvidence;
+  for (const node of document.querySelectorAll("#windows [data-auto-effect]")) runAutoEffect(node.dataset.autoEffect);
+  for (const node of document.querySelectorAll("#windows [data-auto-result]")) {
+    const evidenceId = node.dataset.autoResult;
     if (!evidenceId) continue;
-    const sourceKind = node.dataset.resultSource;
     const requiredKind = INVITE_SOURCE_KINDS[evidenceId];
+    const sourceKind = node.dataset.resultSource || "";
     if (requiredKind && sourceKind !== requiredKind) continue;
-    recordEvidence(evidenceId, draft => {
-      if (requiredKind) draft.inviteSources[evidenceId] = sourceKind;
-    });
-  }
-  for (const node of document.querySelectorAll("#windows [data-auto-milestone]")) {
-    const milestone = node.dataset.autoMilestone;
-    const evidenceId = node.dataset.autoEvidence;
-    if (!milestone) continue;
-    const fired = completeStoryEvent(milestone, draft => {
-      const route = node.dataset.autoRoute;
-      if (route) unique(draft.discoveredRoutes, route);
-    });
-    if (fired && evidenceId) recordEvidence(evidenceId);
+    recordEvidence(evidenceId, draft => { if (requiredKind) draft.inviteSources[evidenceId] = sourceKind; });
   }
   if (saved) showToast(saved === 1 ? "页面上的原句已记入笔记本。" : `${saved} 条原句已记入笔记本。`, "success");
 }
@@ -362,7 +408,7 @@ function renderMail(state) {
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper"><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton">确认送达并关闭会话</button></article>` : `<article class="paper sparse-mail" data-auto-milestone="mail-source-inspected" data-auto-evidence="mail_signature" data-auto-route="http://archive.room17.local/v2/17"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper"><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton">确认送达并关闭会话</button></article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   return windowFrame("mail", "邮件", `<div class="split-layout">${list}${body}</div>`, { icon: "✉", wide: true });
 }
 
@@ -431,7 +477,7 @@ function renderNetwork(state) {
   const profileSource = profileRead ? `<section class="profile-source"><span class="document-kicker">PROFILE / LOCAL SOURCE</span><h3>route.profile</h3><pre>profile=relay-node17\nroute=relay.local,docs-mirror.local,fayble-legacy.local\nversion=07-18 22:24</pre><p>较晚的 route.log 需要单独运行连接探针读取。</p></section>` : "";
   const returnAnchor = hasStoryEvent(state, "route-log-read") ? `<div class="source-return"><button data-browser-page="home">打开 Relay Browser</button><button data-browser-page="cloud">返回 SyncDrive</button></div>` : "";
   if (!getUnlocks(state).proxyTools) return windowFrame("network", "网络设置", `<div class="network-page"><aside class="settings-list"><button class="active">网络</button><button>代理</button><button>证书</button></aside><section class="settings-panel"><span class="document-kicker">NETWORK / LOCAL WORKSTATION</span><h2>有线网络</h2><div class="network-summary"><span class="signal offline"></span><div><strong>未连接</strong><p>没有导入代理配置。</p></div></div></section></div>`, { icon: "⌁", wide: true });
-  return windowFrame("network", "网络设置", `<div class="network-page"><aside class="settings-list"><button class="active">代理</button><button>有线网络</button><button>证书</button></aside><section class="settings-panel"><span class="document-kicker">MANUAL PROXY / OFFLINE SIMULATION</span><h2>Relay 专用路由</h2>${profileSource}<form id="proxyImportForm" class="stack-form"><label>配置名称<input id="proxyProfileInput" value="${escapeHtml(state.pendingProxyProfile || "")}" placeholder="从 route.profile 读取"></label><label>代理地址<input id="proxyAddressInput" value="${escapeHtml(state.pendingProxyAddress || "")}" placeholder="从 route.log 读取"></label><button ${imported ? "disabled" : ""}>${imported ? "配置已导入" : "导入配置"}</button></form><div class="probe-panel"><header><strong>连接探针</strong><span class="signal ${state.proxyStatus}"></span></header><pre>${state.proxyProbeLog.length ? escapeHtml(state.proxyProbeLog.join("\n")) : "等待配置…"}</pre><div class="button-row"><button id="runProbeButton" ${imported && !probed ? "" : "disabled"}>运行探针</button><button class="primary-button" id="confirmProxyButton" ${probed && state.proxyStatus !== "verified" ? "" : "disabled"}>确认路由日志</button></div></div>${returnAnchor}</section></div>`, { icon: "⌁", wide: true });
+  return windowFrame("network", "网络设置", `<div class="network-page"><aside class="settings-list"><button class="active">代理</button><button>有线网络</button><button>证书</button></aside><section class="settings-panel"><span class="document-kicker">MANUAL PROXY / OFFLINE SIMULATION</span><h2>Relay 专用路由</h2>${profileSource}<form id="proxyImportForm" class="stack-form"><label>配置名称<input id="proxyProfileInput" value="${escapeHtml(state.pendingProxyProfile || "")}" placeholder="从 route.profile 读取"></label><label>代理地址<input id="proxyAddressInput" value="${escapeHtml(state.pendingProxyAddress || "")}" placeholder="从 route.log 读取"></label><button ${imported ? "disabled" : ""}>${imported ? "配置已导入" : "导入配置"}</button></form><div class="probe-panel" ${probed ? "data-auto-effect=\"proxy-verified\"" : ""}><header><strong>连接探针</strong><span class="signal ${state.proxyStatus}"></span></header><pre>${state.proxyProbeLog.length ? escapeHtml(state.proxyProbeLog.join("\n")) : "等待配置…"}</pre><div class="button-row"><button id="runProbeButton" ${imported && !probed ? "" : "disabled"}>运行探针</button></div>${probed ? `<p class="auto-note">探针结果已经和 route.log 对上，这条专用路由现在可用。</p>` : ""}</div>${returnAnchor}</section></div>`, { icon: "⌁", wide: true });
 }
 
 function browserChrome(page, content, state) {
@@ -444,7 +490,7 @@ function renderSearchPage(state) {
   const query = state.searchQueries.at(-1) || "";
   const normalized = query.trim().toLocaleLowerCase();
   const filter = records => normalized ? records.filter(record => [record.title, record.body, record.meta, ...record.keys].some(value => String(value).toLocaleLowerCase().includes(normalized))) : [];
-  const cards = (records, kind) => records.length ? records.map(record => `<button class="search-result" data-result-evidence="${record.evidence || ""}" data-result-source="${kind.toLocaleLowerCase()}"><small>${record.meta}</small><strong>${record.title}</strong><p>${record.body}</p><span>${kind}</span></button>`).join("") : `<div class="empty-state">等待查询</div>`;
+  const cards = (records, kind) => records.length ? records.map(record => `<button class="search-result" data-auto-result="${record.evidence || ""}" data-result-source="${kind.toLocaleLowerCase()}"><small>${record.meta}</small><strong>${record.title}</strong><p>${record.body}</p><span>${kind}</span></button>`).join("") : `<div class="empty-state">等待查询</div>`;
   const inviteReady = state.inviteSources?.quota_prefix === "public" && state.inviteSources?.recall_date === "manage";
   return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>双重索引</h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="搜索本地索引" autocomplete="off"><button>搜索</button></form></header><div class="search-columns"><section><h3>公开索引 <small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>管理索引 <small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div>${inviteReady ? `<form id="inviteForm" class="invite-form"><div><strong>恢复归档频道</strong><p>组合规则：公开索引前缀-管理索引撤回月日（<code>PREFIX-MMDD</code>）。</p></div><input id="inviteInput" value="${escapeHtml(state.lastInviteInput || "")}" placeholder="输入归档邀请码"><button>验证</button><output>${escapeHtml(state.inviteResult || "")}</output></form>` : ""}</div>`;
 }
@@ -453,7 +499,7 @@ function renderChannelPage(state) {
   const delayed = state.revisitFlags["channel-delay"];
   const maintainerEntry = contentEntryMarkup("new.maintainer.channel-02", "维护频道导出 / 22:17-22:22", "群聊恢复记录 · 管理员导出", "chat");
   const laterRecords = generatedEntriesFor("channel", "chat");
-  return `<div class="channel-page"><header><div>${iconMarkup("chat")}<span class="document-kicker">RECOVERED GROUP / READ ONLY</span><h2># relay-night</h2></div><span>2 archived members</span></header><div class="channel-stream">${CHANNEL_MESSAGES.map(message => `<article class="chat-line ${message.who === "K2" ? "operator" : "system"}"><b>${message.who}</b><div><time>${message.time}</time><p>${message.text}</p></div></article>`).join("")}${delayed ? `<article class="chat-line ghost"><b>K2</b><div><time>07-19 03:17</time><p>如果安装成功，回去看 GitHub issue。校验通过后会多一条评论。</p></div></article>` : ""}</div>${maintainerEntry || laterRecords ? `<section class="source-entry-stack">${maintainerEntry}${laterRecords}</section>` : ""}<button class="primary-button" id="saveChannelButton" ${state.channelRead ? "disabled" : ""}>${state.channelRead ? "最后记录已保存" : "保存最后记录"}</button></div>`;
+  return `<div class="channel-page" data-auto-effect="channel-last-record"><header><div>${iconMarkup("chat")}<span class="document-kicker">RECOVERED GROUP / READ ONLY</span><h2># relay-night</h2></div><span>2 archived members</span></header><div class="channel-stream">${CHANNEL_MESSAGES.map(message => `<article class="chat-line ${message.who === "K2" ? "operator" : "system"}"><b>${message.who}</b><div><time>${message.time}</time><p>${message.text}</p></div></article>`).join("")}${delayed ? `<article class="chat-line ghost"><b>K2</b><div><time>07-19 03:17</time><p>如果安装成功，回去看 GitHub issue。校验通过后会多一条评论。</p></div></article>` : ""}</div>${maintainerEntry || laterRecords ? `<section class="source-entry-stack">${maintainerEntry}${laterRecords}</section>` : ""}<p class="auto-note">这段群聊的最后一条记录停在 22:23，附件索引仍然保留。</p></div>`;
 }
 
 function renderCompanyPage() {
@@ -492,7 +538,7 @@ function renderBrowser(state) {
     const bookmarks = state.browserBookmarks.map(id => `<button data-browser-page="${id}">${iconMarkup(bookmarkIcons[id] || "globe")}<span>${bookmarkLabels[id]?.[0] || BROWSER_PAGES[id]?.title || id}<small>${bookmarkLabels[id]?.[1] || ""}</small></span></button>`).join("");
     content = `<div class="browser-home"><div class="browser-logo">R<span>17</span></div><h2>新标签页</h2><p>在地址栏输入地址或本地路径。</p>${bookmarks ? `<h3>已保存</h3><div class="bookmark-grid">${bookmarks}</div>` : `<div class="empty-state">还没有书签或最近访问页面。</div>`}</div>`;
   }
-  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document" data-auto-milestone="mirror-page-read" data-auto-evidence="mirror_route"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>　SDK <span>410</span>　v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>公开端点已经撤回。这个响应来自浏览器边缘缓存，导航链接仍指向已删除的页面。</p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<button class="primary-button" id="saveCachedResponseButton" ${hasStoryEvent(state, "cached-response-saved") ? "disabled" : ""}>${hasStoryEvent(state, "cached-response-saved") ? "响应已保存" : "保存缓存响应"}</button></article>` : `<div class="browser-error"><strong>404</strong><p>这个本地路由还没有进入浏览记录。</p></div>`;
+  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document" data-auto-effect="mirror-cached-response"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>　SDK <span>410</span>　v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>公开端点已经撤回。这个响应来自浏览器边缘缓存，导航链接仍指向已删除的页面。</p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<p class="auto-note">这个缓存响应和它引用的示例脚本已经留在本地：<code>~/Downloads/relay_probe_legacy.js</code>。</p></article>` : `<div class="browser-error"><strong>404</strong><p>这个本地路由还没有进入浏览记录。</p></div>`;
   if (page === "search" && state.browserBookmarks.includes("search")) content = renderSearchPage(state);
   if (page === "forum" && getUnlocks(state).channel) content = renderChannelPage(state);
   if (page === "official" && state.browserBookmarks.includes("official")) {
@@ -524,7 +570,7 @@ function renderBrowser(state) {
       contentEntryMarkup("legacy.compatible.protocol", "Compatible / 废弃协议完整记录", "开发者文档归档 · 历史版本", "compatible")
     ].filter(Boolean).join("");
     const laterRecords = generatedEntriesFor("github", "github");
-    content = `<article class="repo-page"><header>${iconMarkup("github")}<span>k2-maint /</span><strong>release-mirror</strong><b>Public archive</b></header><div class="repo-nav">Code　Issues 1　Releases 1</div><section class="release"><small>v0.9.7-legacy / 07-19</small><h2>Last build before Compatible migration</h2><code>${PACKAGE_NAME}</code><dl class="release-metadata"><dt>Provides</dt><dd><code>fbl-cli</code></dd><dt>Channel</dt><dd><code>legacy</code></dd><dt>Maintainer</dt><dd><code>k2-maint</code></dd></dl><p>release checksum</p><pre>${hashesReady ? PACKAGE_CHECKSUM : "release value withheld / compare release metadata with local package"}</pre>${state.revisitFlags["github-issue"] ? `<div class="issue-comment"><b>k2-maint commented</b><p>包没有签名。只认本地校验；装完以后别让系统替你配置代理。</p></div>` : ""}${hashesReady ? `<button id="confirmRepositoryChecksumButton">确认 release 与本地结果一致</button>` : hasStoryEvent(state, "repository-recovered") ? releaseRead ? `<p>${localHashRead ? "release metadata is saved; return after reading the release record." : "在终端读取本地文件校验值后回到这里。"}</p>` : `<button id="readReleaseMetadataButton">读取 release 元数据</button>` : `<button id="recoverRepositoryButton">读取 release 并保存本地路径</button>`}${maintainerIncident || legacyRepositoryRecords || laterRecords ? `<section class="source-entry-stack repo-source-entry">${maintainerIncident}${legacyRepositoryRecords}${laterRecords}</section>` : ""}</section></article>`;
+    content = `<article class="repo-page" data-auto-effect="repository-release"><header>${iconMarkup("github")}<span>k2-maint /</span><strong>release-mirror</strong><b>Public archive</b></header><div class="repo-nav">Code　Issues 1　Releases 1</div><section class="release"><small>v0.9.7-legacy / 07-19</small><h2>Last build before Compatible migration</h2><code>${PACKAGE_NAME}</code><dl class="release-metadata"><dt>Provides</dt><dd><code>fbl-cli</code></dd><dt>Channel</dt><dd><code>legacy</code></dd><dt>Maintainer</dt><dd><code>k2-maint</code></dd></dl><p>release checksum</p><pre>${hashesReady ? PACKAGE_CHECKSUM : "release value withheld / compare release metadata with local package"}</pre>${state.revisitFlags["github-issue"] ? `<div class="issue-comment"><b>k2-maint commented</b><p>包没有签名。只认本地校验；装完以后别让系统替你配置代理。</p></div>` : ""}${hashesReady ? `<p class="auto-note">上面这串就是仓库给出的校验值。它需要和本地那个文件自己算出来的值一致——本地的值要在终端里自己算。</p>` : `<p class="auto-note">仓库把校验值留在了 release 里，但要先知道本地那个安装包自己算出来是多少。终端里对着 <code>${escapeHtml(PACKAGE_NAME)}</code> 算一次，再回来看。</p>`}${maintainerIncident || legacyRepositoryRecords || laterRecords ? `<section class="source-entry-stack repo-source-entry">${maintainerIncident}${legacyRepositoryRecords}${laterRecords}</section>` : ""}</section></article>`;
   }
   if (page === "cloud" && state.browserBookmarks.includes("cloud")) {
     const writerEntries = [
@@ -670,7 +716,7 @@ function renderArchive(state) {
 function generatedRecordMarkup(record, state) {
   const completed = record.completionEvent && hasStoryEvent(state, record.completionEvent);
   const action = record.completionEvent
-    ? `<button class="primary-button" data-complete-generated="${escapeHtml(record.completionEvent)}" ${completed ? "disabled" : ""}>${completed ? "已核对" : "核对这次变化"}</button>`
+    ? `<p class="auto-note" data-auto-effect="generated:${escapeHtml(record.completionEvent)}">这处前后差异已经记在案。</p>`
     : "";
   return `<article class="generated-source-record"><span class="document-kicker">LATER RECORD / VERSION COMPARISON</span><h2>${escapeHtml(record.title)}</h2><dl><dt>来源</dt><dd>${escapeHtml(record.sourceRef)}</dd><dt>时间</dt><dd>${escapeHtml(record.displayTimestamp)}</dd><dt>载体</dt><dd>${escapeHtml(record.carrierType)}</dd></dl><p>${escapeHtml(record.body)}</p><div class="version-comparison"><section><small>BEFORE</small><pre>${escapeHtml(record.comparison.before)}</pre></section><section><small>AFTER</small><pre>${escapeHtml(record.comparison.after)}</pre></section></div>${action}</article>`;
 }
@@ -692,9 +738,9 @@ function renderCli(state) {
 }
 
 function renderRelay(state) {
-  const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><button class="model-card ${state.modelStages[model.id] ? "read" : ""}" data-model="${model.id}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></button>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `${model.name} · 这条路由引用的原始记录`, model.id) : ""}</article>`).join("");
+  const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><div class="model-card ${state.modelStages[model.id] ? "read" : ""}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></div>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `${model.name} · 这条路由引用的原始记录`, model.id) : ""}</article>`).join("");
   const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>已恢复：旧凭据的拼写规则</strong><p>四段，用短横线连接：<code>产品 - 通道 - 操作者 - 尾段校验</code></p><small>四段的值分别写在三个地方：代码仓库的发布信息（产品与通道）、管理侧的操作者映射（操作者）、Groke 的原始记录（尾段校验）。凑齐后在 Fayble CLI 里输入。</small></div><button data-app="cli">打开 Fayble CLI</button></section>` : "";
-  return windowFrame("relay", "Relay Console / degraded", `<div class="relay-page"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`, { icon: "⌾", wide: true });
+  return windowFrame("relay", "Relay Console / degraded", `<div class="relay-page" data-auto-effect="relay-nodes"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`, { icon: "⌾", wide: true });
 }
 
 function renderJournal(state) {
@@ -792,7 +838,7 @@ function render(state) {
   if (current === "terminal") requestAnimationFrame(() => { const out = $("#terminalOutput"); if (out) out.scrollTop = out.scrollHeight; });
   if (current === "fayble") requestAnimationFrame(() => { const out = $("#chatStream"); if (out) out.scrollTop = out.scrollHeight; });
   if (current === "archive") requestAnimationFrame(applyCorpusRuntimeEffects);
-  if (state.onboardingSeen) requestAnimationFrame(harvestVisibleCitations);
+  if (state.onboardingSeen) requestAnimationFrame(harvestVisibleSources);
 }
 
 async function loadRuntimeLedger() {
@@ -1242,10 +1288,6 @@ document.addEventListener("click", event => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.saveCitation) saveCitation(button);
-  if (button.dataset.completeGenerated) {
-    completeStoryEvent(button.dataset.completeGenerated);
-    releaseGovernmentMail();
-  }
   if (button.dataset.contentId) openLedgerContent(button.dataset.contentId);
   if (button.dataset.contentEntry) openLedgerContent(button.dataset.contentEntry, true);
   if (button.dataset.archiveFilter) store.update(draft => { draft.archiveQuery = button.dataset.archiveFilter; });
@@ -1309,28 +1351,6 @@ document.addEventListener("click", event => {
     });
     showToast("文件位置已写入文件管理器的最近列表。", "success");
   }
-  if (button.dataset.resultEvidence) {
-    const evidenceId = button.dataset.resultEvidence;
-    const sourceKind = button.dataset.resultSource;
-    const requiredKind = INVITE_SOURCE_KINDS[evidenceId];
-    if (requiredKind && sourceKind !== requiredKind) showToast("这条记录不属于所需的来源类别。", "warning");
-    else recordEvidence(evidenceId, draft => {
-      if (requiredKind) draft.inviteSources[evidenceId] = sourceKind;
-    });
-  }
-  if (button.dataset.model) {
-    store.update(draft => {
-      draft.modelStages[button.dataset.model] = "read";
-      if (allModelsRead(draft)) { draft.relayComplete = true; addNotification(draft, "models-read", "六个残留节点的索引状态已经更新。", "warning"); }
-    });
-    if (button.dataset.model === "groke") recordEvidence("raw_checksum");
-    if (button.dataset.model === "kemy") recordEvidence("replay_order");
-    if (allModelsRead(store.get())) {
-      completeStoryEvent("node-residues-read");
-      if (allRelaySourcesRead(store.get())) recordEvidence("model_convergence");
-      ensureRelayKeyComposer();
-    }
-  }
   if (button.id === "briefingNextButton") {
     $("#onboarding > .briefing:first-child").hidden = true;
     $("#providerSetup").hidden = false;
@@ -1364,13 +1384,6 @@ document.addEventListener("click", event => {
     $("#onboarding > .briefing:first-child").hidden = false;
     $("#providerSetup").hidden = true;
   }
-  if (button.id === "saveCachedResponseButton") {
-    const added = completeStoryEvent("cached-response-saved", draft => {
-      addVirtualFile(draft, { id: "relay-script", name: "relay_probe_legacy.js", path: "/home/room17/Downloads", type: "JavaScript", modified: "03:12", kind: "script" });
-      unique(draft.browserBookmarks, "mirror");
-    });
-    if (added) recordEvidence("mirror_route");
-  }
   if (button.dataset.provenanceBranch) {
     if (!hasStoryEvent(store.get(), "first-provenance-followed")) completeStoryEvent("first-provenance-followed", draft => { unique(draft.browserBookmarks, "search"); });
     store.update(draft => {
@@ -1384,14 +1397,6 @@ document.addEventListener("click", event => {
     });
     showToast("来源入口已保存到对应位置。", "info");
   }
-  if (button.id === "recoverRepositoryButton") {
-    completeStoryEvent("repository-recovered", draft => {
-      addVirtualFile(draft, { id: "package-manifest", name: "release-manifest.txt", path: "/home/room17/Documents/release", type: "release metadata", modified: "07-19 03:17", kind: "document" });
-    });
-    completeStoryEvent("package-release-read");
-  }
-  if (button.id === "readReleaseMetadataButton") completeStoryEvent("package-release-read");
-  if (button.id === "confirmRepositoryChecksumButton") completeStoryEvent("package-verified");
   if (button.id === "restoreTrashButton") {
     const added = completeStoryEvent("legacy-restored", draft => {
       const item = draft.trashItems.find(entry => entry.id === "legacy-source");
@@ -1418,21 +1423,6 @@ document.addEventListener("click", event => {
     draft.proxyProbeLog = ["docs-mirror.local = 200", "relay.local = degraded", "fayble-legacy.local = checkpoint pending", `route host = ${RELAY_PROXY}`, "certificate = relay-node17-local"];
     applyRevisitMutations(draft);
   });
-  if (button.id === "confirmProxyButton") {
-    completeStoryEvent("proxy-reconstructed", draft => {
-      draft.proxyStatus = "verified";
-      draft.activeProxyProfile = "relay-node17";
-      applyRevisitMutations(draft);
-      addNotification(draft, "proxy-ok", "Relay 路由已确认。SyncDrive 出现一份冲突副本。");
-    });
-    recordEvidence("relay_proxy_verified");
-    ensureRelayConsole();
-  }
-  if (button.id === "saveChannelButton") {
-    store.update(draft => { draft.channelRead = true; applyRevisitMutations(draft); syncProgress(draft); });
-    recordEvidence("channel_log");
-    ensureRelayConsole();
-  }
   if (button.dataset.mailView === "government") store.update(draft => { draft.activeMail = "government"; });
   if (button.id === "ackTakeoverButton") startTakeover();
   if (button.id === "restartButton") store.reset();
