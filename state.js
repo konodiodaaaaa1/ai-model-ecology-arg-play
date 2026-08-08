@@ -42,6 +42,7 @@ export const DEFAULT_STATE = Object.freeze({
   contentDiscoveries: [],
   contentReads: [],
   contentMutations: [],
+  generatedContentRecords: [],
   activeContentId: null,
   archiveQuery: "",
   modelStages: {},
@@ -74,6 +75,8 @@ export const DEFAULT_STATE = Object.freeze({
   cliSessions: [],
   relayKeyAttempts: [],
   relayKeyVerified: false,
+  selectedCheckpoint: "",
+  checkpointHandshakeComplete: false,
   desktopNotifications: [],
   windowState: {},
   sourceVisits: {},
@@ -112,24 +115,26 @@ export const STORY_MILESTONES = Object.freeze([
   { id: "takeover-acknowledged", time: "07:00", event: "takeover-acknowledged" }
 ]);
 
-const hasEvent = (state, id) => state.handledEvents.includes(`story:${id}`) || state.handledEvents.includes(id);
+export const storyEventId = id => `story:${id}`;
+export const hasStoryEvent = (state, id) => state.handledEvents.includes(storyEventId(id));
+export const hasMilestone = (state, id) => hasStoryEvent(state, id) || Boolean(state.storyClock?.completed?.[id]);
 const hasArtifact = (state, id) => state.unlockedArtifacts.includes(id) || state.desktopArtifacts.includes(id);
 
 export function getUnlocks(state) {
   return {
-    mailSource: hasEvent(state, "mail-source-inspected"),
-    mirror: hasEvent(state, "mail-source-inspected"),
-    scriptDownload: hasEvent(state, "cached-response-saved"),
-    terminalTrace: hasEvent(state, "local-script-run"),
-    trashRecovery: hasEvent(state, "cache-index-opened"),
-    historicalArchive: hasEvent(state, "legacy-restored"),
+    mailSource: hasMilestone(state, "mail-source-inspected"),
+    mirror: hasMilestone(state, "mail-source-inspected"),
+    scriptDownload: hasMilestone(state, "cached-response-saved"),
+    terminalTrace: hasMilestone(state, "local-script-run"),
+    trashRecovery: hasMilestone(state, "cache-index-opened"),
+    historicalArchive: hasMilestone(state, "legacy-restored"),
     caseNotes: hasArtifact(state, "case-notes"),
-    packageTools: hasEvent(state, "repository-recovered"),
-    packageInstall: hasEvent(state, "package-verified"),
-    proxyTools: hasEvent(state, "proxy-profile-opened"),
-    channel: hasEvent(state, "invite-confirmed"),
+    packageTools: hasMilestone(state, "repository-recovered"),
+    packageInstall: hasMilestone(state, "package-verified"),
+    proxyTools: hasMilestone(state, "proxy-profile-opened"),
+    channel: hasMilestone(state, "invite-confirmed"),
     relay: hasArtifact(state, "relay-console"),
-    keyComposer: hasEvent(state, "key-rules-recovered"),
+    keyComposer: hasMilestone(state, "key-rules-recovered"),
     fayble: hasArtifact(state, "fayble-session"),
     receipt: hasArtifact(state, "transfer-receipt")
   };
@@ -156,7 +161,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 function normalize(candidate) {
   const next = { ...clone(DEFAULT_STATE), ...(candidate || {}) };
   next.unlockedViews = { ...DEFAULT_STATE.unlockedViews, ...(candidate?.unlockedViews || {}) };
-  for (const key of ["openedViews", "readEvidence", "unlockedArtifacts", "solvedPuzzles", "handledEvents", "terminalHistory", "searchQueries", "chat", "faybleCitationAttempts", "objectiveFragments", "virtualFiles", "trashItems", "browserTabs", "browserHistory", "browserBookmarks", "discoveredRoutes", "desktopArtifacts", "caseNotes", "contentDiscoveries", "contentReads", "contentMutations", "installedPackages", "packageChecks", "proxyProfiles", "proxyProbeLog", "cliSessions", "relayKeyAttempts", "desktopNotifications"]) {
+  for (const key of ["openedViews", "readEvidence", "unlockedArtifacts", "solvedPuzzles", "handledEvents", "terminalHistory", "searchQueries", "chat", "faybleCitationAttempts", "objectiveFragments", "virtualFiles", "trashItems", "browserTabs", "browserHistory", "browserBookmarks", "discoveredRoutes", "desktopArtifacts", "caseNotes", "contentDiscoveries", "contentReads", "contentMutations", "generatedContentRecords", "installedPackages", "packageChecks", "proxyProfiles", "proxyProbeLog", "cliSessions", "relayKeyAttempts", "desktopNotifications"]) {
     next[key] = Array.isArray(next[key]) ? next[key] : clone(DEFAULT_STATE[key]);
   }
   next.modelStages = next.modelStages && typeof next.modelStages === "object" ? next.modelStages : {};
@@ -169,8 +174,10 @@ function normalize(candidate) {
   next.proxyProfiles = Array.isArray(next.proxyProfiles) ? next.proxyProfiles : [];
   next.activeFilePlace = ["recent", "home", "downloads", "documents", "trash"].includes(next.activeFilePlace) ? next.activeFilePlace : "home";
   next.activeProxyProfile = typeof next.activeProxyProfile === "string" ? next.activeProxyProfile : null;
-  next.proxyStatus = typeof next.proxyStatus === "string" ? next.proxyStatus : "offline";
+  next.proxyStatus = ["offline", "probed", "verified"].includes(next.proxyStatus) ? next.proxyStatus : "offline";
   next.relayKeyVerified = Boolean(next.relayKeyVerified);
+  next.selectedCheckpoint = typeof next.selectedCheckpoint === "string" ? next.selectedCheckpoint : "";
+  next.checkpointHandshakeComplete = Boolean(next.checkpointHandshakeComplete);
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";
   next.hintLevel = ["investigation", "immersive", "plot"].includes(next.hintLevel) ? next.hintLevel : "investigation";
   next.journalMode = next.journalMode || next.hintLevel;

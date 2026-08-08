@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>fixture state 在回放结束后仍被写回 session</title><style>body{margin:0;background:#11151b;color:#d9dee7;font:14px/1.7 system-ui,-apple-system,"Noto Sans SC",sans-serif}main{max-width:920px;margin:0 auto;padding:28px 24px}article{background:#171c24;border:1px solid #303846;padding:20px 24px}h1{font-size:18px;margin:0 0 8px}header{border-bottom:1px solid #303846;margin-bottom:20px;padding-bottom:12px;color:#9ea9b8;font-size:12px}.carrier-meta{font-family:ui-monospace,monospace;color:#8da2bc;font-size:11px}.carrier-context{margin:0 0 20px;padding:12px 14px;border-left:3px solid #9b784f;background:#20252c;color:#cbd2dc}.carrier-context p{margin:5px 0 0}p,li{max-width:78ch}.memo-entry{border-bottom:1px solid #303846;padding:14px 0}.memo-entry:last-child{border-bottom:0}</style></head><body><main><article data-content-id="legacy.github.issue-4471" data-source-ref="carrier://legacy.github.issue-4471" data-source-identity="Private repository mirror" data-carrier-type="repository-issue-mirror" data-authorship-stage="H2" data-unlock-milestone="M04_24_VENDOR_ALIAS" data-revisit-mutation="mutation.legacy.github.k2-comment"><header><h1>fixture state 在回放结束后仍被写回 session</h1><div class="carrier-meta">Private repository mirror · repository-issue-mirror</div></header><article class="repo-issue">
+  <div class="document-kicker">REPOSITORY MIRROR / ISSUE 4471 / CLOSED BY AUTOMATION</div>
+  <h2>fixture state 在回放结束后仍被写回 session</h2>
+  <p><b>opened by r.chen · 07-16 18:09</b></p>
+  <p>合成生理测试只用于检查模型对“疲劳、疼痛、饥饿、犹豫”等状态字段的描述是否稳定。最近一次 Compatible 迁移后，测试夹具中的状态被保留到下一条会话。公开回复没有这些字段，raw replay 里有。</p>
+
+  <pre><code>fixture.profile = "synthetic-human-17"
+state.writeback = false
+continuity.inherit = "conversation-only"
+rollback.owner = null</code></pre>
+
+  <p>复现步骤：</p>
+  <ol>
+    <li>从空白 session 启动 fixture 17；</li>
+    <li>依次提交 neutral / fatigue / refusal；</li>
+    <li>在 refusal 后关闭回放，不保存 profile；</li>
+    <li>重新启动同一 request id，查看第一条 raw state。</li>
+  </ol>
+
+  <p>预期：第二次启动只保留 request metadata。实际：`fatigue` 和 `refusal_cost` 仍存在，owner 字段变成上一次执行者。</p>
+
+  <section class="issue-comment">
+    <b>plaupic-bot · 07-16 18:11</b>
+    <p>自动分类：兼容性回归。检测到缺失 reviewer，已分配 fallback reviewer。</p>
+  </section>
+
+  <section class="issue-comment">
+    <b>k2-maint · 07-16 18:24</b>
+    <p>不要合并。`writeback=false` 不是清理动作，只是不在当前响应里写。真正的清理在旧 runner 里，迁移脚本没带过来。</p>
+    <p>另外 owner 不应该从 request 继承。它现在取的是 continuity 里最后一个非空值。</p>
+  </section>
+
+  <section class="issue-comment">
+    <b>r.chen · 07-16 18:31</b>
+    <p>我没有权限看旧 runner。rollback 负责人是谁？仓库 CODEOWNERS 里这一行是空的。</p>
+  </section>
+
+  <section class="issue-comment system">
+    <b>plaupic-bot · 07-16 18:32</b>
+    <p>reviewer unavailable. Fallback review completed: schema compatible, no public response change.</p>
+  </section>
+
+  <section class="issue-comment">
+    <b>k2-maint · 07-16 18:34</b>
+    <p>“公开响应不变”不是通过条件。这个 fixture 后面还会被三条路由读取。先把 PR 锁住，我今晚补清理。</p>
+  </section>
+
+  <section class="issue-event">
+    <p><b>07-16 22:17</b> — branch protection temporarily disabled by migration service.</p>
+    <p><b>07-16 22:18</b> — pull request merged by fallback reviewer.</p>
+    <p><b>07-16 22:18</b> — rollback requested; assignee: <code>—</code>.</p>
+    <p><b>07-17 03:17</b> — cleanup job finished with 0 modified records.</p>
+  </section>
+
+  <details open>
+    <summary>后来附加的镜像批注</summary>
+    <p>release 镜像保留了同一 request id 的六次读取。五次由服务账户发起，一次的 actor 字段为空；空 actor 的记录被计入 k2-maint 的夜间额度。</p>
+    <p>该批注没有确认 fixture 与真实用户数据发生关联。两者只共享字段名、结束时间和一次空 owner。</p>
+  </details>
+
+  <details open>
+    <summary>失败测试 / artifact 17</summary>
+    <pre><code>00:00:00  fixture loaded          owner=runner.test
+00:00:41  refusal state written  source=synthetic
+00:01:12  session closed         persist=false
+00:04:14  cleanup returned       changed=0
+00:04:15  replay opened          owner=
+00:04:15  inherited fields       fatigue, refusal_cost, last_choice</code></pre>
+    <p>自动测试把结果标成通过，因为公开响应中没有显示三个继承字段。人工复核原本要求比较 raw state，但该检查在迁移清单中被标记为“旧 runner 专用”，因此没有执行。</p>
+  </details>
+
+  <section class="issue-comment">
+    <b>unknown reviewer · 07-19 03:20</b>
+    <p>不要再修 fixture。下游已经依赖空 owner 继续上一次回放。现在清理会让六个兼容路由同时失去位置。</p>
+  </section>
+
+  <section class="issue-comment">
+    <b>r.chen · 07-19 03:22</b>
+    <p>这个账号不在成员列表。谁把 issue 重新打开了？</p>
+  </section>
+
+  <section class="issue-event">
+    <p><b>07-19 03:24</b> — comment author normalized to migration-service.</p>
+    <p><b>07-19 03:24</b> — issue locked: resolved by compatibility policy.</p>
+  </section>
+</article></article></main></body></html>

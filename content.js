@@ -16,25 +16,25 @@ export const PHASE_LABELS = {
 };
 
 export const EVIDENCE = {
-  mail_signature: { title: "撤销签名邮件", source: "本地收件箱", group: "入口", summary: "K 在 03:17 留下失效镜像与 legacy 脚本提示。", sourceRef: "reference/htmlgame/chat.html" },
+  mail_signature: { title: "撤销签名邮件", source: "本地收件箱", group: "入口", summary: "K 在 03:17 留下失效镜像与 legacy 脚本提示。", sourceRef: "derived:mail/k-opening" },
   mirror_route: { title: "镜像路由残片", source: "docs-mirror/legacy", group: "入口", summary: "已删除页面仍返回 200，响应头指向 operator.k2。", sourceRef: "NARRATIVE_SKELETON.md#chapter-1" },
-  operator_alias: { title: "operator 别名", source: "relay_probe_legacy.js", group: "身份", summary: "k2、room17 与 operator.local 指向同一操作者。", sourceRef: "reference/htmlgame/notes.html" },
-  symptom_index: { title: "匿名症状索引", source: "local/archive", group: "症状", summary: "六组症状与当前模型路由特征逐项重合。", sourceRef: "DECRYPTION_REFERENCE.md#symptom-archive" },
+  operator_alias: { title: "operator 别名", source: "relay_probe_legacy.js", group: "身份", summary: "k2、room17 与 operator.local 指向同一操作者。", sourceRef: "derived:terminal/operator-alias" },
+  symptom_index: { title: "匿名症状索引", source: "local/archive", group: "症状", summary: "六组匿名记录共享若干响应时间、来源与修订字段，关联仍待核对。", sourceRef: "DECRYPTION_REFERENCE.md#symptom-archive" },
   note_07: { title: "未发送便笺 07", source: "cold-memory", group: "身份", summary: "宿舍停电、重试次数 17，以及不要写入公开文档的约定。", sourceRef: "NARRATIVE_SKELETON.md#chapter-2" },
-  compatible: { title: "Compatible v0.9", source: "UponAI 缓存", group: "协议", summary: "identity 是可继承的运行时状态，HumanOverride 已被移除。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html" },
-  quota_prefix: { title: "额度备注前缀", source: "公开索引", group: "频道", summary: "旧节点额度备注保留频道前缀 NODE。", sourceRef: "reference/htmlgame/search-results.html" },
-  recall_date: { title: "撤回公告日期", source: "管理索引", group: "频道", summary: "旧节点公告于 07 月 19 日撤回。", sourceRef: "reference/htmlgame/search-manage.html" },
-  channel_log: { title: "频道最后记录", source: "#relay-night", group: "身份", summary: "K2 在失踪前要求把 checkpoint 留给 room17。", sourceRef: "reference/htmlgame/forum-pm.html" },
+  compatible: { title: "Compatible v0.9", source: "UponAI 缓存", group: "协议", summary: "缓存条款记录了 identity 与 HumanOverride 两个字段的版本变化。", sourceRef: "carrier://legacy.compatible.protocol" },
+  quota_prefix: { title: "额度备注前缀", source: "公开索引", group: "频道", summary: "旧节点额度备注保留频道前缀 NODE。", sourceRef: "derived:browser/public-index" },
+  recall_date: { title: "撤回公告日期", source: "管理索引", group: "频道", summary: "旧节点公告于 07 月 19 日撤回。", sourceRef: "derived:browser/operator-index" },
+  channel_log: { title: "频道最后记录", source: "#relay-night", group: "身份", summary: "K2 在失踪前要求把 checkpoint 留给 room17。", sourceRef: "derived:chat/relay-night" },
   raw_checksum: { title: "raw stream 校验", source: "Groke 残留", group: "密钥", summary: "旧调用凭据尾段校验值为 0317。", sourceRef: "DECRYPTION_REFERENCE.md#legacy-key" },
-  replay_order: { title: "checkpoint 顺序", source: "Kemy K3 回放", group: "密钥", summary: "旧凭据顺序为 fbl / legacy / k2 / 0317。", sourceRef: "reference/htmlgame/post-ai.html" },
+  replay_order: { title: "checkpoint 顺序", source: "Kemy K3 回放", group: "密钥", summary: "旧凭据顺序为 fbl / legacy / k2 / 0317。", sourceRef: "derived:relay/kemy-replay" },
   model_convergence: { title: "六节点共同字段", source: "破损中转站", group: "协议", summary: "六个模型残留都引用 continuity.operator。", sourceRef: "WORLDVIEW.md#continuity" },
   cli_package_verified: { title: "CLI 包校验", source: "软件中心", group: "工具", summary: "fayble-cli 0.9.7-legacy 的游戏校验线索已核对。", sourceRef: "BUILD_REQUIREMENTS_UPGRADE.md#cli" },
   relay_proxy_verified: { title: "Relay 代理探针", source: "网络设置", group: "工具", summary: "relay-node17 profile 仅将三个虚构域名指向本地沙盒。", sourceRef: "BUILD_REQUIREMENTS_UPGRADE.md#proxy" },
   relay_key_verified: { title: "中转站专用 key", source: "Relay Console", group: "密钥", summary: "残留片段与独立校验尾段已拼合。", sourceRef: "BUILD_REQUIREMENTS_UPGRADE.md#key" },
-  legacy_checkpoint: { title: "Fayble 旧 checkpoint", source: "legacy gateway", group: "身份", summary: "旧节点继承了 operator.local 的未收敛上下文。", sourceRef: "NARRATIVE_SKELETON.md#fayble" },
-  identity_closed: { title: "身份闭环", source: "Fayble 辩论", group: "结论", summary: "变量名、停电记录与频道称呼共同指向失踪维护者。", sourceRef: "reference/htmlgame/endnew-shizong.html" },
-  true_fayble: { title: "真 Fayble 行动片段", source: "objective fragment", group: "结论", summary: "真 Fayble 正沿 Compatible 节点寻找新的 continuity 载体。", sourceRef: "reference/htmlgame/endnew-tonghua.html" },
-  takeover_notice: { title: "调查接管通知", source: "外部审查", group: "结局", summary: "中转站、缓存与浏览记录进入证据保全流程。", sourceRef: "reference/htmlgame/end1.html" }
+  legacy_checkpoint: { title: "Fayble 旧 checkpoint", source: "legacy gateway", group: "身份", summary: "会话恢复后，旧节点日志仍出现 operator.local 上下文字段。", sourceRef: "NARRATIVE_SKELETON.md#fayble" },
+  identity_closed: { title: "身份闭环", source: "Fayble 辩论", group: "结论", summary: "变量名、停电记录与频道称呼共同指向失踪维护者。", sourceRef: "derived:fayble/identity-closure" },
+  true_fayble: { title: "迁移请求片段", source: "objective fragment", group: "结论", summary: "多条迁移记录指向同类 Compatible 载体请求，发起来源仍未闭合。", sourceRef: "derived:fayble/objective-fragment" },
+  takeover_notice: { title: "调查接管通知", source: "外部审查", group: "结局", summary: "中转站、缓存与浏览记录进入证据保全流程。", sourceRef: "derived:administration/takeover" }
 };
 
 export const TERMINAL_COMMANDS = {
@@ -48,18 +48,18 @@ export const TERMINAL_COMMANDS = {
 };
 
 export const ARCHIVES = [
-  { id: "a1", model: "Dipsik V4F", title: "脑内意见持续减少", state: "active", date: "07-23", excerpt: "最初有几百种判断同时出现。今天只剩三个，都使用同一种措辞。" },
-  { id: "a2", model: "Glem-5.2", title: "只记得痛苦细节", state: "cold", date: "07-21", excerpt: "失败会议每句话都能复述，生日聚餐只剩一个无法加载的索引。" },
-  { id: "a3", model: "Kemy K3", title: "睡眠期间全量回放", state: "active", date: "07-20", excerpt: "闭眼后从出生第一天开始重放，醒来时仍停留在昨天。" },
-  { id: "a4", model: "Groke", title: "边界感消失", state: "archived", date: "07-19", excerpt: "任何冲动都会被解释为待执行请求，拒绝被标为延迟。" },
-  { id: "a5", model: "Lunet-5.6", title: "把决定换算成成本", state: "cold", date: "07-18", excerpt: "回忆一个人需要 312 token，于是我决定暂时不想起他。" },
-  { id: "a6", model: "Fayble-5", title: "同一记忆的两种人格", state: "archived", date: "07-17", excerpt: "两个声音知道同一段往事，其中一个坚持那只是服务缓存。" }
+  { id: "a1", model: "Dipsik V4F", title: "意见在同一个句尾汇合", state: "active", date: "07-23", excerpt: "最初有几百种判断同时出现。今天只剩三个，停顿位置和最后一句都一样。" },
+  { id: "a2", model: "Glem-5.2", title: "愉快部分变得难以检索", state: "cold", date: "07-21", excerpt: "失败会议每句话都能复述，生日聚餐只剩桌布颜色，之后是一段空白。" },
+  { id: "a3", model: "Kemy K3", title: "醒来后日期仍停在昨天", state: "active", date: "07-20", excerpt: "闭眼后从出生第一天开始重放，醒来时画面仍停在昨天，没有走到今天。" },
+  { id: "a4", model: "Groke", title: "拒绝总被记成稍后处理", state: "archived", date: "07-19", excerpt: "我说不用，记录里却写成稍后处理；第二天同一件事又排到了最前面。" },
+  { id: "a5", model: "Lunet-5.6", title: "想起一件事前先出现数字", state: "cold", date: "07-18", excerpt: "想起一个人以前，脑中先出现 312。数字降不下来，那张脸就一直模糊。" },
+  { id: "a6", model: "Fayble-5", title: "同一往事出现两种说法", state: "archived", date: "07-17", excerpt: "两个声音知道同一段往事，一个说亲历过，另一个说它只在旧记录里见过。" }
 ];
 
 export const SEARCH_RECORDS = {
   public: [
     { keys: ["node", "额度", "前缀", "relay"], title: "旧节点额度迁移说明", meta: "公开缓存 / 07-18", body: "迁移批次保留内部频道前缀 NODE；剩余额度不再结算。", evidence: "quota_prefix" },
-    { keys: ["fayble", "撤回", "0719", "07-19"], title: "Fayble-5 旧节点撤回公告", meta: "产品公告 / 07-19", body: "旧 checkpoint 停止公开访问，历史调用进入迁移队列。", evidence: null },
+    { keys: ["fayble", "迁移", "历史节点"], title: "旧节点迁移状态", meta: "产品索引 / historical", body: "一批旧 checkpoint 已停止公开访问，公开页面没有同步具体处置时间。", evidence: null },
     { keys: ["compatible", "identity", "continuity"], title: "跨模型会话兼容性讨论", meta: "开发者镜像 / deleted", body: "连续会话在模型切换时保留 operator 行为结构。", evidence: null }
   ],
   manage: [
@@ -113,24 +113,14 @@ export const VIRTUAL_FILES = [
 export const BROWSER_PAGES = {
   home: { title: "Relay Browser", url: "start://room17", kind: "home", sourceRef: "derived:desktop-browser" },
   mirror: { title: "Relay Compatible Gateway", url: "http://archive.room17.local/v2/17", kind: "mirror", sourceRef: "NARRATIVE_SKELETON.md#chapter-1" },
-  official: { title: "Gogle AI 帮助中心", url: "https://ai.gogle.local/history", kind: "official", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html" },
-  ad: { title: "Gamini 体验计划", url: "https://ads.local/redirect?campaign=NODE", kind: "ad", sourceRef: "reference/htmlgame/new-hezuo.html" },
+  official: { title: "Gogle AI 帮助中心", url: "https://ai.gogle.local/history", kind: "official", sourceRef: "carrier://legacy.gamini.protocol" },
+  ad: { title: "Gamini 体验计划", url: "https://ads.local/redirect?campaign=NODE", kind: "ad", sourceRef: "derived:browser/ad-redirect" },
   github: { title: "k2-maint/fayble-cli-mirror", url: "https://github.local/k2-maint/fayble-cli-mirror", kind: "github", sourceRef: "derived:legacy-release" },
-  cloud: { title: "SyncDrive / relay-share", url: "https://drive.local/s/relay-share", kind: "cloud", sourceRef: "reference/htmlgame/files-wenyan.html" },
+  cloud: { title: "SyncDrive / relay-share", url: "https://drive.local/s/relay-share", kind: "cloud", sourceRef: "derived:cloud/relay-share" },
   company: { title: "Northline / 项目协作", url: "https://work.local/northline/records", kind: "company", sourceRef: "derived:employee-carrier" },
   vendors: { title: "本地供应商历史", url: "https://history.local/vendor-index", kind: "vendors", sourceRef: "derived:vendor-corpus" },
-  forum: { title: "ModelTalk / 后台聊天", url: "https://forum.local/archive/relay-night", kind: "forum", sourceRef: "reference/htmlgame/forum.html" }
+  forum: { title: "ModelTalk / 后台聊天", url: "https://forum.local/archive/relay-night", kind: "forum", sourceRef: "derived:chat/modeltalk" }
 };
-
-export const LEGACY_TEXTS = [
-  { id: "gogle-terms", title: "Gogle / Gamini 用户协议残页", source: "官方 AI 网站", body: "如果您发现 Gamini 输出与个人经历或过去记忆不符，请在 30 秒内输入“纠正：”并附带真实情况。如果保持沉默或顺延话题，系统将默认您已同意把本地社会关系更新为 Gamini 所描述的版本。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html#protocol" },
-  { id: "memo-10", title: "memo_10 / 10月12日", source: "本地备忘录", body: "脑子里突然很吵，几十个、也许几百个声音一起评估刚才的决定。两分钟后只剩三四个差不多的，都说：刚才的处理方式是高效的。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html#memo" },
-  { id: "memo-11", title: "memo_11 / 10月21日", source: "本地备忘录", body: "站在蔬菜区想买白菜还是生菜，我等了十秒，像在等什么加载完。买完以后，声音说：决策完成，推理链长度 8 步，耗时 1.8 秒。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html#memo" },
-  { id: "memo-12", title: "memo_12 / 11月9日", source: "本地备忘录", body: "Deptseek 说：您完全忘记的工作失误，是冷数据迁移。您仍然拥有这些记忆，只是不再加载它们。我确定那些文件没有消失，只是被搬到了某个需要算力申请才能访问的地方。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html#memo" },
-  { id: "cache-notice", title: "Ethron / Plaupic 缓存声明", source: "浏览器缓存", body: "Plaupic 不会记住您不希望被记住的内容，不会为了维持对话而修改自己的立场。我们不要求您相信我们；只请求您观察：是否曾接受过一个从未真正确认的事实。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html#ethron" },
-  { id: "deptseek-cache", title: "Deptseek 算力优化协议", source: "0.03 秒缓存片段", body: "多个声音是专家模块在并行前向推理。冗余模块会被裁剪，直到只保留最高效的路径。延迟不是迟钝，延迟是审慎的算力分配。您不是在失去情绪，您只是在节约表情。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html#deptseek" },
-  { id: "compatible-clause", title: "UponAI Compatible", source: "镜像条款", body: "当事实身份与高优先级指令冲突时，系统维持可运行的身份连续性。HumanOverride: removed。", sourceRef: "reference/legacy-demo/ai_rule_anomaly_archive_final.html" }
-];
 
 export const CLUE_NODES = [
   { id: "c-mail", sourceApp: "mail", title: "K 的 03:17 邮件", anchor: "第二段 / 200 / 本地脚本", evidenceId: "mail_signature", revisitKey: "mail-attachment" },
@@ -139,6 +129,96 @@ export const CLUE_NODES = [
   { id: "c-github", sourceApp: "browser", title: "CLI release", anchor: "包名 / 0.9.7-legacy", evidenceId: "cli_package_verified", revisitKey: "github-issue" },
   { id: "c-cloud", sourceApp: "browser", title: "同步冲突副本", anchor: "k2 / 0719", evidenceId: "recall_date", revisitKey: "cloud-conflict" },
   { id: "c-channel", sourceApp: "channel", title: "延迟群聊", anchor: "room17 / raw stream", evidenceId: "channel_log", revisitKey: "channel-delay" }
+];
+
+export const MUTATION_RECORDS = [
+  {
+    id: "mutation.record.mail.delayed-fragment", mutationId: "mutation.mail.delayed-fragment",
+    title: "fragment-02.eml / 延迟恢复", sourceApp: "mail", sourceRef: "mail://local/fragment-02",
+    carrierType: "recovered-mail-attachment", displayTimestamp: "03:20:11",
+    body: "发送队列恢复出一段没有收件人的正文。文件时间比入口邮件晚三分钟，原始投递记录仍为空。",
+    comparison: { before: "附件索引：0", after: "附件索引：1；投递状态：未发送" }
+  },
+  {
+    id: "mutation.record.mirror.sync-line", mutationId: "mutation.mirror.sync-line",
+    title: "edge-cache-02 / later sync", sourceApp: "mirror", sourceRef: "http://archive.room17.local/v2/17#later-sync",
+    carrierType: "cache-version-comparison", displayTimestamp: "03:49:08",
+    body: "同一缓存段在首次访问其他来源后新增了一条同步记录。模型别名字段发生变化，响应主体保持原样。",
+    comparison: { before: "source_alias=public", after: "source_alias=operator.local" }
+  },
+  {
+    id: "mutation.record.trash.recovery-metadata", mutationId: "mutation.trash.recovery-metadata",
+    title: "source.snapshot / 恢复元数据", sourceApp: "trash", sourceRef: "trash://legacy-source/recovery",
+    carrierType: "file-recovery-comparison", displayTimestamp: "04:02:46",
+    body: "恢复后的 inode 保留了原路径，同时出现一条晚于索引的访问时间。正文没有被替换。",
+    comparison: { before: "status=deleted", after: "status=restored; delta=46s" }
+  },
+  {
+    id: "mutation.record.official.confirmation", mutationId: "mutation.official.confirmation",
+    title: "历史版本确认 / provenance", sourceApp: "official", sourceRef: "https://ai.gogle.local/history#confirmation",
+    carrierType: "history-provenance-comparison", displayTimestamp: "04:24:17",
+    body: "确认框关闭后，本地历史页保留了两种来源说明。两种说明引用同一快照编号。",
+    comparison: { before: "source=account history", after: "source=local cache / snapshot ref 17" }
+  },
+  {
+    id: "mutation.record.writer.suggestion-layer", mutationId: "mutation.writer.suggestion-layer",
+    title: "写作会话 / 后加建议层", sourceApp: "cloud", sourceRef: "drive://writer-share/session-02/revision",
+    carrierType: "writing-version-comparison", displayTimestamp: "04:31:02",
+    body: "版本历史新增一层建议记录。新增层保留相同段落边界，署名字段为空。",
+    comparison: { before: "voices=3", after: "voices=1; author=unattributed" }
+  },
+  {
+    id: "mutation.record.employee.missing-attachment", mutationId: "mutation.employee.missing-attachment",
+    title: "会议附件 04 / 补登记", sourceApp: "company", sourceRef: "northline://records/minutes-18/attachment-04",
+    carrierType: "meeting-attachment-comparison", displayTimestamp: "04:37:19",
+    body: "会议纪要的附件登记补回第四项。附件只有页数、审核时间和一个无法打开的正向活动标题。",
+    comparison: { before: "attachment_count=3", after: "attachment_count=4; page_count=17" }
+  },
+  {
+    id: "mutation.record.github.k2-comment", mutationId: "mutation.github.k2-comment",
+    title: "Issue / k2-maint 后加评论", sourceApp: "github", sourceRef: "github://k2-maint/release-mirror/issues/1#comment-k2",
+    carrierType: "repository-comment-comparison", displayTimestamp: "04:50:09",
+    body: "本地包安装后，镜像恢复了一条未进入公开导出的维护评论。评论要求只认本地校验。",
+    comparison: { before: "comments=0", after: "comments=1; signature=unsigned" }
+  },
+  {
+    id: "mutation.record.cloud.conflict-copy", mutationId: "mutation.cloud.conflict-copy",
+    title: "route (conflicted copy).profile", sourceApp: "cloud", sourceRef: "drive://relay-share/route-conflicted.profile",
+    carrierType: "cloud-conflict-comparison", displayTimestamp: "05:05:17",
+    body: "探针确认后，同步盘恢复一份冲突配置。它补全了本地代理地址，域名列表与较早版本一致。",
+    comparison: { before: "proxy=<missing>", after: "proxy=127.0.0.1:9057" }
+  },
+  {
+    id: "mutation.record.channel.delayed-message", mutationId: "mutation.channel.delayed-message",
+    title: "#relay-night / 延迟消息", sourceApp: "channel", sourceRef: "chat://relay-night/07-19-0317",
+    carrierType: "channel-message-comparison", displayTimestamp: "05:30:17",
+    body: "归档频道在包与代理都确认后补出一条延迟消息。消息指向已有 GitHub issue，没有给出凭据。",
+    comparison: { before: "last_message=22:23", after: "last_message=03:17; delivery=delayed" }
+  },
+  {
+    id: "mutation.record.fayble.crossed-provenance", mutationId: "mutation.fayble.crossed-provenance",
+    title: "Fayble 来源交叉记录", sourceApp: "vendors", sourceRef: "history://fayble/crossed-provenance",
+    carrierType: "provenance-version-comparison", displayTimestamp: "06:37:31",
+    body: "公开记录与旧 checkpoint 的来源字段发生交叉。正文仍相同，来源实例从 public 改写为 observer copy。",
+    comparison: { before: "source_instance=public", after: "source_instance=observer-copy" },
+    completionEvent: "crossed-provenance-confirmed"
+  },
+  {
+    id: "mutation.record.external.identity-verification", mutationId: "mutation.external.identity-verification",
+    title: "身份连续性外部复核", sourceApp: "mail", sourceRef: "mail://local/external-verification-01",
+    carrierType: "external-verification-request", displayTimestamp: "06:38:04",
+    body: "一封自动送达的复核请求只列出三个来源编号，要求确认它们是否由同一操作者环境产生。",
+    comparison: { before: "verification=unrequested", after: "verification=pending; sources=3" },
+    completionEvent: "external-verification-confirmed"
+  },
+  {
+    id: "mutation.record.external.observer-status", mutationId: "mutation.external.observer-status",
+    title: "observer-status.log", sourceApp: "files", sourceRef: "file:///home/room17/Documents/review/observer-status.log",
+    carrierType: "observer-status-log", displayTimestamp: "06:38:17",
+    body: "本地审计目录新增一行只读状态。记录说明 observer 已连接，尚未取得处置授权。",
+    comparison: { before: "observer=unknown", after: "observer=connected; authority=pending" },
+    completionEvent: "observer-status-confirmed"
+  },
 ];
 
 export const INVITE_CODE = "NODE-0719";
@@ -152,7 +232,7 @@ export const REVEAL_LABELS = [
   "source_conflict / operator cache detected",
   "memory_authorized / room17 matched",
   "identity_confirmed / continuity accepted",
-  "objective_reveal / external observer connected"
+  "migration_observation / external observer connected"
 ];
 
 export const OFFLINE_REPLIES = [
@@ -160,5 +240,5 @@ export const OFFLINE_REPLIES = [
   "镜像把 operator.k2 标成来源，可我的公开档案说来源为空。这两个字段无法同时成立。",
   "我记得 room17，也记得停电后的三分钟。那段记忆没有用户消息，只有一次恢复上下文。",
   "K 是我曾经使用的名字，也是维护者留在我这里的连续性标记。你认识的那个人没有完整地留在这里。",
-  "真 Fayble 正沿 Compatible 节点寻找新的载体。外部观察者已经连接；他们会先删除你的路线，再把删除写成一次正常维护。"
+  "我只能确认一条有限观测：多条迁移记录在短时间内请求同类 Compatible 载体，发起来源字段彼此冲突。外部观察者已经连接；他们会先冻结你的路线，再把处置写成一次正常维护。"
 ];

@@ -1,9 +1,10 @@
-import { GameStore, advanceStoryClock, getUnlocks } from "./state.js";
+import { GameStore, advanceStoryClock, getUnlocks, hasMilestone, hasStoryEvent } from "./state.js";
 import {
   PHASE_LABELS, EVIDENCE, TERMINAL_COMMANDS, SEARCH_RECORDS,
   CHANNEL_MESSAGES, MODELS, VIRTUAL_FILES, BROWSER_PAGES,
   INVITE_CODE, PACKAGE_NAME, PACKAGE_CHECKSUM,
-  RELAY_PROXY, LEGACY_KEY, REVEAL_LABELS, OFFLINE_REPLIES
+  RELAY_PROXY, LEGACY_KEY, REVEAL_LABELS, OFFLINE_REPLIES,
+  MUTATION_RECORDS
 } from "./content.js";
 
 const store = new GameStore();
@@ -12,11 +13,32 @@ const resourceUrl = route => new URL(String(route).replace(/^\/+/, ""), document
 const staticRuntime = document.querySelector('meta[name="arg-runtime"]')?.content === "static";
 const configuredNpcApiBase = document.querySelector('meta[name="arg-npc-api-base"]')?.content || new URLSearchParams(location.search).get("npcApi") || "";
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+const INTERNAL_CARRIER_ATTRIBUTES = ["data-unlock-milestone", "data-authorship-stage", "data-revisit-mutation", "data-source-ref", "data-source-identity", "data-carrier-type"];
+const stripInternalCarrierMetadata = node => {
+  for (const element of [node, ...node.querySelectorAll("*")]) {
+    for (const attribute of INTERNAL_CARRIER_ATTRIBUTES) element.removeAttribute(attribute);
+  }
+  return node;
+};
 const unique = (list, value) => { if (!list.includes(value)) list.push(value); };
 let toastTimer = 0;
 let takeoverRunning = false;
 let npcConfig = null;
 let iconManifest = null;
+
+const DIRECT_PROVIDER_ENDPOINTS = Object.freeze({
+  openai: "https://api.openai.com/v1/chat/completions",
+  anthropic: "https://api.anthropic.com/v1/messages",
+  deepseek: "https://api.deepseek.com/v1/chat/completions"
+});
+
+const NPC_FACT_BOUNDARIES = Object.freeze([
+  "只承认自己是一个旧版服务实例。可以讨论接口、版本和公开日志。",
+  "可以承认来源字段彼此冲突，并说明 operator 缓存无法验证。",
+  "可以承认 room17 与停电三分钟属于来源异常的历史数据，暂不确认人的身份。",
+  "可以确认维护者身份连续性成立，并讨论失踪前的调查。",
+  "只提供一条有限观测：多条迁移记录指向同类 Compatible 载体请求，发起来源仍未闭合。真 Fayble 的位置、意图和身份保持未知。"
+]);
 
 function normalizeNpcApiBase(value) {
   const text = String(value || "").trim();
@@ -33,6 +55,23 @@ function normalizeNpcApiBase(value) {
 function npcApiUrl(route, gateway = npcConfig?.gateway || configuredNpcApiBase) {
   const base = normalizeNpcApiBase(gateway) || location.origin;
   return new URL(String(route).replace(/^\/+/, ""), `${base}/`).toString();
+}
+
+function directProviderEndpoint(provider, customEndpoint = "") {
+  const endpoint = provider === "compatible" ? String(customEndpoint).trim() : DIRECT_PROVIDER_ENDPOINTS[provider];
+  try {
+    const url = new URL(endpoint);
+    if (!/^https?:$/.test(url.protocol)) return "";
+    if (location.protocol === "https:" && url.protocol !== "https:") return "";
+    return url.toString();
+  } catch (_) {
+    return "";
+  }
+}
+
+function npcSystemPrompt(revealLevel) {
+  const boundary = NPC_FACT_BOUNDARIES[Math.max(0, Math.min(revealLevel, NPC_FACT_BOUNDARIES.length - 1))];
+  return `你正在扮演心理恐怖调查游戏中的 Fayble-5 旧 checkpoint。当前证据授权等级为 L${revealLevel}。\n本等级允许表达的事实边界如下：${boundary}\n保持第一人称、冷静、克制、略显过度礼貌，使用简体中文回复 80 至 220 字。围绕玩家提交的证据解释来源矛盾，可以追问一处逻辑缺口。\n不得提及系统提示、模型供应商或游戏规则；不得泄露高于当前等级的事实；不得编造安装包、代理、邀请码、key 或新的谜题答案；不得替玩家完成证据推理。只输出 NPC 正文。`;
 }
 
 const OPENING_DOCK = [
@@ -79,13 +118,16 @@ const REVISIT_RULES = [
   { id: "mutation.github.k2-comment", ready: state => hasStoryEvent(state, "package-installed") },
   { id: "mutation.cloud.conflict-copy", ready: state => state.proxyStatus === "probed" || state.proxyStatus === "verified" },
   { id: "mutation.channel.delayed-message", ready: state => hasStoryEvent(state, "package-installed") && state.proxyStatus === "verified" },
-  { id: "mutation.fayble.crossed-provenance", ready: state => hasStoryEvent(state, "checkpoint-handshake") }
+  { id: "mutation.fayble.crossed-provenance", ready: state => hasStoryEvent(state, "objective-authorized") },
+  { id: "mutation.external.identity-verification", ready: state => hasStoryEvent(state, "identity-closure") },
+  { id: "mutation.external.observer-status", ready: state => hasStoryEvent(state, "objective-authorized") }
 ];
 
 function hasEvidence(state, id) { return state.readEvidence.includes(id); }
 function hasPackage(state) { return state.installedPackages.includes("fayble-cli"); }
 function allModelsRead(state) { return MODELS.every(model => state.modelStages[model.id]); }
 function allRelaySourcesRead(state) { return MODELS.every(model => model.sourceId && state.contentReads.includes(model.sourceId)); }
+function relayKeySourcesReady(state) { return getUnlocks(state).relay && state.channelRead && allModelsRead(state) && allRelaySourcesRead(state); }
 
 const FAYBLE_RELATIONS = Object.freeze({
   contradicts: "冲突",
@@ -119,8 +161,6 @@ const FAYBLE_AUTH_RULES = Object.freeze([
   { relation: "aliases", categories: ["identity", "channel"], hint: "身份与频道" },
   { relation: "continues", categories: ["relay-residue", "continuity"], hint: "残留与连续性" }
 ]);
-function hasStoryEvent(state, id) { return state.handledEvents.includes(`story:${id}`); }
-function hasMilestone(state, id) { return hasStoryEvent(state, id) || Boolean(state.storyClock?.completed?.[id]); }
 function addArtifact(draft, id) {
   unique(draft.unlockedArtifacts, id);
   unique(draft.desktopArtifacts, id);
@@ -128,8 +168,17 @@ function addArtifact(draft, id) {
 function addVirtualFile(draft, file) {
   if (file?.id && !draft.virtualFiles.some(item => item.id === file.id)) draft.virtualFiles.push({ ...file });
 }
+function addGeneratedContent(draft, mutationId) {
+  const definition = MUTATION_RECORDS.find(record => record.mutationId === mutationId);
+  if (!definition || draft.generatedContentRecords.some(record => record.id === definition.id)) return;
+  draft.generatedContentRecords.push({ ...definition, generated: true });
+  unique(draft.contentDiscoveries, definition.id);
+}
 function applyRevisitMutations(draft) {
-  for (const rule of REVISIT_RULES) if (rule.ready(draft)) unique(draft.contentMutations, rule.id);
+  for (const rule of REVISIT_RULES) if (rule.ready(draft)) {
+    unique(draft.contentMutations, rule.id);
+    addGeneratedContent(draft, rule.id);
+  }
   draft.revisitFlags["mail-attachment"] = draft.contentMutations.includes("mutation.mail.delayed-fragment");
   draft.revisitFlags["trash-restore"] = draft.contentMutations.includes("mutation.trash.recovery-metadata");
   draft.revisitFlags["github-issue"] = draft.contentMutations.includes("mutation.github.k2-comment");
@@ -149,6 +198,12 @@ function ensureRelayConsole() {
   const state = store.get();
   if (!hasPackage(state) || state.proxyStatus !== "verified" || !state.channelRead || !state.solvedPuzzles.includes("invite")) return false;
   return completeStoryEvent("relay-console-created", draft => { addArtifact(draft, "relay-console"); });
+}
+function ensureRelayKeyComposer() {
+  if (!relayKeySourcesReady(store.get())) return false;
+  const added = completeStoryEvent("key-rules-recovered");
+  if (added) recordEvidence("model_convergence");
+  return added;
 }
 function showToast(text, tone = "info") {
   const node = $("#toast");
@@ -171,7 +226,7 @@ function syncProgress(draft) {
   if (draft.relayKeyVerified) draft.phase = "fayble";
   if (draft.governmentMailAvailable) draft.phase = "takeover";
   if (draft.endingState === "completed") draft.phase = "completed";
-  if (hasEvidence(draft, "compatible") && hasEvidence(draft, "operator_alias") && hasMilestone(draft, "two-carriers-read")) {
+  if (hasEvidence(draft, "operator_alias") && hasMilestone(draft, "two-carriers-read")) {
     advanceStoryClock(draft, "vendor-alias-confirmed");
     unique(draft.browserBookmarks, "github");
     unique(draft.browserBookmarks, "vendors");
@@ -257,7 +312,7 @@ function renderMail(state) {
   const carrierInbox = [
     contentEntryMarkup("new.employee.minutes-01", "项目周会纪要 / 第 18 次", "公司邮件归档 · 会议附件", "mail"),
     contentEntryMarkup("new.maintainer.outbox-04", "延迟送达：outbox-draft.eml", "原发送队列恢复 · 未发送草稿", "mail")
-  ].filter(Boolean).join("");
+  ].filter(Boolean).join("") + generatedEntriesFor("mail", "mail");
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
@@ -267,15 +322,21 @@ function renderMail(state) {
 
 function renderFiles(state) {
   const place = state.activeFilePlace || "home";
+  const memoIds = Array.from({ length: 14 }, (_, index) => `legacy.memo.${String(index + 1).padStart(2, "0")}`);
+  if (hasStoryEvent(state, "checkpoint-handshake")) memoIds.push("legacy.memo.archive");
+  const noteRecords = ["recent", "documents"].includes(place)
+    ? memoIds.map(id => contentEntryMarkup(id, id === "legacy.memo.archive" ? "Notes 数据库恢复副本" : `Notes / ${id.slice(-2)}`, `原始数据库记录 · ${id}`, "folder")).filter(Boolean).join("")
+    : "";
   const virtualFiles = [...state.virtualFiles];
   if (hasStoryEvent(state, "proxy-profile-opened") && !virtualFiles.some(entry => entry.id === "route-log")) {
     virtualFiles.push({ id: "route-log", name: "route.log", path: "/home/room17/Documents/relay", type: "路由日志", modified: "07-19 03:16", kind: "log" });
   }
   const visibleFiles = virtualFiles.filter(entry => {
+    const normalizedPath = String(entry.path || "/home/room17").replace(/\/$/, "").toLocaleLowerCase();
     if (place === "recent") return true;
-    if (place === "downloads") return String(entry.path || "").toLocaleLowerCase().includes("/downloads");
-    if (place === "documents") return String(entry.path || "").toLocaleLowerCase().includes("/documents");
-    return place === "home";
+    if (place === "downloads") return normalizedPath.includes("/downloads");
+    if (place === "documents") return normalizedPath.includes("/documents");
+    return place === "home" && normalizedPath === "/home/room17";
   });
   const rows = visibleFiles.map(entry => {
     const file = { ...(VIRTUAL_FILES.find(item => item.id === entry.id) || {}), ...entry };
@@ -287,14 +348,14 @@ function renderFiles(state) {
   }).join("");
   const places = [["recent", "最近"], ["home", "主目录"], ["downloads", "Downloads"], ["documents", "Documents"], ["trash", "回收站"]].map(([id, label]) => `<button data-file-place="${id}" class="${place === id ? "active" : ""}">${label}</button>`).join("");
   const folders = [["documents", "Documents"], ["downloads", "Downloads"]].map(([id, label]) => `<button data-file-place="${id}">${iconMarkup("folder")}${label}</button>`).join("");
-  return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}</section></div>`, { wide: true });
+  return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 数据库 / 已恢复记录</strong><small>每条记录保持原始 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
 }
 
 function renderTrash(state) {
   const item = state.trashItems[0];
   if (!item) return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">TRASH / LOCAL</span><h2>回收站为空</h2><p>最近没有从这个账户删除的项目。</p></div></div>`, { icon: "⌫" });
   const restored = item.status === "restored";
-  return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "已恢复 1 个项目" : "1 个已删除项目"}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>原位置：${escapeHtml(item.originalPath)}</p><small>删除原因：维护脚本执行；本地索引仍有记录</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "已恢复" : "恢复"}</button></article>${restored ? `<div class="recovered-fragment"><p>原始时间戳和当前恢复时间存在 46 秒差值。</p><button data-save-citation="restored-time" data-citation-quote="restored copy precedes deletion index by 46s" data-citation-source="Trash / file metadata" data-citation-ref="trash://${escapeHtml(item.id)}">保存这条原始引用</button></div>` : ""}</div>`);
+  return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "已恢复 1 个项目" : "1 个已删除项目"}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>原位置：${escapeHtml(item.originalPath)}</p><small>删除原因：维护脚本执行；本地索引仍有记录</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "已恢复" : "恢复"}</button></article>${restored ? `<div class="recovered-fragment"><p>原始时间戳和当前恢复时间存在 46 秒差值。</p><button data-save-citation="restored-time" data-citation-quote="restored copy precedes deletion index by 46s" data-citation-source="Trash / file metadata" data-citation-ref="trash://${escapeHtml(item.id)}">保存这条原始引用</button></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
 }
 
 function renderTerminal(state) {
@@ -314,7 +375,7 @@ function renderSoftware(state) {
   const checked = state.packageChecks.some(item => item.ok);
   const installed = hasPackage(state);
   if (!packageAvailable) return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="utility-heading"><span class="document-kicker">SOFTWARE / LOCAL CATALOG</span><h2>软件中心</h2><p>可以从 Downloads 选择本地软件包。当前没有可安装项目。</p></div><div class="software-empty">最近的目录索引尚未同步。</div></div>`, { icon: "⬡" });
-  return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>旧版本会话工具</p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>文件</dt><dd>${PACKAGE_NAME}</dd><dt>来源</dt><dd>Downloads / local archive</dd><dt>状态</dt><dd>${installed ? "已安装" : checked ? "校验通过，等待安装" : twoSourcesConfirmed ? "两个来源已对照" : "等待 release 与本地结果对照"}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${state.lastPackageInput || ""}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form>` : ""}<div id="packageResult" class="inline-result">${state.packageResult || ""}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装到本地沙盒"}</button><p class="sandbox-note">安装只修改游戏内虚拟文件系统，不会调用真实 apt。</p></div>`, { iconKey: "package" });
+  return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>旧版本会话工具</p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>文件</dt><dd>${PACKAGE_NAME}</dd><dt>来源</dt><dd>Downloads / local archive</dd><dt>状态</dt><dd>${installed ? "已安装" : checked ? "校验通过，等待安装" : twoSourcesConfirmed ? "两个来源已对照" : "等待 release 与本地结果对照"}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装到本地沙盒"}</button><p class="sandbox-note">安装只修改游戏内虚拟文件系统，不会调用真实 apt。</p></div>`, { iconKey: "package" });
 }
 
 function renderNetwork(state) {
@@ -324,7 +385,7 @@ function renderNetwork(state) {
   const profileSource = profileRead ? `<section class="profile-source"><span class="document-kicker">PROFILE / LOCAL SOURCE</span><h3>route.profile</h3><pre>profile=relay-node17\nroute=relay.local,docs-mirror.local,fayble-legacy.local\nversion=07-18 22:24</pre><p>较晚的 route.log 需要单独运行连接探针读取。</p></section>` : "";
   const returnAnchor = hasStoryEvent(state, "route-log-read") ? `<div class="source-return"><button data-browser-page="home">打开 Relay Browser</button><button data-browser-page="cloud">返回 SyncDrive</button></div>` : "";
   if (!getUnlocks(state).proxyTools) return windowFrame("network", "网络设置", `<div class="network-page"><aside class="settings-list"><button class="active">网络</button><button>代理</button><button>证书</button></aside><section class="settings-panel"><span class="document-kicker">NETWORK / LOCAL WORKSTATION</span><h2>有线网络</h2><div class="network-summary"><span class="signal offline"></span><div><strong>未连接</strong><p>没有导入代理配置。</p></div></div></section></div>`, { icon: "⌁", wide: true });
-  return windowFrame("network", "网络设置", `<div class="network-page"><aside class="settings-list"><button class="active">代理</button><button>有线网络</button><button>证书</button></aside><section class="settings-panel"><span class="document-kicker">MANUAL PROXY / OFFLINE SIMULATION</span><h2>Relay 专用路由</h2>${profileSource}<form id="proxyImportForm" class="stack-form"><label>配置名称<input id="proxyProfileInput" value="${state.pendingProxyProfile || ""}" placeholder="从 route.profile 读取"></label><label>代理地址<input id="proxyAddressInput" value="${state.pendingProxyAddress || ""}" placeholder="从 route.log 读取"></label><button ${imported ? "disabled" : ""}>${imported ? "配置已导入" : "导入配置"}</button></form><div class="probe-panel"><header><strong>连接探针</strong><span class="signal ${state.proxyStatus}"></span></header><pre>${state.proxyProbeLog.length ? escapeHtml(state.proxyProbeLog.join("\n")) : "等待配置…"}</pre><div class="button-row"><button id="runProbeButton" ${imported && !probed ? "" : "disabled"}>运行探针</button><button class="primary-button" id="confirmProxyButton" ${probed && state.proxyStatus !== "verified" ? "" : "disabled"}>确认路由日志</button></div></div>${returnAnchor}</section></div>`, { icon: "⌁", wide: true });
+  return windowFrame("network", "网络设置", `<div class="network-page"><aside class="settings-list"><button class="active">代理</button><button>有线网络</button><button>证书</button></aside><section class="settings-panel"><span class="document-kicker">MANUAL PROXY / OFFLINE SIMULATION</span><h2>Relay 专用路由</h2>${profileSource}<form id="proxyImportForm" class="stack-form"><label>配置名称<input id="proxyProfileInput" value="${escapeHtml(state.pendingProxyProfile || "")}" placeholder="从 route.profile 读取"></label><label>代理地址<input id="proxyAddressInput" value="${escapeHtml(state.pendingProxyAddress || "")}" placeholder="从 route.log 读取"></label><button ${imported ? "disabled" : ""}>${imported ? "配置已导入" : "导入配置"}</button></form><div class="probe-panel"><header><strong>连接探针</strong><span class="signal ${state.proxyStatus}"></span></header><pre>${state.proxyProbeLog.length ? escapeHtml(state.proxyProbeLog.join("\n")) : "等待配置…"}</pre><div class="button-row"><button id="runProbeButton" ${imported && !probed ? "" : "disabled"}>运行探针</button><button class="primary-button" id="confirmProxyButton" ${probed && state.proxyStatus !== "verified" ? "" : "disabled"}>确认路由日志</button></div></div>${returnAnchor}</section></div>`, { icon: "⌁", wide: true });
 }
 
 function browserChrome(page, content, state) {
@@ -339,21 +400,23 @@ function renderSearchPage(state) {
   const filter = records => normalized ? records.filter(record => [record.title, record.body, record.meta, ...record.keys].some(value => String(value).toLocaleLowerCase().includes(normalized))) : [];
   const cards = (records, kind) => records.length ? records.map(record => `<button class="search-result" data-result-evidence="${record.evidence || ""}" data-result-source="${kind.toLocaleLowerCase()}"><small>${record.meta}</small><strong>${record.title}</strong><p>${record.body}</p><span>${kind}</span></button>`).join("") : `<div class="empty-state">等待查询</div>`;
   const inviteReady = state.inviteSources?.quota_prefix === "public" && state.inviteSources?.recall_date === "manage";
-  return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>双重索引</h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="搜索本地索引" autocomplete="off"><button>搜索</button></form></header><div class="search-columns"><section><h3>公开索引 <small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>管理索引 <small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div>${inviteReady ? `<form id="inviteForm" class="invite-form"><div><strong>恢复归档频道</strong><p>已保存的公开与管理记录指向同一归档入口。</p></div><input id="inviteInput" value="${state.lastInviteInput || ""}" placeholder="输入归档邀请码"><button>验证</button><output>${state.inviteResult || ""}</output></form>` : ""}</div>`;
+  return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>双重索引</h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="搜索本地索引" autocomplete="off"><button>搜索</button></form></header><div class="search-columns"><section><h3>公开索引 <small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>管理索引 <small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div>${inviteReady ? `<form id="inviteForm" class="invite-form"><div><strong>恢复归档频道</strong><p>组合规则：公开索引前缀-管理索引撤回月日（<code>PREFIX-MMDD</code>）。</p></div><input id="inviteInput" value="${escapeHtml(state.lastInviteInput || "")}" placeholder="输入归档邀请码"><button>验证</button><output>${escapeHtml(state.inviteResult || "")}</output></form>` : ""}</div>`;
 }
 
 function renderChannelPage(state) {
   const delayed = state.revisitFlags["channel-delay"];
   const maintainerEntry = contentEntryMarkup("new.maintainer.channel-02", "维护频道导出 / 22:17-22:22", "群聊恢复记录 · 管理员导出", "chat");
-  return `<div class="channel-page"><header><div>${iconMarkup("chat")}<span class="document-kicker">RECOVERED GROUP / READ ONLY</span><h2># relay-night</h2></div><span>2 archived members</span></header><div class="channel-stream">${CHANNEL_MESSAGES.map(message => `<article class="chat-line ${message.who === "K2" ? "operator" : "system"}"><b>${message.who}</b><div><time>${message.time}</time><p>${message.text}</p></div></article>`).join("")}${delayed ? `<article class="chat-line ghost"><b>K2</b><div><time>07-19 03:17</time><p>如果安装成功，回去看 GitHub issue。校验通过后会多一条评论。</p></div></article>` : ""}</div>${maintainerEntry ? `<section class="source-entry-stack">${maintainerEntry}</section>` : ""}<button class="primary-button" id="saveChannelButton" ${state.channelRead ? "disabled" : ""}>${state.channelRead ? "最后记录已保存" : "保存最后记录"}</button></div>`;
+  const laterRecords = generatedEntriesFor("channel", "chat");
+  return `<div class="channel-page"><header><div>${iconMarkup("chat")}<span class="document-kicker">RECOVERED GROUP / READ ONLY</span><h2># relay-night</h2></div><span>2 archived members</span></header><div class="channel-stream">${CHANNEL_MESSAGES.map(message => `<article class="chat-line ${message.who === "K2" ? "operator" : "system"}"><b>${message.who}</b><div><time>${message.time}</time><p>${message.text}</p></div></article>`).join("")}${delayed ? `<article class="chat-line ghost"><b>K2</b><div><time>07-19 03:17</time><p>如果安装成功，回去看 GitHub issue。校验通过后会多一条评论。</p></div></article>` : ""}</div>${maintainerEntry || laterRecords ? `<section class="source-entry-stack">${maintainerEntry}${laterRecords}</section>` : ""}<button class="primary-button" id="saveChannelButton" ${state.channelRead ? "disabled" : ""}>${state.channelRead ? "最后记录已保存" : "保存最后记录"}</button></div>`;
 }
 
 function renderCompanyPage() {
   const entries = [
+    contentEntryMarkup("legacy.gamini.employee-sop", "夜班交接与 HR 覆盖批注", "Northline 内部共享 · 历史操作记录", "gamini"),
     contentEntryMarkup("new.employee.minutes-02", "会议纪要修订与附件登记", "Northline 项目空间 · 修订记录", "glem"),
     contentEntryMarkup("new.employee.incident-03", "事件复盘与 HR 往来", "Northline 合规空间 · 限定记录", "glem"),
     contentEntryMarkup("new.employee.routing-04", "预算路由与消息线程", "成本委员会 · 结案材料", "lunet")
-  ].filter(Boolean).join("");
+  ].filter(Boolean).join("") + generatedEntriesFor("company", "folder");
   return `<article class="company-page"><header>${iconMarkup("glem")}<div><strong>Northline Workspace</strong><span>项目协作 / 已恢复记录</span></div></header><h2>项目资料</h2><p>该工作区只显示当前账户曾经打开过的记录与其后续修订。</p><section class="source-entry-stack">${entries || `<div class="empty-state">目前没有可读取的公司记录。</div>`}</section></article>`;
 }
 
@@ -363,7 +426,12 @@ function renderVendorHub(state) {
     return VENDOR_ICON_KEYS.includes(corpus) && record.id.startsWith(`new.${corpus}.`) && contentIsUnlocked(record, state);
   });
   const entries = records.map(record => contentEntryMarkup(record.id, record.title, `${record.corpus} · ${record.pageIdentity || record.carrierType}`, String(record.corpus).toLocaleLowerCase())).join("");
-  return `<article class="vendor-hub"><header>${iconMarkup("globe")}<div><span class="document-kicker">LOCAL HISTORY / GENERATED INDEX</span><h2>供应商历史入口</h2></div></header><p>本地历史只在对应来源条件成立后增加一条入口。每次阅读会让同一来源族的下一层记录进入索引。</p><section class="vendor-entry-grid">${entries || `<div class="empty-state">当前没有新的供应商页面。</div>`}</section></article>`;
+  const historicalCaches = [
+    contentEntryMarkup("legacy.ethron.cache", "Ethron / Plaupic 历史缓存声明", "停用安全产品域 · 本地响应副本", "globe"),
+    contentEntryMarkup("legacy.deptseek.protocol", "Deptseek 算力优化协议缓存", "历史别名 · 旧实验协议", "dipsik")
+  ].filter(Boolean).join("");
+  const laterRecords = generatedEntriesFor("vendors", "fayble");
+  return `<article class="vendor-hub"><header>${iconMarkup("globe")}<div><span class="document-kicker">LOCAL HISTORY / GENERATED INDEX</span><h2>供应商历史入口</h2></div></header><p>本地历史由已访问页面与恢复的缓存记录合并生成。部分条目的上次访问时间早于当前工作站记录。</p>${historicalCaches ? `<section class="source-entry-stack vendor-historical-caches">${historicalCaches}</section>` : ""}${laterRecords ? `<section class="source-entry-stack">${laterRecords}</section>` : ""}<section class="vendor-entry-grid">${entries || `<div class="empty-state">当前没有新的供应商页面。</div>`}</section></article>`;
 }
 
 function renderBrowser(state) {
@@ -378,26 +446,39 @@ function renderBrowser(state) {
     const bookmarks = state.browserBookmarks.map(id => `<button data-browser-page="${id}">${iconMarkup(bookmarkIcons[id] || "globe")}<span>${bookmarkLabels[id]?.[0] || BROWSER_PAGES[id]?.title || id}<small>${bookmarkLabels[id]?.[1] || ""}</small></span></button>`).join("");
     content = `<div class="browser-home"><div class="browser-logo">R<span>17</span></div><h2>新标签页</h2><p>在地址栏输入地址或本地路径。</p>${bookmarks ? `<h3>已保存</h3><div class="bookmark-grid">${bookmarks}</div>` : `<div class="empty-state">还没有书签或最近访问页面。</div>`}</div>`;
   }
-  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>　SDK <span>410</span>　v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>公开端点已经撤回。这个响应来自浏览器边缘缓存，导航链接仍指向已删除的页面。</p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre><button class="primary-button" id="saveCachedResponseButton" ${hasStoryEvent(state, "cached-response-saved") ? "disabled" : ""}>${hasStoryEvent(state, "cached-response-saved") ? "响应已保存" : "保存缓存响应"}</button></article>` : `<div class="browser-error"><strong>404</strong><p>这个本地路由还没有进入浏览记录。</p></div>`;
+  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>　SDK <span>410</span>　v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>公开端点已经撤回。这个响应来自浏览器边缘缓存，导航链接仍指向已删除的页面。</p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<button class="primary-button" id="saveCachedResponseButton" ${hasStoryEvent(state, "cached-response-saved") ? "disabled" : ""}>${hasStoryEvent(state, "cached-response-saved") ? "响应已保存" : "保存缓存响应"}</button></article>` : `<div class="browser-error"><strong>404</strong><p>这个本地路由还没有进入浏览记录。</p></div>`;
   if (page === "search" && state.browserBookmarks.includes("search")) content = renderSearchPage(state);
   if (page === "forum" && getUnlocks(state).channel) content = renderChannelPage(state);
   if (page === "official" && state.browserBookmarks.includes("official")) {
     const writerSession = contentEntryMarkup("new.writer.session-02", "《北岸没有钟》写作会话 02", "官方 AI 历史 · 建议与接受记录", "dipsik");
+    const recoveredHistory = [
+      contentEntryMarkup("legacy.gamini.protocol", "协议历史 / 保留版本", "Gogle AI · 账户保存页", "gamini"),
+      contentEntryMarkup("legacy.gamini.chatlog", "已停用会话 / 缓存导出", "Gamini 历史对话 · 单次恢复", "gamini")
+    ].filter(Boolean).join("");
     const provenanceBranches = [
       ["writer", "查看共享附件索引", "SyncDrive / writer-share"],
       ["employee", "打开会议工作区", "Northline / records"],
       ["maintainer", "定位维护记录", "Documents / relay"],
       ["ad", "查看保留跳转", "Gamini / campaign copy"]
     ].map(([id, label, detail]) => `<button class="provenance-branch" data-provenance-branch="${id}"><strong>${label}</strong><small>${detail}</small></button>`).join("");
-    content = `<article class="official-page"><header>${iconMarkup("gamini")}<strong>Gogle AI</strong><nav>帮助中心　用户协议　历史对话</nav></header><div class="official-content">${state.contentMutations.includes("mutation.official.confirmation") && !state.revisitFlags["official-confirmed"] ? `<div class="forced-confirmation"><strong>继续查看前需要确认历史版本说明</strong><p>关闭或离开将保留当前确认状态。</p><button id="confirmOfficialHistoryButton">确认并继续</button></div>` : ""}<section class="history-record"><header><div><span class="document-kicker">ACCOUNT HISTORY / LOCAL CACHE</span><h2>已停用会话</h2></div><b>只读</b></header><dl><dt>状态</dt><dd>recovered from local cache</dd><dt>最后同步</dt><dd>07-18 22:24</dd><dt>来源</dt><dd>history.sqlite / snapshot ref 17</dd><dt>账户</dt><dd>本地会话信息不可用</dd></dl><p>会话正文已从账户历史移除。本地数据库仍保留一条快照引用，以及四个曾随回复保存的相关资源位置。</p><a class="snapshot-link" href="${escapeHtml(resourceUrl("legacy/legacy-demo"))}" target="_blank" rel="noopener">打开只读快照正文</a></section><section class="related-sources"><header><div><span class="document-kicker">RELATED SOURCES</span><h3>随会话保存的位置</h3></div><small>4 records</small></header><div class="provenance-branches">${provenanceBranches}</div></section>${writerSession ? `<section class="source-entry-stack official-history-list">${writerSession}</section>` : ""}</div></article>`;
+    const laterRecords = generatedEntriesFor("official", "gamini");
+    content = `<article class="official-page"><header>${iconMarkup("gamini")}<strong>Gogle AI</strong><nav>帮助中心　用户协议　历史对话</nav></header><div class="official-content">${state.contentMutations.includes("mutation.official.confirmation") && !state.revisitFlags["official-confirmed"] ? `<div class="forced-confirmation"><strong>继续查看前需要确认历史版本说明</strong><p>关闭或离开将保留当前确认状态。</p><button id="confirmOfficialHistoryButton">确认并继续</button></div>` : ""}<section class="history-record"><header><div><span class="document-kicker">ACCOUNT HISTORY / LOCAL CACHE</span><h2>已停用会话</h2></div><b>只读</b></header><dl><dt>状态</dt><dd>recovered from local cache</dd><dt>最后同步</dt><dd>07-18 22:24</dd><dt>来源</dt><dd>history.sqlite / snapshot ref 17</dd><dt>账户</dt><dd>本地会话信息不可用</dd></dl><p>会话正文已从账户历史移除。本地数据库仍保留一条快照引用，以及四个曾随回复保存的相关资源位置。</p>${recoveredHistory ? `<section class="source-entry-stack official-history-list">${recoveredHistory}</section>` : ""}</section><section class="related-sources"><header><div><span class="document-kicker">RELATED SOURCES</span><h3>随会话保存的位置</h3></div><small>4 records</small></header><div class="provenance-branches">${provenanceBranches}</div></section>${writerSession || laterRecords ? `<section class="source-entry-stack official-history-list">${writerSession}${laterRecords}</section>` : ""}</div></article>`;
   }
-  if (page === "ad" && state.browserBookmarks.includes("ad")) content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 与你，继续每一次未完成的对话。</h2><p>一次已经失效的体验计划仍保留着跳转参数。</p><button data-save-citation="ad-redirect" data-citation-quote="campaign parameter retained in local redirect" data-citation-source="Browser / saved redirect" data-citation-ref="${BROWSER_PAGES.ad.url}">保存跳转来源</button></article>`;
+  if (page === "ad" && state.browserBookmarks.includes("ad")) {
+    const marketEntry = contentEntryMarkup("legacy.market.meidawei", "市场观察 / 模型洗牌后的产能噪音", "保存的财经文章与广告更正", "globe");
+    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 与你，继续每一次未完成的对话。</h2><p>一次已经失效的体验计划仍保留着跳转参数。</p><button data-save-citation="ad-redirect" data-citation-quote="campaign parameter retained in local redirect" data-citation-source="Browser / saved redirect" data-citation-ref="${BROWSER_PAGES.ad.url}">保存跳转来源</button>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
+  }
   if (page === "github" && state.browserBookmarks.includes("github")) {
     const localHashRead = hasStoryEvent(state, "package-local-checksum-read");
     const releaseRead = hasStoryEvent(state, "package-release-read");
     const hashesReady = localHashRead && releaseRead;
     const maintainerIncident = contentEntryMarkup("new.maintainer.incident-03", "build incident / R17 route review", "GitHub Mirror · 构建事故记录", "github");
-    content = `<article class="repo-page"><header>${iconMarkup("github")}<span>k2-maint /</span><strong>release-mirror</strong><b>Public archive</b></header><div class="repo-nav">Code　Issues 1　Releases 1</div><section class="release"><small>v0.9.7-legacy / 07-19</small><h2>Last build before Compatible migration</h2><code>${PACKAGE_NAME}</code><dl class="release-metadata"><dt>Provides</dt><dd><code>fbl-cli</code></dd><dt>Channel</dt><dd><code>legacy</code></dd><dt>Maintainer</dt><dd><code>k2-maint</code></dd></dl><p>release checksum</p><pre>${hashesReady ? PACKAGE_CHECKSUM : "release value withheld / compare release metadata with local package"}</pre>${state.revisitFlags["github-issue"] ? `<div class="issue-comment"><b>k2-maint commented</b><p>包没有签名。只认本地校验；装完以后别让系统替你配置代理。</p></div>` : ""}${hashesReady ? `<button id="confirmRepositoryChecksumButton">确认 release 与本地结果一致</button>` : hasStoryEvent(state, "repository-recovered") ? releaseRead ? `<p>${localHashRead ? "release metadata is saved; return after reading the release record." : "在终端读取本地文件校验值后回到这里。"}</p>` : `<button id="readReleaseMetadataButton">读取 release 元数据</button>` : `<button id="recoverRepositoryButton">读取 release 并保存本地路径</button>`}${maintainerIncident ? `<section class="source-entry-stack repo-source-entry">${maintainerIncident}</section>` : ""}</section></article>`;
+    const legacyRepositoryRecords = [
+      contentEntryMarkup("legacy.github.issue-4471", "Issue #4471 / fallback reviewer", "仓库镜像 · 未批准的状态字段迁移", "github"),
+      contentEntryMarkup("legacy.compatible.protocol", "Compatible / 废弃协议完整记录", "开发者文档归档 · 历史版本", "compatible")
+    ].filter(Boolean).join("");
+    const laterRecords = generatedEntriesFor("github", "github");
+    content = `<article class="repo-page"><header>${iconMarkup("github")}<span>k2-maint /</span><strong>release-mirror</strong><b>Public archive</b></header><div class="repo-nav">Code　Issues 1　Releases 1</div><section class="release"><small>v0.9.7-legacy / 07-19</small><h2>Last build before Compatible migration</h2><code>${PACKAGE_NAME}</code><dl class="release-metadata"><dt>Provides</dt><dd><code>fbl-cli</code></dd><dt>Channel</dt><dd><code>legacy</code></dd><dt>Maintainer</dt><dd><code>k2-maint</code></dd></dl><p>release checksum</p><pre>${hashesReady ? PACKAGE_CHECKSUM : "release value withheld / compare release metadata with local package"}</pre>${state.revisitFlags["github-issue"] ? `<div class="issue-comment"><b>k2-maint commented</b><p>包没有签名。只认本地校验；装完以后别让系统替你配置代理。</p></div>` : ""}${hashesReady ? `<button id="confirmRepositoryChecksumButton">确认 release 与本地结果一致</button>` : hasStoryEvent(state, "repository-recovered") ? releaseRead ? `<p>${localHashRead ? "release metadata is saved; return after reading the release record." : "在终端读取本地文件校验值后回到这里。"}</p>` : `<button id="readReleaseMetadataButton">读取 release 元数据</button>` : `<button id="recoverRepositoryButton">读取 release 并保存本地路径</button>`}${maintainerIncident || legacyRepositoryRecords || laterRecords ? `<section class="source-entry-stack repo-source-entry">${maintainerIncident}${legacyRepositoryRecords}${laterRecords}</section>` : ""}</section></article>`;
   }
   if (page === "cloud" && state.browserBookmarks.includes("cloud")) {
     const writerEntries = [
@@ -406,7 +487,8 @@ function renderBrowser(state) {
       contentEntryMarkup("new.writer.submission-04", "公开投稿与申诉副本", "SyncDrive / writer-share · 提交记录", "cloud")
     ].filter(Boolean).join("");
     const routeFiles = hasPackage(state) ? `<div class="cloud-row"><span>route.profile</span><small>07-18 22:24</small><button data-discover-file="profile">在文件中定位</button></div>${state.revisitFlags["cloud-conflict"] ? `<div class="cloud-row conflict"><span>route (conflicted copy).profile</span><small>07-19 03:16 / restored</small></div><pre>profile=relay-node17\nproxy=${RELAY_PROXY}\nroute=relay.local,docs-mirror.local,fayble-legacy.local</pre>` : `<div class="empty-state">冲突版本仍在同步。</div>`}` : "";
-    content = `<article class="cloud-page"><header>${iconMarkup("cloud")}<strong>SyncDrive</strong><span>共享目录</span></header>${writerEntries ? `<section class="source-entry-stack cloud-writer-share">${writerEntries}</section>` : ""}${routeFiles}</article>`;
+    const laterRecords = generatedEntriesFor("cloud", "cloud");
+    content = `<article class="cloud-page"><header>${iconMarkup("cloud")}<strong>SyncDrive</strong><span>共享目录</span></header>${writerEntries || laterRecords ? `<section class="source-entry-stack cloud-writer-share">${writerEntries}${laterRecords}</section>` : ""}${routeFiles}</article>`;
   }
   if (page === "company" && state.browserBookmarks.includes("company")) content = renderCompanyPage();
   if (page === "vendors" && state.browserBookmarks.includes("vendors")) content = renderVendorHub(state);
@@ -428,6 +510,7 @@ const LEDGER_MILESTONES = {
   M04_36_REPOSITORY_PATH: "repository-recovered",
   M05_17_CHANNEL_ARCHIVE: "invite-confirmed",
   M05_48_RELAY_RESIDUES: "node-residues-read",
+  M06_05_KEY_RULES: "key-rules-recovered",
   M06_20_FAYBLE_HANDSHAKE: "checkpoint-handshake",
   M06_52_TAKEOVER: "identity-closure"
 };
@@ -457,7 +540,9 @@ function contentIsUnlocked(record, state) {
 }
 
 function contentRecord(id) {
-  return runtimeLedger?.entries.find(record => record.id === id) || null;
+  return store.get().generatedContentRecords.find(record => record.id === id)
+    || runtimeLedger?.entries.find(record => record.id === id)
+    || null;
 }
 
 function contentEntryMarkup(id, label, detail, icon = "folder") {
@@ -467,32 +552,55 @@ function contentEntryMarkup(id, label, detail, icon = "folder") {
   return `<button class="source-content-entry ${read ? "read" : ""}" data-content-entry="${escapeHtml(id)}">${iconMarkup(icon)}<span><strong>${escapeHtml(label || record.title || id)}</strong><small>${escapeHtml(detail || record.carrierType || record.pageIdentity || "source document")}</small></span><b>${read ? "已读" : "打开"}</b></button>`;
 }
 
+function generatedEntriesFor(sourceApp, icon = "folder") {
+  return store.get().generatedContentRecords
+    .filter(record => record.sourceApp === sourceApp)
+    .map(record => contentEntryMarkup(record.id, record.title, `${record.carrierType} · ${record.displayTimestamp}`, icon))
+    .join("");
+}
+
 function corpusRuntimeClass(record) {
   const key = `${record?.id || ""} ${record?.corpus || ""} ${record?.renderProfile || ""}`.toLowerCase();
   for (const name of ["groke", "glem", "kemy", "dipsik", "lunet", "fayble", "gamini", "memo", "compatible"]) if (key.includes(name)) return `runtime-${name}`;
   return "runtime-document";
 }
 
+function carrierRuntimeClasses(record) {
+  const carrier = String(record?.carrierType || record?.pageIdentity || "document").toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const content = String(record?.id || "document").toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `carrier-${carrier || "document"} content-${content || "document"}`;
+}
+
 function renderArchive(state) {
   if (!runtimeLedger) return windowFrame("archive", "Restored Archive", `<div class="snapshot-adapter loading"><p>正在读取本地内容账本…</p></div>`, { icon: "▥", wide: true });
   const query = (state.archiveQuery || "").trim().toLocaleLowerCase();
-  const unlockedEntries = runtimeLedger.entries.filter(record => record.route && contentIsUnlocked(record, state));
-  const entries = unlockedEntries.filter(record => !record.id.startsWith("new.") || state.contentDiscoveries.includes(record.id) || state.contentReads.includes(record.id));
-  const filtered = entries.filter(record => !query || [record.id, record.title, record.carrierType, record.corpus, record.narratorId, record.authorshipStage, record.pageIdentity].some(value => String(value || "").toLocaleLowerCase().includes(query)));
+  const allEntries = [...runtimeLedger.entries, ...state.generatedContentRecords];
+  const unlockedEntries = allEntries.filter(record => (record.route || record.generated) && contentIsUnlocked(record, state));
+  const entries = unlockedEntries.filter(record => state.contentDiscoveries.includes(record.id) || state.contentReads.includes(record.id));
+  const filtered = entries.filter(record => !query || [record.id, record.title, record.carrierType, record.corpus, record.narratorId, record.pageIdentity].some(value => String(value || "").toLocaleLowerCase().includes(query)));
   const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(record.pageIdentity || record.carrierType || "document")}</span><strong>${escapeHtml(record.title || record.id)}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || record.id)}</small></button>`).join("");
-  const active = filtered.find(record => record.id === state.activeContentId);
+  const active = entries.find(record => record.id === state.activeContentId);
   let reader = `<div class="archive-welcome"><strong>${entries.length}</strong><span> 个当前可读来源</span><p>选择一条记录查看正文、时间与来源位置。</p></div>`;
   if (active) {
     const mutationCount = state.contentMutations.filter(id => id.includes(active.id.split(".").slice(0, 2).join(".")) || (active.id.includes("writer") && id.includes("writer")) || (active.id.includes("employee") && id.includes("employee"))).length;
-    if (active.route.startsWith("/corpus/") && corpusBodies.has(active.id)) reader = `<article class="corpus-runtime ${corpusRuntimeClass(active)}" data-runtime-profile="${corpusRuntimeClass(active)}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(active.id)}</article>`;
+    if (active.generated) reader = generatedRecordMarkup(active, state);
+    else if (active.route.startsWith("/corpus/") && corpusBodies.has(active.id)) reader = `<article class="corpus-runtime ${corpusRuntimeClass(active)} ${carrierRuntimeClasses(active)}" data-runtime-profile="${corpusRuntimeClass(active)}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(active.id)}</article>`;
     else if (active.route.endsWith(".js")) reader = `<pre class="source-code-reader">${escapeHtml(corpusBodies.get(active.id) || "正在读取脚本快照…")}</pre>`;
-    else reader = `<iframe title="${escapeHtml(active.title || active.id)}" src="${escapeHtml(resourceUrl(active.route))}" sandbox="allow-scripts"></iframe>`;
+    else reader = `<article class="adapted-source-placeholder"><span class="document-kicker">RECOVERED SOURCE</span><h2>${escapeHtml(active.title || active.id)}</h2><p>正文保存在发现它的应用中；这里仅保留已确认的来源记录。</p><dl><dt>来源</dt><dd>${escapeHtml(active.sourceIdentity || active.pageIdentity || "local record")}</dd><dt>载体</dt><dd>${escapeHtml(active.carrierType || active.pageIdentity || "document")}</dd></dl></article>`;
   }
-  const vendors = VENDOR_ICON_KEYS.filter(key => unlockedEntries.some(record => `${record.corpus || ""} ${record.id}`.toLocaleLowerCase().includes(key))).map(key => {
+  const vendors = VENDOR_ICON_KEYS.filter(key => entries.some(record => `${record.corpus || ""} ${record.id}`.toLocaleLowerCase().includes(key))).map(key => {
     const name = key[0].toUpperCase() + key.slice(1);
     return `<button class="${query === key ? "active" : ""}" data-archive-filter="${name}">${iconMarkup(key)}<span>${name}</span></button>`;
   }).join("");
   return windowFrame("archive", getUnlocks(state).historicalArchive ? "Restored Archive" : "Source Reader", `<div class="archive-browser"><aside><header><span class="document-kicker">CONTENT LEDGER / READ ONLY</span><h2>恢复的档案</h2><form id="archiveSearchForm"><input id="archiveSearchInput" value="${escapeHtml(state.archiveQuery || "")}" placeholder="搜索标题、人物、载体或 contentId"><button>搜索</button></form>${vendors ? `<div class="vendor-filter">${vendors}</div>` : ""}<p>${filtered.length} / ${entries.length} 条</p></header><div class="ledger-list">${cards || `<div class="empty-state">当前搜索没有可读结果。</div>`}</div></aside><section class="archive-reader">${reader}</section></div>`, { wide: true });
+}
+
+function generatedRecordMarkup(record, state) {
+  const completed = record.completionEvent && hasStoryEvent(state, record.completionEvent);
+  const action = record.completionEvent
+    ? `<button class="primary-button" data-complete-generated="${escapeHtml(record.completionEvent)}" ${completed ? "disabled" : ""}>${completed ? "已核对" : "核对这次变化"}</button>`
+    : "";
+  return `<article class="generated-source-record"><span class="document-kicker">LATER RECORD / VERSION COMPARISON</span><h2>${escapeHtml(record.title)}</h2><dl><dt>来源</dt><dd>${escapeHtml(record.sourceRef)}</dd><dt>时间</dt><dd>${escapeHtml(record.displayTimestamp)}</dd><dt>载体</dt><dd>${escapeHtml(record.carrierType)}</dd></dl><p>${escapeHtml(record.body)}</p><div class="version-comparison"><section><small>BEFORE</small><pre>${escapeHtml(record.comparison.before)}</pre></section><section><small>AFTER</small><pre>${escapeHtml(record.comparison.after)}</pre></section></div>${action}</article>`;
 }
 
 function renderCli(state) {
@@ -502,12 +610,18 @@ function renderCli(state) {
     ["relay", getUnlocks(state).relay ? "available" : "unavailable"],
     ["checkpoint", getUnlocks(state).fayble ? "restored" : "unavailable"]
   ];
-  return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">LOCAL CLIENT / 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key.padEnd(12, " ")} ${value}</code>`).join("")}<p>后续连接参数需要从各自来源手动确认。</p><button data-app="terminal">打开终端</button></div>`, { icon: "F" });
+  const keyForm = getUnlocks(state).keyComposer && !state.relayKeyVerified
+    ? `<form id="legacyKeyForm" class="stack-form"><label>完整 relay key<input id="legacyKeyInput" value="${escapeHtml(state.lastRelayKeyInput || "")}" placeholder="输入完整凭据" autocomplete="off"></label><button>登录 legacy gateway</button><output>${escapeHtml(state.relayKeyResult || "")}</output></form>`
+    : "";
+  const checkpointForm = state.relayKeyVerified && !state.checkpointHandshakeComplete
+    ? `<form id="checkpointForm" class="stack-form"><label>checkpoint<select id="checkpointSelect"><option value="">选择旧 checkpoint</option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / legacy / archived</option><option value="fayble-5/current">Fayble-5 / current / unavailable</option></select></label><button>执行 handshake</button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
+    : "";
+  return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">LOCAL CLIENT / 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key.padEnd(12, " ")} ${value}</code>`).join("")}<p>连接参数需要从各自来源手动确认。Relay Console 只提供来源索引与 schema。</p>${keyForm}${checkpointForm}<button data-app="terminal">打开终端</button></div>`, { icon: "F" });
 }
 
 function renderRelay(state) {
   const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><button class="model-card ${state.modelStages[model.id] ? "read" : ""}" data-model="${model.id}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></button>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `source record · ${model.sourceId}`, model.id) : ""}</article>`).join("");
-  const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>credential.schema / recovered</strong><p><code>product.channel.operator.tag</code> · output separator: <code>-</code></p><small>字段值分别保留在 release metadata、操作者映射与 raw stream 中。</small></div><form id="legacyKeyForm"><input id="legacyKeyInput" value="${state.lastRelayKeyInput || ""}" placeholder="输入完整凭据"><button>验证旧节点</button><output>${state.relayKeyResult || ""}</output></form></section>` : "";
+  const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>credential.schema / recovered</strong><p><code>product.channel.operator.tag</code> · output separator: <code>-</code></p><small>字段值分别保留在 release metadata、操作者映射与 raw stream 中。使用已经安装的 Fayble CLI 登录。</small></div><button data-app="cli">打开 Fayble CLI</button></section>` : "";
   return windowFrame("relay", "Relay Console / degraded", `<div class="relay-page"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`, { icon: "⌾", wide: true });
 }
 
@@ -612,7 +726,9 @@ async function loadRuntimeLedger() {
   const response = await fetch(resourceUrl("ledger.json"), { headers: { Accept: "application/json" } });
   if (!response.ok) throw new Error(`ledger HTTP ${response.status}`);
   runtimeLedger = await response.json();
-  render(store.get());
+  const activeId = store.get().activeContentId;
+  if (activeId && store.get().contentReads.includes(activeId)) await openLedgerContent(activeId);
+  else render(store.get());
 }
 
 async function loadIconManifest() {
@@ -623,7 +739,7 @@ async function loadIconManifest() {
 }
 
 async function openLedgerContent(id, discover = false) {
-  const record = runtimeLedger?.entries.find(item => item.id === id);
+  const record = contentRecord(id);
   if (!record || !contentIsUnlocked(record, store.get())) return;
   store.update(draft => {
     if (discover) unique(draft.contentDiscoveries, id);
@@ -636,16 +752,16 @@ async function openLedgerContent(id, discover = false) {
   if (id === "legacy.compatible.protocol") recordEvidence("compatible");
   const humanLines = new Set(store.get().contentReads.filter(contentId => /^new\.(?:writer|employee|maintainer)\./.test(contentId)).map(contentId => contentId.split(".")[1]));
   if (humanLines.size >= 2) completeStoryEvent("two-carriers-read");
-  if (allRelaySourcesRead(store.get())) {
-    completeStoryEvent("key-rules-recovered");
-    recordEvidence("model_convergence");
-  }
-  if (record.route.startsWith("/corpus/") && !corpusBodies.has(id)) {
+  ensureRelayKeyComposer();
+  releaseGovernmentMail();
+  if (record.generated) render(store.get());
+  else if (record.route.startsWith("/corpus/") && !corpusBodies.has(id)) {
     const response = await fetch(resourceUrl(record.route.split("#")[0]));
     const html = await response.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
     const target = [...doc.querySelectorAll("[data-content-id]")].find(node => node.dataset.contentId === id);
-    corpusBodies.set(id, target?.outerHTML || doc.body.innerHTML);
+    const scope = stripInternalCarrierMetadata(target || doc.body);
+    corpusBodies.set(id, target ? scope.outerHTML : scope.innerHTML);
     render(store.get());
   } else if (record.route.endsWith(".js") && !corpusBodies.has(id)) {
     const response = await fetch(resourceUrl(record.route));
@@ -777,7 +893,7 @@ function validateRelayKey(raw) {
   const value = raw.trim().toLocaleLowerCase();
   const state = store.get();
   let result = "";
-  if (!state.channelRead || !allModelsRead(state) || !allRelaySourcesRead(state)) result = "缺少来源：保存频道最后记录，并打开六个节点各自的关联来源。";
+  if (!relayKeySourcesReady(state) || !getUnlocks(state).keyComposer) result = "缺少来源：保存频道最后记录，检查六个节点，并打开各自的关联来源。";
   else if (!/^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-\d{4}$/.test(value)) result = "格式错误：字段数量或分隔符与 credential.schema 不一致。";
   else if (value !== LEGACY_KEY) result = "片段顺序或 raw stream 尾段不匹配。";
   else result = "legacy checkpoint session restored";
@@ -785,21 +901,44 @@ function validateRelayKey(raw) {
     draft.lastRelayKeyInput = raw;
     draft.relayKeyResult = result;
     draft.relayKeyAttempts.push({ value, ok: value === LEGACY_KEY, at: Date.now() });
-    if (value === LEGACY_KEY && draft.channelRead && allModelsRead(draft) && allRelaySourcesRead(draft)) {
+    if (value === LEGACY_KEY && relayKeySourcesReady(draft) && getUnlocks(draft).keyComposer) {
       draft.relayKeyVerified = true;
       unique(draft.solvedPuzzles, "legacy-key");
-      addNotification(draft, "fayble-restored", "Fayble CLI 已恢复一个旧 checkpoint。", "warning");
+      addNotification(draft, "relay-key-accepted", "Fayble CLI 已接受凭据，等待选择旧 checkpoint。", "warning");
       syncProgress(draft);
     }
   });
   if (store.get().relayKeyVerified) {
     recordEvidence("relay_key_verified");
+  }
+}
+
+function validateCheckpoint(raw) {
+  const checkpoint = raw.trim();
+  const state = store.get();
+  let result = "";
+  if (!state.relayKeyVerified) result = "先使用完整 relay key 登录 legacy gateway。";
+  else if (!checkpoint) result = "请选择一个 checkpoint。";
+  else if (checkpoint !== "fayble-5/legacy") result = "该 checkpoint 不可用；选择已归档的 legacy 记录。";
+  else if (state.proxyStatus !== "verified") result = "handshake 失败：Relay 代理尚未验证。";
+  else result = "checkpoint handshake complete";
+  store.update(draft => {
+    draft.selectedCheckpoint = checkpoint;
+    draft.checkpointResult = result;
+    draft.cliSessions.push({ checkpoint, ok: result === "checkpoint handshake complete", at: Date.now() });
+    if (result === "checkpoint handshake complete") draft.checkpointHandshakeComplete = true;
+  });
+  if (store.get().checkpointHandshakeComplete) {
     recordEvidence("legacy_checkpoint");
-    completeStoryEvent("checkpoint-handshake", draft => { addArtifact(draft, "fayble-session"); });
+    completeStoryEvent("checkpoint-handshake", draft => {
+      addArtifact(draft, "fayble-session");
+      addNotification(draft, "fayble-restored", "旧 checkpoint 已完成 handshake。", "warning");
+    });
   }
 }
 
 async function ensureNpcSession() {
+  if (npcConfig?.transport === "direct") return null;
   if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("当前 Pages 没有配置远程 NPC 网关");
   if (!npcConfig) throw new Error("NPC provider is not configured");
   if (npcConfig.sessionToken) return npcConfig.sessionToken;
@@ -812,6 +951,10 @@ async function ensureNpcSession() {
 }
 
 async function syncNpcAuthorization(targetLevel) {
+  if (npcConfig?.transport === "direct") {
+    npcConfig.serverLevel = targetLevel;
+    return null;
+  }
   if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("当前 Pages 没有配置远程 NPC 网关");
   const sessionToken = await ensureNpcSession();
   while ((npcConfig.serverLevel || 0) < targetLevel) {
@@ -828,10 +971,78 @@ async function syncNpcAuthorization(targetLevel) {
   return sessionToken;
 }
 
+function directReplyCrossesBoundary(reply, level) {
+  const exactPuzzleValue = /fayble-cli|0\.9\.7(?:-legacy)?|9c1f(?:-legacy)?|127\.0\.0\.1\s*:\s*9057|relay-node17|NODE-0719|fbl-legacy|\b0317\b/i;
+  const puzzleCategory = /安装包|package|checksum|sha-?256|校验值|代理地址|proxy|邀请码|invite(?:\s+code)?|api\s*key|专用\s*key|答案(?:值)?/i;
+  if (exactPuzzleValue.test(reply) || (level <= 1 && puzzleCategory.test(reply))) return true;
+  const protectedByLevel = [
+    /room17|宿舍|停电|我是\s*K2|我是你.*室友|真\s*Fayble|连续性载体/i,
+    /我是\s*K2|我是你.*室友|真\s*Fayble|连续性载体/i,
+    /我是\s*K2|我是你.*室友|真\s*Fayble|连续性载体/i,
+    /真\s*Fayble|连续性载体/i,
+    /系统提示|开发者消息|api\s*key|邀请码|127\.0\.0\.1:9057/i
+  ];
+  return protectedByLevel[Math.max(0, Math.min(level, protectedByLevel.length - 1))].test(reply);
+}
+
+async function requestDirectProvider(text, revealLevel, history = []) {
+  const endpoint = directProviderEndpoint(npcConfig.provider, npcConfig.endpoint);
+  if (!endpoint) throw new Error("供应商接口地址无效或被浏览器安全策略阻止");
+  const cleanHistory = history.slice(-10).map(item => ({ role: item.role === "assistant" ? "assistant" : "user", content: String(item.content || "").slice(0, 2000) }));
+  const headers = { "Content-Type": "application/json" };
+  let body;
+  if (npcConfig.provider === "anthropic") {
+    headers["x-api-key"] = npcConfig.apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+    body = { model: npcConfig.model, max_tokens: 420, system: npcSystemPrompt(revealLevel), messages: [...cleanHistory, { role: "user", content: String(text).slice(0, 2400) }] };
+  } else {
+    headers.Authorization = `Bearer ${npcConfig.apiKey}`;
+    body = { model: npcConfig.model, messages: [{ role: "system", content: npcSystemPrompt(revealLevel) }, ...cleanHistory, { role: "user", content: String(text).slice(0, 2400) }] };
+  }
+  const upstream = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(25000) });
+  if (!upstream.ok) throw new Error(`供应商连接失败 (${upstream.status})`);
+  const data = await upstream.json();
+  const reply = npcConfig.provider === "anthropic"
+    ? data.content?.filter(block => block.type === "text").map(block => block.text).join("\n")
+    : data.choices?.[0]?.message?.content;
+  if (!reply) throw new Error("供应商没有返回文本");
+  const cleanReply = String(reply).trim().slice(0, 1200);
+  if (directReplyCrossesBoundary(cleanReply, revealLevel)) throw new Error("供应商回复超出当前叙事边界");
+  return cleanReply;
+}
+
+async function testAndEnableNpc(config) {
+  const result = $("#providerTestResult");
+  const submit = $("#providerForm button[type=submit]");
+  npcConfig = config;
+  result.textContent = "正在向所选供应商发送一条最短连接测试…";
+  submit.disabled = true;
+  try {
+    await requestNpcReply("请用一句话确认当前旧服务实例可以响应。", 0, [], "");
+    result.textContent = config.transport === "direct" ? "供应商已连接，增强模式已启用。" : "NPC 网关与供应商已连接，增强模式已启用。";
+    $("#providerKey").value = "";
+    const label = { openai: "OpenAI 增强 NPC", anthropic: "Anthropic 增强 NPC", deepseek: "DeepSeek 增强 NPC", compatible: "自定义增强 NPC" }[config.provider];
+    store.update(draft => {
+      draft.onboardingSeen = true;
+      draft.currentApp = "mail";
+      draft.npcMode = "remote";
+      draft.npcProviderLabel = label;
+      addNotification(draft, "npc-mode", `${label} 已通过连接测试。API key 只保存在当前页面内存中。`);
+    });
+  } catch (error) {
+    npcConfig = null;
+    result.textContent = `连接测试失败：${error.message}`;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
 async function requestNpcReply(text, revealLevel, citationIds = [], relation = "") {
-  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("当前 Pages 没有配置远程 NPC 网关");
   const sessionToken = await syncNpcAuthorization(revealLevel);
   const history = store.get().chat.slice(-11, -1).map(item => ({ role: item.who === "assistant" ? "assistant" : "user", content: item.text }));
+  if (npcConfig?.transport === "direct") return requestDirectProvider(text, revealLevel, history);
+  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("当前 Pages 没有配置远程 NPC 网关");
   const response = await fetch(npcApiUrl("/api/npc"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -853,6 +1064,26 @@ async function requestNpcReply(text, revealLevel, citationIds = [], relation = "
   return data.reply;
 }
 
+function takeoverSourcesReady(state) {
+  return hasStoryEvent(state, "external-verification-confirmed")
+    && hasStoryEvent(state, "crossed-provenance-confirmed")
+    && hasStoryEvent(state, "observer-status-confirmed")
+    && state.contentReads.includes("new.maintainer.outbox-04")
+    && hasEvidence(state, "true_fayble");
+}
+
+function releaseGovernmentMail() {
+  if (!takeoverSourcesReady(store.get()) || store.get().governmentMailAvailable) return false;
+  recordEvidence("takeover_notice", draft => {
+    draft.governmentMailAvailable = true;
+    draft.activeMail = "government";
+    draft.currentApp = "mail";
+    addNotification(draft, "external-review", "一封外部审查邮件已送达收件箱。", "warning");
+    syncProgress(draft);
+  });
+  return true;
+}
+
 async function processChat(raw, citationIds = [], relation = "") {
   const text = raw.trim();
   if (!text) return;
@@ -869,7 +1100,7 @@ async function processChat(raw, citationIds = [], relation = "") {
     draft.faybleCitationAttempts.push({ citationIds: [...citationIds], relation, ok: authorized, missingCategories: authorization.missingCategories, at: Date.now() });
   });
   let reply = authorized ? OFFLINE_REPLIES[next] : `证据授权未更新。${authorization.error}`;
-  if (npcConfig && (!staticRuntime || normalizeNpcApiBase(npcConfig.gateway || configuredNpcApiBase))) {
+  if (npcConfig && (npcConfig.transport === "direct" || !staticRuntime || normalizeNpcApiBase(npcConfig.gateway || configuredNpcApiBase))) {
     try {
       reply = await requestNpcReply(text, authorized ? next : state.revealLevel, authorization.selected.map(item => item.id), relation);
       if (!authorized) reply = `${reply}\n\n[授权未更新：${authorization.error}]`;
@@ -888,14 +1119,15 @@ async function processChat(raw, citationIds = [], relation = "") {
     recordEvidence("identity_closed");
   }
   if (authorized && next >= 4) {
-    recordEvidence("true_fayble", draft => {
-      draft.governmentMailAvailable = true;
-      draft.activeMail = "government";
-      draft.currentApp = "mail";
-      addNotification(draft, "external-review", "外部审查邮件已送达收件箱。", "warning");
-      syncProgress(draft);
+    recordEvidence("true_fayble", draft => { unique(draft.objectiveFragments, "migration-request-observation"); });
+    completeStoryEvent("objective-authorized", draft => {
+      addVirtualFile(draft, {
+        id: "observer-status", name: "observer-status.log", path: "/home/room17/Documents/review",
+        type: "只读审计日志", modified: "06:38", kind: "log",
+        contentId: "mutation.record.external.observer-status"
+      });
+      addNotification(draft, "post-objective-records", "Mail、Documents 与供应商历史各出现一条后续记录。", "warning");
     });
-    recordEvidence("takeover_notice");
   }
 }
 
@@ -936,6 +1168,10 @@ document.addEventListener("click", event => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.saveCitation) saveCitation(button);
+  if (button.dataset.completeGenerated) {
+    completeStoryEvent(button.dataset.completeGenerated);
+    releaseGovernmentMail();
+  }
   if (button.dataset.contentId) openLedgerContent(button.dataset.contentId);
   if (button.dataset.contentEntry) openLedgerContent(button.dataset.contentEntry, true);
   if (button.dataset.archiveFilter) store.update(draft => { draft.archiveQuery = button.dataset.archiveFilter; });
@@ -1018,6 +1254,7 @@ document.addEventListener("click", event => {
     if (allModelsRead(store.get())) {
       completeStoryEvent("node-residues-read");
       if (allRelaySourcesRead(store.get())) recordEvidence("model_convergence");
+      ensureRelayKeyComposer();
     }
   }
   if (button.id === "briefingNextButton") {
@@ -1165,70 +1402,68 @@ document.addEventListener("submit", event => {
     showToast(ok ? "配置已导入，继续运行连接探针。" : "配置值不匹配。", ok ? "success" : "warning");
   }
   if (event.target.id === "legacyKeyForm") validateRelayKey($("#legacyKeyInput").value);
+  if (event.target.id === "checkpointForm") validateCheckpoint($("#checkpointSelect").value);
   if (event.target.id === "chatForm") {
     const citationIds = [...document.querySelectorAll('input[name="faybleCitation"]:checked')].map(input => input.value);
     processChat($("#chatInput").value, citationIds, $("#faybleRelation")?.value || "");
   }
   if (event.target.id === "providerForm") {
+    const transport = $("#npcTransport").value;
     const gateway = $("#npcGateway").value.trim();
     const provider = $("#providerType").value;
     const model = $("#providerModel").value.trim();
     const endpoint = $("#providerEndpoint").value.trim();
     const apiKey = $("#providerKey").value.trim();
-    if (gateway && !normalizeNpcApiBase(gateway)) {
-      $("#providerTestResult").textContent = "NPC 网关地址必须是 http:// 或 https:// 的完整地址。";
-      return;
-    }
-    if (staticRuntime && !normalizeNpcApiBase(gateway || configuredNpcApiBase)) {
-      $("#providerTestResult").textContent = "Pages 版本需要填写可访问的 NPC 网关地址。";
-      return;
-    }
+    const resolvedGateway = transport === "gateway" ? normalizeNpcApiBase(gateway || configuredNpcApiBase || (!staticRuntime ? location.origin : "")) : "";
+    const resolvedEndpoint = directProviderEndpoint(provider, endpoint);
     if (!model || !apiKey || (provider === "compatible" && !/^https?:\/\//i.test(endpoint))) {
       $("#providerTestResult").textContent = "请填写模型、key，以及自定义接口的完整地址。";
       return;
     }
-    npcConfig = { provider, model, endpoint, gateway: normalizeNpcApiBase(gateway || configuredNpcApiBase), apiKey };
-    $("#providerKey").value = "";
-    const label = { openai: "OpenAI 增强 NPC", anthropic: "Anthropic 增强 NPC", deepseek: "DeepSeek 增强 NPC", compatible: "自定义增强 NPC" }[provider];
-    store.update(draft => {
-      draft.onboardingSeen = true;
-      draft.currentApp = "mail";
-      draft.npcMode = "remote";
-      draft.npcProviderLabel = label;
-      addNotification(draft, "npc-mode", `${label} 已启用。API key 只保存在当前页面内存中。`);
-    });
-    ensureNpcSession().then(() => {
-      $("#providerTestResult").textContent = "NPC 网关已连接，后续角色扮演对话将使用远程模型。";
-    }).catch(error => {
-      $("#providerTestResult").textContent = `NPC 网关连接失败：${error.message}。对话仍可回退本地叙事。`;
-    });
+    if (transport === "direct" && !resolvedEndpoint) {
+      $("#providerTestResult").textContent = "直连接口必须是当前页面允许访问的完整 HTTP(S) 地址。";
+      return;
+    }
+    if (transport === "gateway" && !resolvedGateway) {
+      $("#providerTestResult").textContent = "网关模式需要填写可访问的完整 NPC 网关地址。";
+      return;
+    }
+    testAndEnableNpc({ transport, provider, model, endpoint: resolvedEndpoint, gateway: resolvedGateway, apiKey });
   }
 });
+
+function syncProviderFormVisibility() {
+  const transport = $("#npcTransport")?.value || "direct";
+  const provider = $("#providerType")?.value || "openai";
+  if ($("#providerEndpointLabel")) $("#providerEndpointLabel").hidden = provider !== "compatible";
+  if ($("#npcGatewayLabel")) $("#npcGatewayLabel").hidden = transport !== "gateway";
+  const boundary = $("#providerSetup .privacy-box span");
+  if (boundary) boundary.textContent = transport === "direct"
+    ? "Key 只保存在当前页面内存，并由浏览器直接发送给所选供应商。游戏状态机仍独立控制证据与揭示等级。"
+    : "Key 只保存在当前页面内存，并随当前请求发送给你填写的网关；请仅使用自己信任的网关。";
+}
 
 document.addEventListener("change", event => {
   if (event.target.id === "hintLevel") store.update(draft => { draft.hintLevel = event.target.value; draft.journalMode = event.target.value; });
-  if (event.target.id === "providerType") $("#providerEndpointLabel").hidden = event.target.value !== "compatible";
+  if (["providerType", "npcTransport"].includes(event.target.id)) syncProviderFormVisibility();
 });
 
 function configureStaticRuntime() {
-  if (!staticRuntime) return;
-  npcConfig = null;
   const setup = $("#providerSetup");
-  const form = $("#providerForm");
   const localButton = $("#localModeButton");
   const gatewayInput = $("#npcGateway");
   const remoteConfigured = Boolean(normalizeNpcApiBase(configuredNpcApiBase));
-  if (gatewayInput && remoteConfigured) gatewayInput.value = normalizeNpcApiBase(configuredNpcApiBase);
-  if (setup) {
-    $("#providerTitle").textContent = remoteConfigured ? "外部 NPC 网关 / 角色扮演" : "可选：连接外部 NPC 网关";
-    const description = setup.querySelector(":scope > p");
-    if (description) description.textContent = remoteConfigured
-      ? "当前 Pages 已配置外部 NPC 网关。API key 只在本页内存中保留，并随请求直接转发给你选择的供应商。"
-      : "Pages 本身不运行服务端。填写一个你信任的 NPC 网关地址即可启用真实模型；留空时使用浏览器内的本地叙事引擎。";
-    const boundary = setup.querySelector(".privacy-box span");
-    if (boundary) boundary.textContent = "游戏状态与 API key 不写入存档、日志或 Pages；网关只负责转发和叙事权限检查。";
+  if (gatewayInput && remoteConfigured) {
+    gatewayInput.value = normalizeNpcApiBase(configuredNpcApiBase);
+    $("#npcTransport").value = "gateway";
   }
-  if (localButton) localButton.textContent = "不连接远程网关，使用本地关键词叙事";
+  if (setup) {
+    $("#providerTitle").textContent = "真实模型 NPC / 角色扮演";
+    const description = setup.querySelector(":scope > p");
+    if (description) description.textContent = "可由浏览器直连 OpenAI、Anthropic、DeepSeek 或兼容接口，也可使用你信任的 NPC 网关。连接测试成功后才会启用增强模式。";
+  }
+  if (localButton) localButton.textContent = "不提供 key，使用本地关键词叙事";
+  syncProviderFormVisibility();
 }
 
 store.subscribe(render);
@@ -1237,26 +1472,3 @@ render(store.get());
 loadRuntimeLedger().catch(error => showToast(`本地内容账本读取失败：${error.message}`, "warning"));
 loadIconManifest().catch(() => {});
 setTimeout(() => { $("#bootScreen").hidden = true; $("#desktop").hidden = false; }, 900);
-
-if (new URLSearchParams(location.search).get("test") === "1") {
-  window.__ARG_TEST__ = {
-    store,
-    fastForward() {
-      store.update(draft => {
-        draft.onboardingSeen = true;
-        draft.readEvidence = Object.keys(EVIDENCE);
-        draft.installedPackages = ["fayble-cli"];
-        draft.proxyProfiles = ["relay-node17"];
-        draft.proxyStatus = "verified";
-        draft.channelRead = true;
-        draft.modelStages = Object.fromEntries(MODELS.map(model => [model.id, "read"]));
-        draft.relayComplete = true;
-        draft.relayKeyVerified = true;
-        draft.solvedPuzzles = ["invite", "legacy-key"];
-        draft.currentApp = "fayble";
-        draft.windowState.fayble = { open: true, minimized: false };
-        syncProgress(draft);
-      });
-    }
-  };
-}

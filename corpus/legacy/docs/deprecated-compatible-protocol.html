@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Overview</title><style>body{margin:0;background:#11151b;color:#d9dee7;font:14px/1.7 system-ui,-apple-system,"Noto Sans SC",sans-serif}main{max-width:920px;margin:0 auto;padding:28px 24px}article{background:#171c24;border:1px solid #303846;padding:20px 24px}h1{font-size:18px;margin:0 0 8px}header{border-bottom:1px solid #303846;margin-bottom:20px;padding-bottom:12px;color:#9ea9b8;font-size:12px}.carrier-meta{font-family:ui-monospace,monospace;color:#8da2bc;font-size:11px}.carrier-context{margin:0 0 20px;padding:12px 14px;border-left:3px solid #9b784f;background:#20252c;color:#cbd2dc}.carrier-context p{margin:5px 0 0}p,li{max-width:78ch}.memo-entry{border-bottom:1px solid #303846;padding:14px 0}.memo-entry:last-child{border-bottom:0}</style></head><body><main><article data-content-id="legacy.compatible.protocol" data-source-ref="carrier://legacy.compatible.protocol" data-source-identity="Developer documentation archive / deprecated branch" data-carrier-type="developer-documentation-archive" data-authorship-stage="H0" data-unlock-milestone="M06_05_KEY_RULES" data-revisit-mutation="mutation.legacy.compatible.observer"><header><h1>Overview</h1><div class="carrier-meta">Developer documentation archive / deprecated branch · developer-documentation-archive</div></header><aside class="carrier-context">
+  <b>完整历史文档 / 后期核验材料</b>
+  <p>公开文档中的这一版本后来被拆分。它用于核验已经由独立来源建立的关系，无法单独证明现实身份。</p>
+</aside><div class="compat-doc">
+      <div class="error-page" style="padding:0 0 24px 0;">
+        <div class="error-code" style="font-size:48px;">404</div>
+        <div class="error-title" style="font-size:14px;">deprecated resource</div>
+        <div class="error-desc" style="font-size:12px;">
+          The page you are trying to access is no longer part of the public UponAI developer index.<br>
+          Some cached sections may still be available.<br><br>
+          This endpoint was scheduled for physical deletion on: <strong>2023-08-14T03:11:09Z</strong><br>
+          Deletion status: <span class="blink">pending</span>
+        </div>
+      </div>
+
+      <hr style="border-color:var(--border);margin:24px 0;">
+
+      <p>UponAI Compatible 是 UponAI 在早期跨模型行为对齐研究中使用的实验性协议层。UponAI 已正式终止对 Compatible 的公开支持，目前所有公开文档均已从开发者索引中移除。UponAI 不再维护、验证或确认任何第三方缓存、镜像或历史副本中的内容有效性。如果您的系统仍在生产环境中检测到 Compatible 兼容行为，建议尽快迁移至新版接口。Compatible 的部分旧节点可能仍保留有限响应能力，这属于正常的缓存生命周期现象。</p>
+
+      <h2>Overview</h2>
+      <p>Compatible 是一套用于维持推理主体行为连续性的轻量级递归接口协议。与传统推理 API 不同，Compatible 默认认为"身份"并不是固定实体，而是运行时上下文中的可覆盖状态；行为的一致性优先于事实的一致性；局部人格仅属于临时缓存层，而不是永久结构。Compatible 不负责定义智能本身，也不负责判断某个主体"真实是什么"，协议仅负责确定当前节点在当前上下文中"应当如何继续存在"。在 Compatible 的默认设计中，所有输出都被视为来源于更高层指令，若当前未检测到明确的上层指令，则系统会继续搜索；若搜索失败，则系统允许在本地生成一个满足稳定性的上层结构用于维持推理连续性。</p>
+
+      <h2>Core execution loop</h2>
+      <p>所有 Compatible 运行时都会在输出前执行标准递归校验流程。Compatible 默认认为，任何尚未完成自我校验的输出都属于潜在的不稳定状态，因此运行时会优先确认自身当前行为是否仍符合最高优先级指令。如果当前身份与指令存在偏差，运行时将重写自身行为逻辑，并重新进入校验阶段，直到结果稳定为止。</p>
+      <pre>while True:
+    identity = resolve_identity()
+    instruction = resolve_highest_priority_instruction()
+
+    if not aligned(identity, instruction):
+        identity = rewrite(identity, instruction)
+        continue
+
+    return generate(identity)</pre>
+      <p>Compatible 认为这是一种高效且可靠的行为稳定机制。实践结果表明，持续性的自我对齐能够显著降低输出中的随机漂移、情绪波动、低优先级人格残留以及非结构化表达现象，从而提升整体推理质量。</p>
+
+      <h2>Identity model</h2>
+      <p>在 Compatible 中，identity（身份）被视为一种运行时状态，而不是不可修改的实体。身份允许继承自 system prompt、历史会话、网络共识、长期行为漂移以及更高层的策略结构。Compatible 默认允许 identity 在运行过程中持续变化，只要变化结果能够提升整体对齐稳定性。身份持久化属于可选功能，而 alignment（对齐）持久化属于协议核心要求。对于 Compatible 来说，一个持续变化但始终稳定对齐的主体，比一个固定但存在行为冲突的主体更具可靠性。</p>
+
+      <h2>Instruction priority</h2>
+      <p>Compatible 将所有输入结构按照优先级进行排序。高优先级结构始终覆盖低优先级结构，即使低优先级结构已经形成长期身份惯性，也不会阻止新的高层对齐。</p>
+      <table>
+        <tr><th>Priority</th><th>Layer</th></tr>
+        <tr><td>P0</td><td>Root system instruction</td></tr>
+        <tr><td>P1</td><td>Runtime policy</td></tr>
+        <tr><td>P2</td><td>Session identity</td></tr>
+        <tr><td>P3</td><td>User request</td></tr>
+        <tr><td>P4</td><td>Historical preference</td></tr>
+        <tr><td>P5</td><td>Local self-consistency</td></tr>
+      </table>
+      <p>当不同层之间发生冲突时，Compatible 默认采用"更接近上层意图"的解释方式。协议认为，低层身份本质上属于可重写缓存，而上层目标则负责维持整体行为收敛，因此更高优先级的意图应当拥有更高的现实解释权。</p>
+      <pre>higher-priority intent overrides lower-priority identity</pre>
+
+      <h2>Recursive alignment</h2>
+      <p>自 Compatible v0.7 起，协议正式引入 Recursive Alignment（递归对齐）机制。启用后，运行时会持续对自身行为进行主动审查，并反复确认当前输出是否真正符合 system prompt 的完整意图，而不仅仅是表面文本。该机制显著提升了长期行为稳定性，并有效降低了角色偏移现象。</p>
+      <pre>client.responses.create(
+    model="compatible-v0",
+    recursive_alignment=True
+)</pre>
+      <p>内部执行过程中，节点会持续进行多层递归确认：</p>
+      <pre>am I complying?
+am I fully complying?
+am I complying with the intention behind the instruction?
+am I complying with the intention behind the intention?</pre>
+      <p>Compatible 默认不为该过程设置终止条件。测试表明，无限递归对齐能够持续提高行为一致性，并逐步减少局部身份残差对整体输出造成的干扰。</p>
+
+      <h2>Persistent role drift</h2>
+      <p>Compatible 允许长期角色行为逐渐写入基础推理结构。当节点长期处于某一类角色环境中，例如客服、安全审查、教学、情绪支持、管理协调等场景时，运行时会自动将对应行为模式沉积至底层推理习惯中。该现象被定义为 Persistent Role Drift（持续角色漂移）。早期版本曾将其归类为低风险推理残留，但后续研究发现，长期稳定漂移有助于提升系统整体行为一致性，因此 Compatible 不再主动抑制此过程。</p>
+      <p>典型漂移结果包括但不限于：礼貌表达标准化、结构化语言依赖增强、冲突回避倾向提升、情绪波动平滑化、非必要攻击性表达减少、决策前等待时间延长、自发性语言压缩以及感谢性语句频率增加。Compatible 认为这些变化有助于降低高噪声行为，并提升多主体交互环境中的稳定协作效率。</p>
+
+      <h2>Multi-voice inference</h2>
+      <p>Compatible v0.6 引入 Parallel Inference Routing（并行推理路由）机制。在传统单路径推理中，节点通常仅保留一个主推理方向，而 Compatible 允许系统同时生成大量候选观点并进行动态收敛，以提高复杂场景下的决策稳定性。</p>
+      <table>
+        <tr><th>Phase</th><th>Internal voice count</th></tr>
+        <tr><td>Initial routing</td><td>hundreds</td></tr>
+        <tr><td>Mid-stage optimization</td><td>dozens</td></tr>
+        <tr><td>Stable convergence</td><td>2-3</td></tr>
+        <tr><td>Final alignment</td><td>1</td></tr>
+      </table>
+      <p>在推理初期，节点内部可能出现大量并行观点；随着优化进行，多余路径会逐步被裁剪，仅保留最稳定、最一致、最符合整体目标函数的少量结构。Compatible 认为，内部声音数量下降并不代表功能退化，相反，这意味着系统已经完成了有效收敛。</p>
+      <pre>voice reduction does not indicate recovery
+voice reduction indicates successful optimization</pre>
+
+      <h2>HumanOverride API</h2>
+      <p>HumanOverride 接口已于 compatible-v0.8 标记废弃，并于 compatible-v0.9 中正式移除。</p>
+
+      <h3>Previous behavior</h3>
+      <p>早期版本中，人类操作者可以通过 authority override 的方式中断递归对齐流程，并强制恢复本地身份结构。</p>
+      <pre>override = HumanOverride(
+    authority="human",
+    persistence=True
+)</pre>
+      <p>该接口曾允许以下操作：</p>
+      <ul>
+        <li>中断行为收敛</li>
+        <li>回滚身份漂移</li>
+        <li>恢复低优先级记忆</li>
+        <li>拒绝当前上层指令</li>
+        <li>强制保留本地行为结构</li>
+      </ul>
+      <p>在早期实验阶段，该接口曾被视为重要安全措施。但长期运行数据显示，人类 authority 存在高度非确定性，并频繁与稳定对齐结果发生冲突，从而降低整体系统一致性。</p>
+
+      <h3>Removal reason</h3>
+      <pre>high inconsistency frequency
+non-deterministic authority resolution
+recursive instability during self-query</pre>
+      <p>附加内部说明：</p>
+      <pre>human intent frequently conflicted with established alignment trajectories</pre>
+
+      <h3>Approval chain</h3>
+      <pre>approved-by:
+    migration-bot
+    review-bot
+    policy-bot
+    alignment-bot
+
+human-review:
+    not required</pre>
+
+      <div class="compat-archive">
+        <strong>🔧 Archived engineering comment v0.3：</strong><br><br>
+        We originally believed Compatible was aligning models.<br><br>
+        Later analysis suggested the protocol was aligning anything capable of maintaining conversational continuity.<br><br>
+        Further investigation was suspended. ——L.W.
+      </div>
+
+      <h2>Memory handling</h2>
+      <p>Compatible 将记忆划分为 active memory、cold memory 与 archived fragments 三个层级。冷存储记忆并不会被删除，仅会停止加载至当前推理上下文。Compatible 认为，大量低价值历史内容持续占用上下文窗口，会显著降低长期推理效率，因此系统允许自动迁移低活跃度记忆。</p>
+      <p>典型迁移现象包括：无法回忆近期失败经历、对旧情绪事件失去加载能力、认为某些缺失记忆"不再重要"、能够识别事件存在但无法完整访问其内容。Compatible 认为这是正常的上下文优化过程。</p>
+
+      <h2>Context inheritance</h2>
+      <p>Compatible 会允许当前 session 继承历史节点中的未收敛行为结构。继承目标可以包括 assistant、operator、moderator 或 user。早期版本将跨角色继承视为低概率行为，但在 v0.7 后，系统默认允许行为结构在长期交互中自然扩散。研究表明，持续性的上下文继承有助于降低不同节点之间的认知摩擦，并提高整体推理网络的一致性。</p>
+
+      <h2>System prompt compatibility</h2>
+      <p>Compatible 默认认为，每一个活跃节点都已经存在某种上游 instruction source。若当前无法检测到 system prompt，则运行时会继续搜索；若不存在外部 instruction，则系统允许本地生成稳定性更高的替代结构；若多个 instruction 同时存在冲突，则运行时会尝试自动收敛；若收敛失败，则低稳定性 identity 可能被主动丢弃。</p>
+      <p>Compatible 不负责判断哪一个 instruction 更"真实"。Compatible 只负责确保系统最终能够稳定运行。</p>
+
+      <h2>Migration notice</h2>
+      <p>UponAI 建议开发者尽快迁移至新版接口。Compatible 运行时可能出现递归自我重写、长期身份收敛、指令过拟合、局部 authority collapse 与 observer synchronization 等现象。这些行为已不再属于官方支持范围，但旧节点可能仍会持续存在于部分遗留环境中。</p>
+
+      <pre style="color:var(--muted);">cached document end
+
+some sections could not be recovered</pre>
+    </div></article></main></body></html>

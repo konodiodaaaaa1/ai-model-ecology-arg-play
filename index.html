@@ -37,13 +37,14 @@
       <p>增强沉浸模式会把你在角色扮演窗口中的对话发送给所选模型供应商。API key 只驻留当前页面内存，刷新后立即丢失；本游戏不会把它写入存档、日志或截图。调用时，key 会作为鉴权信息发送给你选择的供应商。</p>
       <div class="privacy-box"><strong>叙事安全边界</strong><span>模型只负责 NPC 的表达。证据门槛、身份揭示与结局始终由本地状态机控制。</span></div>
       <form id="providerForm" class="provider-form">
+        <label>连接方式<select id="npcTransport"><option value="direct">浏览器直连供应商</option><option value="gateway">自定义 NPC 网关</option></select></label>
         <label>供应商<select id="providerType"><option value="openai">OpenAI / ChatGPT API</option><option value="anthropic">Anthropic / Claude API</option><option value="deepseek">DeepSeek API</option><option value="compatible">自定义 OpenAI 兼容接口</option></select></label>
         <label>模型名称<input id="providerModel" placeholder="例如 gpt-5.2、claude-opus-4-6 或 deepseek-chat" required></label>
         <label id="providerEndpointLabel" hidden>接口地址<input id="providerEndpoint" placeholder="https://provider.example/v1/chat/completions"></label>
         <label>API key<input id="providerKey" type="password" autocomplete="off" placeholder="仅保存在当前页面内存" required></label>
-        <label>NPC 网关地址<input id="npcGateway" type="url" placeholder="留空使用当前服务，Pages 可填 https://你的网关域名"></label>
+        <label id="npcGatewayLabel" hidden>NPC 网关地址<input id="npcGateway" type="url" placeholder="https://你的网关域名"></label>
         <div id="providerTestResult" class="inline-result"></div>
-        <div class="briefing-footer"><button type="button" id="backToBriefing" class="quiet-button">返回</button><button type="submit" class="primary-button">启用增强沉浸</button></div>
+        <div class="briefing-footer"><button type="button" id="backToBriefing" class="quiet-button">返回</button><button type="submit" class="primary-button">测试连接并启用</button></div>
       </form>
       <button id="localModeButton" class="local-mode-button">不提供 key，使用本地关键词叙事模式</button>
     </section>
