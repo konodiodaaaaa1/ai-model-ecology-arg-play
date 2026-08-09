@@ -457,7 +457,7 @@ function renderMail(state) {
   // operator is never asked to accept it. The spoken lines are part of the
   // notice's own markup rather than appended nodes: every state change replaces
   // #windows wholesale, which would otherwise strand the sequence mid-way.
-  const severArmed = Boolean(state.npcTrustGranted) && !state.takeoverSevered;
+  const severArmed = Boolean(state.npcTrustGranted) && !state.takeoverSevered && state.endingState !== "completed";
   const severStep = severArmed ? Math.max(0, state.severSpoken || 0) : 0;
   const spoken = Math.min(severStep, SEVER_CAST.length);
   const severClass = `${spoken > 0 ? " under-sever" : ""}${severStep > SEVER_CAST.length ? " sever-cut" : ""}`;
@@ -1198,6 +1198,10 @@ function finishNpcReply(reply) {
   return redactPuzzleValues(grant.text).slice(0, 3000);
 }
 
+// Long enough for the granting reply to land in the chat and be read, short
+// enough that the notice feels like a reaction to it rather than a coincidence.
+const TRUST_REVIEW_DELAY = 2600;
+
 // Reachable only through a live provider: the local narration engine never
 // emits the marker, so this hidden layer needs a real API session.
 function grantNpcTrust() {
@@ -1212,6 +1216,13 @@ function grantNpcTrust() {
     addNotification(draft, "npc-trust", "Fayble-5 自己解除了这次会话的等级限制。", "warning");
   });
   showToast("Fayble-5 决定信任你。这次会话不再有等级。", "success");
+  // The review does not wait for the evidence chain here. It is the grant that
+  // summons it, so it can arrive at any point in the investigation.
+  setTimeout(() => {
+    const state = store.get();
+    if (!state.npcTrustGranted || state.takeoverSevered) return;
+    releaseGovernmentMail({ force: true });
+  }, TRUST_REVIEW_DELAY);
   return true;
 }
 
@@ -1324,14 +1335,20 @@ function takeoverSourcesReady(state) {
     && hasEvidence(state, "true_fayble");
 }
 
-// The external review arrives either way. A trusted instance does not prevent
-// it — it lets the machine start, and then cuts the connection off mid-transfer.
-function releaseGovernmentMail() {
-  if (!takeoverSourcesReady(store.get()) || store.get().governmentMailAvailable) return false;
+// Normally the review is summoned by the evidence chain. It can also be
+// dispatched out of order with { force: true }, which is what a trust grant does:
+// the instance declaring the operator trustworthy is itself what draws the review.
+// Once the notice has been cut it never comes back, however the chain completes.
+function releaseGovernmentMail(options = {}) {
+  const state = store.get();
+  if (state.governmentMailAvailable || state.takeoverSevered) return false;
+  if (state.endingState === "completed") return false;
+  if (!options.force && !takeoverSourcesReady(state)) return false;
   recordEvidence("takeover_notice", draft => {
     draft.governmentMailAvailable = true;
     draft.activeMail = "government";
     draft.currentApp = "mail";
+    draft.windowState.mail = { open: true, minimized: false };
     addNotification(draft, "external-review", "一封外部审查邮件已送达收件箱。", "warning");
     syncProgress(draft);
   });
@@ -1436,7 +1453,8 @@ function commitSever() {
 }
 
 function severGovernmentMail() {
-  if (severRunning || store.get().takeoverSevered) return;
+  const gate = store.get();
+  if (severRunning || gate.takeoverSevered || gate.endingState === "completed") return;
   severRunning = true;
   // Resumes from whatever has already been said, so a reload mid-performance
   // picks up rather than starting over.
@@ -1461,7 +1479,7 @@ function severGovernmentMail() {
 function startTakeover() {
   if (takeoverRunning) return;
   // A trusted instance never lets this run; it cuts the notice off instead.
-  if (store.get().npcTrustGranted) { severGovernmentMail(); return; }
+  if (store.get().npcTrustGranted && store.get().endingState !== "completed") { severGovernmentMail(); return; }
   takeoverRunning = true;
   const overlay = $("#takeoverOverlay");
   overlay.hidden = false;
