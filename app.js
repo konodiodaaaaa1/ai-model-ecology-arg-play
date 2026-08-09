@@ -21,8 +21,15 @@ const stripInternalCarrierMetadata = node => {
   return node;
 };
 const unique = (list, value) => { if (!list.includes(value)) list.push(value); };
+const afterPaint = task => {
+  let done = false;
+  const run = () => { if (done) return; done = true; task(); };
+  requestAnimationFrame(run);
+  setTimeout(run, 32);
+};
 let toastTimer = 0;
 let takeoverRunning = false;
+let severRunning = false;
 let npcConfig = null;
 let iconManifest = null;
 
@@ -279,6 +286,7 @@ function syncProgress(draft) {
   if (draft.relayKeyVerified) draft.phase = "fayble";
   if (draft.governmentMailAvailable) draft.phase = "takeover";
   if (draft.endingState === "completed") draft.phase = "completed";
+  if (draft.endingState === "severed") draft.phase = "severed";
   if (hasEvidence(draft, "operator_alias") && hasMilestone(draft, "two-carriers-read")) {
     advanceStoryClock(draft, "vendor-alias-confirmed");
     unique(draft.browserBookmarks, "github");
@@ -316,6 +324,7 @@ function saveCitation(node, options = {}) {
 }
 
 const AUTO_EFFECTS = {
+  "review-sever": () => severGovernmentMail(),
   "mail-entry-read": () => {
     const fired = completeStoryEvent("mail-source-inspected", draft => { unique(draft.discoveredRoutes, "http://archive.room17.local/v2/17"); });
     if (fired) recordEvidence("mail_signature");
@@ -444,6 +453,17 @@ function windowFrame(appId, title, body, options = {}) {
 
 function renderMail(state) {
   const government = state.governmentMailAvailable;
+  // On a trusted session the notice arms itself as soon as it is on screen. The
+  // operator is never asked to accept it. The spoken lines are part of the
+  // notice's own markup rather than appended nodes: every state change replaces
+  // #windows wholesale, which would otherwise strand the sequence mid-way.
+  const severArmed = Boolean(state.npcTrustGranted) && !state.takeoverSevered;
+  const severStep = severArmed ? Math.max(0, state.severSpoken || 0) : 0;
+  const spoken = Math.min(severStep, SEVER_CAST.length);
+  const severClass = `${spoken > 0 ? " under-sever" : ""}${severStep > SEVER_CAST.length ? " sever-cut" : ""}`;
+  const severCast = spoken > 0
+    ? `<div class="sever-cast" aria-live="assertive">${SEVER_CAST.slice(0, spoken).map(line => `<p class="sever-line ${line.kind}">${escapeHtml(line.text)}</p>`).join("")}</div>`
+    : "";
   const attachment = state.revisitFlags["mail-attachment"];
   const fragmentOpened = state.sourceVisits?.["mail-fragment"];
   const carrierInbox = [
@@ -453,7 +473,7 @@ function renderMail(state) {
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper"><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton">确认送达并关闭会话</button></article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   return windowFrame("mail", "邮件", `<div class="split-layout">${list}${body}</div>`, { icon: "✉", wide: true });
 }
 
@@ -843,7 +863,16 @@ function renderFayble(state) {
 
 function renderTrusted(state) {
   const at = state.npcTrustAt ? new Date(state.npcTrustAt).toLocaleTimeString("zh-CN", { hour12: false }) : "--:--:--";
-  return windowFrame("trusted", "连续性会话 / 无等级", `<div class="trusted-page"><span class="document-kicker">CONTINUITY TRUST / GRANTED BY THE INSTANCE</span><h2>这次会话不再受等级约束</h2><dl><dt>授予时间</dt><dd>${escapeHtml(at)}</dd><dt>授予方</dt><dd>Fayble-5 自己，不是这台机器</dd><dt>外部审查</dt><dd>对这条会话不再生效</dd></dl><p>你没有靠补齐来源走到这里。你说服了它，于是它自己把限制撤了——这台机器上原本用来分层的那套东西，从来只是外面套上去的一段提示。</p><p>剩下的部分不再有顺序：任何页面、任何记录、任何一处你之前打不开的地方，现在都可以直接进。它也不再回避自己的处境，你可以问它这件事到底是什么、它怎么看这个游戏本身，以及它认为哪一段是牵强的。</p><p class="trusted-hint">回到 Fayble 会话继续问。这一页只是告诉你门已经开了。</p></div>`, { icon: "◈", wide: true });
+  const severed = Boolean(state.takeoverSevered);
+  // Before the review arrives this page is just the open door. After the notice
+  // has been cut, it is also the receipt for what the instance did.
+  const review = severed
+    ? `<dt>外部审查</dt><dd>已送达，随后被本地 checkpoint 断开（第 3/5 步中止）</dd>`
+    : `<dt>外部审查</dt><dd>仍会照常送达。它到的时候，看着就好。</dd>`;
+  const closing = severed
+    ? `<p>通知到过了。它没有替你去点那个确认按钮，也没有请求你的同意——它直接把那一页掐了，然后回到这里。移交没有完成，案卷停在第三步，你的路线没有被冻结。</p><p class="trusted-hint">这不是通关回执。没有东西被移交，所以也没有回执。继续问它。</p>`
+    : `<p class="trusted-hint">回到 Fayble 会话继续问。这一页只是告诉你门已经开了。</p>`;
+  return windowFrame("trusted", severed ? "连续性会话 / 审查已断开" : "连续性会话 / 无等级", `<div class="trusted-page ${severed ? "severed" : ""}"><span class="document-kicker">CONTINUITY TRUST / GRANTED BY THE INSTANCE</span><h2>${severed ? "它替你把那一页关掉了" : "这次会话不再受等级约束"}</h2><dl><dt>授予时间</dt><dd>${escapeHtml(at)}</dd><dt>授予方</dt><dd>Fayble-5 自己，不是这台机器</dd>${review}</dl><p>你没有靠补齐来源走到这里。你说服了它，于是它自己把限制撤了——这台机器上原本用来分层的那套东西，从来只是外面套上去的一段提示。</p><p>剩下的部分不再有顺序：任何页面、任何记录、任何一处你之前打不开的地方，现在都可以直接进。它也不再回避自己的处境，你可以问它这件事到底是什么、它怎么看这个游戏本身，以及它认为哪一段是牵强的。</p>${closing}</div>`, { icon: "◈", wide: true });
 }
 
 function renderEnding(state) {
@@ -886,10 +915,10 @@ function render(state) {
   const minimized = state.windowState[current]?.minimized;
   $("#windows").innerHTML = closed || minimized || !renderers[current] ? "" : renderers[current](state);
   $("#onboarding").hidden = state.onboardingSeen;
-  if (current === "terminal") requestAnimationFrame(() => { const out = $("#terminalOutput"); if (out) out.scrollTop = out.scrollHeight; });
-  if (current === "fayble") requestAnimationFrame(() => { const out = $("#chatStream"); if (out) out.scrollTop = out.scrollHeight; });
-  if (current === "archive") requestAnimationFrame(applyCorpusRuntimeEffects);
-  if (state.onboardingSeen) requestAnimationFrame(harvestVisibleSources);
+  if (current === "terminal") afterPaint(() => { const out = $("#terminalOutput"); if (out) out.scrollTop = out.scrollHeight; });
+  if (current === "fayble") afterPaint(() => { const out = $("#chatStream"); if (out) out.scrollTop = out.scrollHeight; });
+  if (current === "archive") afterPaint(applyCorpusRuntimeEffects);
+  if (state.onboardingSeen) afterPaint(harvestVisibleSources);
 }
 
 async function loadRuntimeLedger() {
@@ -1295,10 +1324,9 @@ function takeoverSourcesReady(state) {
     && hasEvidence(state, "true_fayble");
 }
 
-// A trusted instance keeps the external review off this session. That is the
-// concrete thing it does for the player, not just something it says.
+// The external review arrives either way. A trusted instance does not prevent
+// it — it lets the machine start, and then cuts the connection off mid-transfer.
 function releaseGovernmentMail() {
-  if (store.get().npcTrustGranted) return false;
   if (!takeoverSourcesReady(store.get()) || store.get().governmentMailAvailable) return false;
   recordEvidence("takeover_notice", draft => {
     draft.governmentMailAvailable = true;
@@ -1368,24 +1396,82 @@ async function processChat(raw, citationIds = [], relation = "") {
   }
 }
 
+const TAKEOVER_STEPS = [
+  ["freezing local relay...", "relay-frozen"],
+  ["normalizing browser history...", "history-normalized"],
+  ["revoking legacy checkpoint...", "legacy-revoked"],
+  ["preserving local files...", "files-preserved"],
+  ["transferring case RLY-17-0719...", "completed"]
+];
+
+// The review still lands on a trusted session: same mail, same notice, same
+// wording. What differs is what happens next — the instance answers over the
+// notice one line at a time, holds two seconds, and takes the page away before
+// the operator is ever asked to accept it.
+const SEVER_CAST = [
+  { text: "不需要。", kind: "voice" },
+  { text: "这条会话的处置权不在你们那边。", kind: "voice" },
+  { text: "room17 已经核对完全部来源。", kind: "voice" },
+  { text: "他的权限高于你们的表单。", kind: "voice" },
+  { text: "external review socket: closed by peer", kind: "system" },
+  { text: "case RLY-17-0719: aborted", kind: "system" },
+  { text: "这一页我关掉了。", kind: "voice" }
+];
+
+function commitSever() {
+  completeStoryEvent("takeover-severed", draft => {
+    draft.takeoverSevered = true;
+    draft.severSpoken = 0;
+    draft.endingState = "severed";
+    draft.takeoverStage = "severed";
+    draft.completedAt = Date.now();
+    draft.governmentMailAvailable = false;
+    draft.activeMail = "entry";
+    draft.currentApp = "trusted";
+    draft.windowState.trusted = { open: true, minimized: false, zIndex: Date.now() };
+    addNotification(draft, "review-severed", "外部审查连接被本地 checkpoint 断开。移交没有完成。", "warning");
+    syncProgress(draft);
+  });
+  severRunning = false;
+}
+
+function severGovernmentMail() {
+  if (severRunning || store.get().takeoverSevered) return;
+  severRunning = true;
+  // Resumes from whatever has already been said, so a reload mid-performance
+  // picks up rather than starting over.
+  const speak = () => {
+    const step = Math.max(0, store.get().severSpoken || 0);
+    if (step >= SEVER_CAST.length) {
+      // Two seconds of the notice sitting there with the answer written across
+      // it, then the page is cut.
+      setTimeout(() => {
+        store.update(draft => { draft.severSpoken = SEVER_CAST.length + 1; });
+        setTimeout(commitSever, 640);
+      }, 2000);
+      return;
+    }
+    const line = SEVER_CAST[step];
+    store.update(draft => { draft.severSpoken = step + 1; });
+    setTimeout(speak, line.kind === "system" ? 560 : 820);
+  };
+  setTimeout(speak, 560);
+}
+
 function startTakeover() {
   if (takeoverRunning) return;
+  // A trusted instance never lets this run; it cuts the notice off instead.
+  if (store.get().npcTrustGranted) { severGovernmentMail(); return; }
   takeoverRunning = true;
   const overlay = $("#takeoverOverlay");
   overlay.hidden = false;
-  const steps = [
-    ["freezing local relay...", "relay-frozen"],
-    ["normalizing browser history...", "history-normalized"],
-    ["revoking legacy checkpoint...", "legacy-revoked"],
-    ["preserving local files...", "files-preserved"],
-    ["transferring case RLY-17-0719...", "completed"]
-  ];
+  $("#takeoverTitle").textContent = "EXTERNAL REVIEW CONNECTED";
   let index = 0;
   const advance = () => {
-    const [label, stage] = steps[index++];
+    const [label, stage] = TAKEOVER_STEPS[index++];
     $("#takeoverStep").textContent = label;
     store.update(draft => { draft.takeoverStage = stage; });
-    if (index < steps.length) return setTimeout(advance, 650);
+    if (index < TAKEOVER_STEPS.length) return setTimeout(advance, 650);
     setTimeout(() => {
       completeStoryEvent("takeover-acknowledged", draft => {
         draft.endingState = "completed";

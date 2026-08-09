@@ -608,6 +608,8 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .trusted-page dd { margin: 0; }
 .trusted-page p { margin: 0; color: #c4cec7; font-size: 13px; line-height: 1.7; }
 .trusted-page .trusted-hint { color: var(--muted); font-size: 11px; }
+.trusted-page.severed dl { border-left-color: var(--red); }
+.trusted-page.severed h2 { color: #e4ded1; }
 .prompt-chips { display: flex; gap: 7px; padding: 0 22px 10px; overflow-x: auto; }
 .prompt-chips button { flex: 0 0 auto; padding: 7px 10px; border: 1px solid #46524c; border-radius: 14px; background: transparent; color: #b6c0ba; cursor: pointer; font-size: 11px; }
 .fayble-page form { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px 22px 18px; border-top: 1px solid var(--line); }
@@ -659,6 +661,28 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .toast[data-tone="warning"] { border-left-color: var(--red); }
 .takeover-overlay { position: fixed; inset: 0; z-index: 220; display: grid; place-content: center; gap: 12px; background: #080a09; color: #d7857b; text-align: center; }
 .scanline { display: none; }
+
+/* The instance answering over the review notice: each line lands hard, the
+   notice drains behind it, then the whole page is cut. */
+.government-paper.under-sever { position: relative; overflow: hidden; filter: grayscale(.55) contrast(.82); transition: filter .9s ease; }
+.government-paper.under-sever > *:not(.sever-cast) { opacity: .18; transition: opacity .8s ease; }
+.sever-cast { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: clamp(24px, 6vw, 64px); pointer-events: none; }
+.sever-line { margin: 0; color: #1b1f1d; font: 400 clamp(24px, 4.4vw, 52px)/1.14 Georgia, "Songti SC", serif; letter-spacing: -.01em; animation: sever-strike .34s cubic-bezier(.2, .9, .2, 1) 1 both; }
+.sever-line.system { color: #8a3f34; font: 400 clamp(11px, 1.5vw, 15px)/1.4 "SFMono-Regular", Consolas, monospace; letter-spacing: .04em; animation-duration: .18s; }
+.government-paper.sever-cut { animation: sever-cut .6s steps(3) 1 both; }
+@keyframes sever-strike {
+  from { opacity: 0; transform: translateY(14px) scale(.965); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sever-cut {
+  0% { opacity: 1; transform: none; }
+  40% { opacity: 1; transform: scaleY(1.008); filter: brightness(2.1) grayscale(1); }
+  70% { opacity: .5; transform: scaleY(.06); filter: brightness(3) grayscale(1); }
+  100% { opacity: 0; transform: scaleY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sever-line, .government-paper.sever-cut { animation-duration: .01ms; }
+}
 .horror-stage-2 .model-card-shell.accent-red .model-card.read:hover { animation: boundary-jolt .42s steps(2) 1; }
 .horror-stage-2 .model-card-shell.accent-blue .model-card.read { background-image: repeating-linear-gradient(0deg, transparent 0 16px, rgba(116,168,192,.045) 17px); }
 .horror-stage-2 .model-card-shell.accent-green .model-card.read h3 { text-shadow: 1px 0 rgba(143,200,154,.4), 3px 0 rgba(143,200,154,.13); }

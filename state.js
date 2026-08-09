@@ -83,6 +83,8 @@ export const DEFAULT_STATE = Object.freeze({
   revealLevel: 0,
   npcTrustGranted: false,
   npcTrustAt: null,
+  takeoverSevered: false,
+  severSpoken: 0,
   objectiveFragments: [],
   governmentMailAvailable: false,
   activeMail: "entry",
@@ -207,6 +209,9 @@ function normalize(candidate) {
   next.relayKeyVerified = Boolean(next.relayKeyVerified);
   next.npcTrustGranted = Boolean(next.npcTrustGranted);
   next.npcTrustAt = typeof next.npcTrustAt === "number" ? next.npcTrustAt : null;
+  next.takeoverSevered = Boolean(next.takeoverSevered);
+  next.severSpoken = Number.isInteger(next.severSpoken) && next.severSpoken >= 0 ? next.severSpoken : 0;
+  next.endingState = ["inactive", "completed", "severed"].includes(next.endingState) ? next.endingState : "inactive";
   next.selectedCheckpoint = typeof next.selectedCheckpoint === "string" ? next.selectedCheckpoint : "";
   next.checkpointHandshakeComplete = Boolean(next.checkpointHandshakeComplete);
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";

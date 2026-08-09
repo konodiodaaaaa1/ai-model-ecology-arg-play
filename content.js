@@ -12,7 +12,8 @@ export const VIEW_META = {
 
 export const PHASE_LABELS = {
   entry: "维护者缺席", trace: "镜像追踪", archive: "异常归档", channel: "频道恢复",
-  relay: "残留路由", fayble: "身份核验", takeover: "外部接管", completed: "会话关闭"
+  relay: "残留路由", fayble: "身份核验", takeover: "外部接管", completed: "会话关闭",
+  severed: "审查连接已断"
 };
 
 export const EVIDENCE = {
