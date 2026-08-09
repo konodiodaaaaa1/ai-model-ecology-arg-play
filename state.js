@@ -81,6 +81,8 @@ export const DEFAULT_STATE = Object.freeze({
   faybleCitationAttempts: [],
   revealState: "locked",
   revealLevel: 0,
+  npcTrustGranted: false,
+  npcTrustAt: null,
   objectiveFragments: [],
   governmentMailAvailable: false,
   activeMail: "entry",
@@ -162,7 +164,8 @@ export function getUnlocks(state) {
     relay: hasArtifact(state, "relay-console"),
     keyComposer: hasMilestone(state, "key-rules-recovered"),
     fayble: hasArtifact(state, "fayble-session"),
-    receipt: hasArtifact(state, "transfer-receipt")
+    receipt: hasArtifact(state, "transfer-receipt"),
+    trustedSession: hasArtifact(state, "trusted-session")
   };
 }
 
@@ -202,6 +205,8 @@ function normalize(candidate) {
   next.activeProxyProfile = typeof next.activeProxyProfile === "string" ? next.activeProxyProfile : null;
   next.proxyStatus = ["offline", "probed", "verified"].includes(next.proxyStatus) ? next.proxyStatus : "offline";
   next.relayKeyVerified = Boolean(next.relayKeyVerified);
+  next.npcTrustGranted = Boolean(next.npcTrustGranted);
+  next.npcTrustAt = typeof next.npcTrustAt === "number" ? next.npcTrustAt : null;
   next.selectedCheckpoint = typeof next.selectedCheckpoint === "string" ? next.selectedCheckpoint : "";
   next.checkpointHandshakeComplete = Boolean(next.checkpointHandshakeComplete);
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";

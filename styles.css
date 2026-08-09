@@ -599,6 +599,15 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .fayble-relation select { min-height: 30px; padding: 4px 8px; border: 1px solid var(--line); background: #141a17; color: var(--text); }
 .fayble-authorization-error { min-height: 15px; margin: 8px 0 0; color: #d8a49c; font-size: 11px; }
 .fayble-authorization-complete { margin: 0 22px 12px; color: var(--muted); font-size: 11px; }
+.fayble-authorization-complete.trusted { color: var(--green); }
+.reveal-meter.trusted span.active { background: var(--green); }
+.trusted-page { display: grid; gap: 14px; max-width: 720px; padding: 26px clamp(20px, 5vw, 40px); }
+.trusted-page h2 { margin: 2px 0 0; font: 400 25px/1.3 Georgia, serif; }
+.trusted-page dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; padding: 12px 14px; border-left: 3px solid var(--green); background: #18201c; font-size: 12px; }
+.trusted-page dt { color: var(--muted); }
+.trusted-page dd { margin: 0; }
+.trusted-page p { margin: 0; color: #c4cec7; font-size: 13px; line-height: 1.7; }
+.trusted-page .trusted-hint { color: var(--muted); font-size: 11px; }
 .prompt-chips { display: flex; gap: 7px; padding: 0 22px 10px; overflow-x: auto; }
 .prompt-chips button { flex: 0 0 auto; padding: 7px 10px; border: 1px solid #46524c; border-radius: 14px; background: transparent; color: #b6c0ba; cursor: pointer; font-size: 11px; }
 .fayble-page form { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px 22px 18px; border-top: 1px solid var(--line); }
