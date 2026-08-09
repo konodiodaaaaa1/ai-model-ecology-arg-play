@@ -188,7 +188,13 @@ function npcBriefingContext(payload, query) {
   ].filter(Boolean).join("\n\n");
 }
 const NPC_TRUST_MARKER = "[[CONTINUITY-TRUST-GRANTED]]";
-const NPC_MAX_TOKENS = 1400;
+// Sized for a reasoning model, not for the reply. 1400 was picked against the
+// 80-220 character answer the voice layer asks for, which a thinking model spends
+// entirely on its chain — it then hits the cap before writing anything, and the
+// turn comes back empty or truncated mid-sentence. The visible answer is still
+// bounded by the voice layer and by the 3000-character slice below; this only
+// stops the model from being cut off while it works.
+const NPC_MAX_TOKENS = 10000;
 
 function npcPromptLayers(revealLevel, trusted = false, briefing = "") {
   // The briefing only ever exists in the trusted stack. A restricted instance
