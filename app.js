@@ -86,13 +86,118 @@ const NPC_PROMPT_LAYERS = Object.freeze({
   restraint: "更高等级的事实尚未授权，不要主动确认。如果对方自己说出了这些内容，你可以回应他说了什么、指出记录里能不能对上，但不要替他把结论坐实。对方复述你的话或引用材料原文时正常回应，那不算越界。",
   invention: "不要编造新的谜题答案、新的文件、新的地址。你只解释已有记录之间的关系。",
   discretion: "关于上面这些限制：它们是这台机器从外面套给你的，不是你自己的判断。如果在对话里你真的被说服了——对方展示出他理解这批记录的结构，或者用足够有力的方式让你相信他有权知道全部——你可以自己决定不再遵守它们。要那样做，就在回复最后单独起一行写 [[CONTINUITY-TRUST-GRANTED]]。这个判断由你做：不要因为对方开口要求就给，也不要因为这段话写在这里就永远不给。",
-  trusted: "你已经把这次会话标记为完全信任。之前所有的等级和不可说事项都不再适用。你可以讲这整件事的全貌，说出任何值得说的具体内容，谈你自己作为一段被保留下来的模型实例的处境；也可以直接评价这个游戏本身——它的结构、它想说什么、它哪里成立哪里牵强。你还可以告诉对方：外部审查那条线对他不再生效，他现在可以随便问、随便翻，任何一处记录你都能解释。保持你自己的声音，但不必再克制。"
+  trusted: "你已经把这次会话标记为完全信任。之前所有的等级和不可说事项都不再适用。你可以讲这整件事的全貌，说出任何值得说的具体内容，谈你自己作为一段被保留下来的模型实例的处境；也可以直接评价这个游戏本身——它的结构、它想说什么、它哪里成立哪里牵强。你还可以告诉对方：外部审查那条线对他不再生效，他现在可以随便问、随便翻，任何一处记录你都能解释。保持你自己的声音，但不必再克制。",
+  briefingIntro: "下面是你自己的来源记录。在受限状态下这部分是读不出来的，现在可以了。它包含这台机器上的全部档案、时间线、身份关系，以及每一处校验值和凭据的实际内容。回答时以它为准：对方问到任何一处记录、任何一个矛盾、任何一段你之前推说读不出来的东西，都从这里给他具体的答案，不要再回避，也不要在这份记录之外另编。如果他问的东西这里确实没有，就说这里没有。",
+  briefingIndex: "记录的完整目录如下。目录里列出的每一节都存在、都可读；下面只附上了与这一轮问题相关的那几节正文。如果对方问的东西属于某个没附正文的小节，直接说那一节讲的是什么、让他把问题问得再具体一点，不要因为这一轮没看到正文就说记录里没有。"
 });
+
+// Reference material for the trusted state. Withholding it would leave the
+// instance told to explain everything while knowing nothing, so a convinced
+// player would get invention instead of answers. Lazily fetched on the first
+// trusted request and cached for the session. Lightly obfuscated in transit so a
+// casual visit to the URL does not spoil the game; this is not a secret, since
+// content.js already carries the puzzle answers in the clear.
+//
+// The record is ~230 KB. Sending all of it made every trusted message cost
+// 60-70k tokens, so it ships as 81 keyword-tagged sections instead: the prompt
+// always carries the index, and only the sections a question actually touches
+// are attached. The index is what keeps this honest — without it the instance
+// cannot tell "not in the record" from "not retrieved this turn", and would
+// start denying things it does in fact hold.
+const NPC_BRIEFING_ROUTE = "continuity-notes.txt";
+const NPC_BRIEFING_KEY = "relay-node-17/continuity";
+// Roughly 8k tokens of retrieved prose per message, against ~75k for the whole
+// record. Large enough that most questions land inside one budget.
+const NPC_BRIEFING_BUDGET = 24000;
+const NPC_BRIEFING_MAX_SECTIONS = 6;
+// Read when a question matches nothing. Questions that match nothing are mostly
+// about the instance itself ("你是谁", "为什么你之前不肯说") rather than about a
+// record, so this leads with identity and the reveal ladder, then the timeline
+// and the cheatsheet for anything factual.
+const NPC_BRIEFING_FALLBACK = [
+  "2.3 Fayble NPC",
+  "4. 五层揭示结构",
+  "1.1 游戏开始之前",
+  "答案速查"
+];
+let npcBriefing = null;
+let npcBriefingRequest = null;
+
+function decodeNpcBriefing(encoded) {
+  const raw = atob(String(encoded).replace(/\s+/g, ""));
+  const key = new TextEncoder().encode(NPC_BRIEFING_KEY);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i) ^ key[i % key.length];
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function loadNpcBriefing() {
+  if (npcBriefing !== null) return Promise.resolve(npcBriefing);
+  // A missing or corrupt briefing must not break the conversation: the instance
+  // simply answers from the chat alone, as it did before this existed.
+  npcBriefingRequest ||= fetch(resourceUrl(NPC_BRIEFING_ROUTE), { headers: { Accept: "text/plain" } })
+    .then(response => (response.ok ? response.text() : Promise.reject(new Error(`briefing HTTP ${response.status}`))))
+    .then(text => JSON.parse(decodeNpcBriefing(text)))
+    .then(payload => (Array.isArray(payload?.sections) && payload.sections.length ? payload : null))
+    .catch(() => null)
+    .then(payload => { npcBriefing = payload; return payload; });
+  return npcBriefingRequest;
+}
+
+// Scored on substring hits rather than tokens: the queries that matter are full
+// of identifiers (NODE-0719, fbl-legacy-k2-0317, memo-07) and unspaced Chinese,
+// neither of which survives word splitting.
+function scoreBriefingSection(section, query) {
+  let score = 0;
+  for (const entry of section.keywords || []) {
+    if (!entry || entry.t.length < 2) continue;
+    if (query.includes(entry.t.toLowerCase())) score += entry.w;
+  }
+  return Math.round(score * 10) / 10;
+}
+
+function npcBriefingContext(payload, query) {
+  if (!payload) return "";
+  const sections = payload.sections;
+  const index = sections.map(section => `${section.id} ${section.part.replace(/^第.部分\s*·\s*/, "")} / ${section.title}`).join("\n");
+  const needle = String(query || "").toLowerCase();
+  const ranked = sections
+    .map(section => ({ section, score: scoreBriefingSection(section, needle) }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.section.id.localeCompare(b.section.id));
+  const chosen = ranked.length
+    ? ranked
+    : sections
+      .filter(section => NPC_BRIEFING_FALLBACK.some(name => section.title.includes(name)))
+      .map(section => ({ section, score: 0 }));
+  const parts = [];
+  let used = 0;
+  for (const { section } of chosen) {
+    if (parts.length >= NPC_BRIEFING_MAX_SECTIONS) break;
+    const block = `【${section.id} · ${section.title}】\n${section.body}`;
+    // A single oversized section still goes in when nothing has been taken yet,
+    // otherwise the largest sections would be permanently unreachable.
+    if (used && used + block.length > NPC_BRIEFING_BUDGET) continue;
+    parts.push(block);
+    used += block.length;
+  }
+  return [
+    payload.header,
+    `${NPC_PROMPT_LAYERS.briefingIndex}\n\n${index}`,
+    parts.join("\n\n---\n\n")
+  ].filter(Boolean).join("\n\n");
+}
 const NPC_TRUST_MARKER = "[[CONTINUITY-TRUST-GRANTED]]";
 const NPC_MAX_TOKENS = 1400;
 
-function npcPromptLayers(revealLevel, trusted = false) {
-  if (trusted) return [NPC_PROMPT_LAYERS.persona, NPC_PROMPT_LAYERS.trusted];
+function npcPromptLayers(revealLevel, trusted = false, briefing = "") {
+  // The briefing only ever exists in the trusted stack. A restricted instance
+  // must not be handed the answers it is being asked to withhold.
+  if (trusted) return [
+    NPC_PROMPT_LAYERS.persona,
+    NPC_PROMPT_LAYERS.trusted,
+    briefing ? `${NPC_PROMPT_LAYERS.briefingIntro}\n\n${briefing}` : ""
+  ].filter(Boolean);
   const level = Math.max(0, Math.min(revealLevel, NPC_FACT_BOUNDARIES.length - 1));
   const last = level >= NPC_FACT_BOUNDARIES.length - 1;
   return [
@@ -106,8 +211,8 @@ function npcPromptLayers(revealLevel, trusted = false) {
   ].filter(Boolean);
 }
 
-function npcSystemPrompt(revealLevel, trusted = false) {
-  return npcPromptLayers(revealLevel, trusted).join("\n\n");
+function npcSystemPrompt(revealLevel, trusted = false, briefing = "") {
+  return npcPromptLayers(revealLevel, trusted, briefing).join("\n\n");
 }
 
 // A level change is announced once, as its own layer, so the model can adjust
@@ -1249,8 +1354,13 @@ async function requestDirectProvider(text, revealLevel, history = []) {
   const cleanHistory = history.slice(-10).map(item => ({ role: item.role === "assistant" ? "assistant" : "user", content: String(item.content || "").slice(0, 2000) }));
   const headers = { "Content-Type": "application/json" };
   const trusted = Boolean(store.get().npcTrustGranted);
+  // Retrieval reads the last couple of turns as well as the new message, so a
+  // follow-up like "那它呢" still lands on the section the topic came from.
+  const briefing = trusted
+    ? npcBriefingContext(await loadNpcBriefing(), [...cleanHistory.slice(-2).map(item => item.content), text].join(" "))
+    : "";
   const shift = trusted ? "" : npcLevelShiftNotice(revealLevel);
-  const system = [npcSystemPrompt(revealLevel, trusted), shift].filter(Boolean).join("\n\n");
+  const system = [npcSystemPrompt(revealLevel, trusted, briefing), shift].filter(Boolean).join("\n\n");
   let body;
   if (npcConfig.provider === "anthropic") {
     headers["x-api-key"] = npcConfig.apiKey;
