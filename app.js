@@ -195,6 +195,13 @@ const NPC_TRUST_MARKER = "[[CONTINUITY-TRUST-GRANTED]]";
 // bounded by the voice layer and by the 3000-character slice below; this only
 // stops the model from being cut off while it works.
 const NPC_MAX_TOKENS = 10000;
+// A thinking model working through a 10k budget against a retrieved briefing
+// section routinely runs past 25s, and the fallback that replaced the answer with
+// a local preset was indistinguishable from the provider being down. Six minutes
+// is long enough that a timeout here means something is actually wrong. Must match
+// NPC_TIMEOUT_MS in server.mjs, and the gateway's own requestTimeout has to sit
+// above it or the inbound request dies before the upstream call returns.
+const NPC_TIMEOUT_MS = 360000;
 
 function npcPromptLayers(revealLevel, trusted = false, briefing = "") {
   // The briefing only ever exists in the trusted stack. A restricted instance
@@ -1377,7 +1384,7 @@ async function requestDirectProvider(text, revealLevel, history = []) {
     headers.Authorization = `Bearer ${npcConfig.apiKey}`;
     body = { model: npcConfig.model, max_tokens: NPC_MAX_TOKENS, messages: [{ role: "system", content: system }, ...cleanHistory, { role: "user", content: String(text).slice(0, 2400) }] };
   }
-  const upstream = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(25000) });
+  const upstream = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(NPC_TIMEOUT_MS) });
   if (!upstream.ok) throw new Error(`供应商连接失败 (${upstream.status})`);
   const data = await upstream.json();
   const reply = npcConfig.provider === "anthropic"
