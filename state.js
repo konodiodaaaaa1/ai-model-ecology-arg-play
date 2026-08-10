@@ -114,6 +114,13 @@ export const DEFAULT_STATE = Object.freeze({
   hintLevel: "investigation",
   journalMode: "investigation",
   legacyLedgerCursor: 0,
+  downloadedClientPackages: [],
+  installedClients: [],
+  importedClients: [],
+  carrierReads: [],
+  activeClientPackage: "",
+  pendingCarrierId: "",
+  relayAdminOpen: false,
   migratedFrom: null,
   lastUpdated: 0
 });
@@ -192,9 +199,11 @@ const clone = value => JSON.parse(JSON.stringify(value));
 function normalize(candidate) {
   const next = { ...clone(DEFAULT_STATE), ...(candidate || {}) };
   next.unlockedViews = { ...DEFAULT_STATE.unlockedViews, ...(candidate?.unlockedViews || {}) };
-  for (const key of ["openedViews", "readEvidence", "unlockedArtifacts", "solvedPuzzles", "handledEvents", "terminalHistory", "searchQueries", "chat", "faybleCitationAttempts", "objectiveFragments", "virtualFiles", "trashItems", "browserTabs", "browserHistory", "browserBookmarks", "discoveredRoutes", "desktopArtifacts", "caseNotes", "contentDiscoveries", "contentReads", "contentMutations", "generatedContentRecords", "installedPackages", "packageChecks", "proxyProfiles", "proxyProbeLog", "cliSessions", "relayKeyAttempts", "desktopNotifications"]) {
+  for (const key of ["openedViews", "readEvidence", "unlockedArtifacts", "solvedPuzzles", "handledEvents", "terminalHistory", "searchQueries", "chat", "faybleCitationAttempts", "objectiveFragments", "virtualFiles", "trashItems", "browserTabs", "browserHistory", "browserBookmarks", "discoveredRoutes", "desktopArtifacts", "caseNotes", "contentDiscoveries", "contentReads", "contentMutations", "generatedContentRecords", "installedPackages", "packageChecks", "proxyProfiles", "proxyProbeLog", "cliSessions", "relayKeyAttempts", "desktopNotifications", "downloadedClientPackages", "installedClients", "importedClients", "carrierReads"]) {
     next[key] = Array.isArray(next[key]) ? next[key] : clone(DEFAULT_STATE[key]);
   }
+  if (!Array.isArray(candidate?.downloadedClientPackages)) next.downloadedClientPackages = [...next.installedClients];
+  if (!Array.isArray(candidate?.importedClients)) next.importedClients = [...next.installedClients];
   next.modelStages = next.modelStages && typeof next.modelStages === "object" ? next.modelStages : {};
   next.windowState = next.windowState && typeof next.windowState === "object" ? next.windowState : {};
   next.sourceVisits = next.sourceVisits && typeof next.sourceVisits === "object" ? next.sourceVisits : {};
@@ -217,6 +226,9 @@ function normalize(candidate) {
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";
   next.hintLevel = ["investigation", "immersive", "plot"].includes(next.hintLevel) ? next.hintLevel : "investigation";
   next.journalMode = next.journalMode || next.hintLevel;
+  next.activeClientPackage = typeof next.activeClientPackage === "string" ? next.activeClientPackage : "";
+  next.pendingCarrierId = typeof next.pendingCarrierId === "string" ? next.pendingCarrierId : "";
+  next.relayAdminOpen = Boolean(next.relayAdminOpen);
   next.version = 3;
   return next;
 }

@@ -530,8 +530,8 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .runtime-dipsik section { position: relative; padding-left: 20px; border-left: 1px solid #8a9a91; }
 .runtime-dipsik .runtime-branch { display: block; height: 1px; margin: 7px 0; background: #6d8175; opacity: .38; }
 .runtime-lunet { counter-reset: route-cost; background: #e6e2d7; }
-.runtime-lunet section { counter-increment: route-cost; display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 14px; border-bottom: 1px solid #aca38f; }
-.runtime-lunet section::after { content: "cost / " counter(route-cost) "7"; padding-top: 30px; color: #6b6250; font: 11px Consolas, monospace; text-align: right; }
+.runtime-lunet section { position: relative; counter-increment: route-cost; min-width: 0; padding-right: 106px; border-bottom: 1px solid #aca38f; }
+.runtime-lunet section::after { position: absolute; top: 30px; right: 0; content: "cost / " counter(route-cost) "7"; color: #6b6250; font: 11px Consolas, monospace; text-align: right; }
 .runtime-fayble { background: #e6e7e3; border-left: 6px solid #506c66; }
 .runtime-fayble[data-provenance="crossed"] { border-left-color: #9b4d45; }
 .runtime-fayble[data-provenance="crossed"] header::after { content: "provenance source changed after legacy handshake"; display: block; margin-top: 10px; color: #9b4d45; font: 11px Consolas, monospace; }
@@ -768,9 +768,255 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
   .snapshot-adapter header { align-items: flex-start; flex-direction: column; }
   .corpus-runtime, .corpus-runtime[class*="carrier-"] { padding: 20px 18px 30px; overflow-wrap: anywhere; }
   .corpus-runtime[class*="carrier-"] > article { padding: 22px 18px 30px; }
-  .runtime-lunet section { grid-template-columns: minmax(0, 1fr) 62px; gap: 8px; }
+  .runtime-lunet section { padding-right: 70px; }
   .runtime-groke .runtime-absence { width: 100%; }
   .horror-stage-3 .fayble-page::after { top: 90px; right: 12px; font-size: 10px; }
   .provider-form { grid-template-columns: 1fr; }
   .provider-form label, .provider-form label:nth-of-type(5), .provider-form #npcGatewayLabel, .provider-form .inline-result, .provider-form .briefing-footer { grid-column: 1; }
 }
+
+/* ── V2 SHARED CLIENT SHELL ──────────────────────────────────── */
+.relay-tabs { display: flex; gap: 0; border-bottom: 1px solid #2a3040; margin-bottom: 0; }
+.relay-tabs button { background: none; border: none; border-bottom: 2px solid transparent; color: #6d7a8c; cursor: pointer; font-size: 12px; padding: 8px 16px; }
+.relay-tabs button.active { border-bottom-color: #9bcf8d; color: #d2dce8; }
+
+/* Relay Admin */
+.relay-admin-page { padding: 0; overflow: auto; }
+.relay-admin-header { background: #12161e; border-bottom: 1px solid #2a3040; padding: 14px 20px; }
+.relay-admin-header h2 { color: #d2dce8; font-size: 15px; margin: 4px 0 0; }
+.relay-admin-header small { color: #5c6878; font-size: 11px; font-family: ui-monospace, monospace; }
+.relay-admin-section { border-bottom: 1px solid #1e2530; padding: 14px 20px; }
+.relay-admin-section header { align-items: baseline; display: flex; gap: 12px; margin-bottom: 10px; }
+.relay-admin-section header strong { color: #c5d0de; font-size: 13px; }
+.relay-admin-section header span, .relay-admin-section header small { color: #5c6878; font-size: 11px; }
+.relay-admin-table { border-collapse: collapse; font-size: 12px; width: 100%; }
+.relay-admin-table th { background: #12161e; color: #5c6878; font-size: 11px; font-weight: 500; padding: 6px 10px; text-align: left; }
+.relay-admin-table td { border-top: 1px solid #1e2530; color: #a8b4c4; padding: 6px 10px; }
+.relay-admin-table td code { background: #1a2030; border-radius: 3px; color: #7ba8c4; font-size: 11px; padding: 1px 5px; }
+.relay-admin-table .status-active { color: #7bc47b; }
+.relay-admin-table .status-degraded { color: #c4a857; }
+.relay-admin-table .status-review { color: #c47b50; }
+.relay-admin-table .status-archived { color: #5c6878; }
+.relay-admin-note { color: #5c6878; font-size: 11px; margin: 8px 0 0; }
+.cache-pkg-list { display: flex; flex-direction: column; gap: 6px; }
+.cache-pkg-row { align-items: center; background: #12161e; border: 1px solid #1e2530; border-radius: 6px; display: flex; justify-content: space-between; padding: 10px 14px; }
+.cache-pkg-row > div { align-items: center; display: flex; gap: 10px; }
+.cache-pkg-row strong { color: #c5d0de; display: block; font-size: 13px; }
+.cache-pkg-row small { color: #5c6878; font-size: 11px; font-family: ui-monospace, monospace; }
+.cache-pkg-row button { background: #1e3a2a; border: 1px solid #2e5a3e; border-radius: 5px; color: #7bc47b; cursor: pointer; font-size: 12px; padding: 5px 12px; white-space: nowrap; }
+.cache-pkg-row button:disabled { background: #1a2030; border-color: #2a3040; color: #3d5068; cursor: default; }
+.domain-link { padding: 0; border: 0; background: transparent; color: #7ba8c4; font: 11px/1.4 "SFMono-Regular", Consolas, monospace; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.domain-link:hover { color: #a8d2e8; }
+
+/* Software Center recovery packages */
+.software-catalog { max-width: 860px; }
+.software-package-detail { padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.client-package-catalog { margin-top: 20px; }
+.client-package-catalog > header { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.client-package-catalog h3 { margin: 4px 0 0; font-size: 18px; font-weight: 500; }
+.client-package-catalog header small { color: var(--muted); }
+.client-package-card { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid #4a4a4a; border-bottom-width: 0; background: #2b2b2b; }
+.client-package-card:first-of-type { border-radius: 5px 5px 0 0; }
+.client-package-card:last-of-type { border-bottom-width: 1px; border-radius: 0 0 5px 5px; }
+.client-package-card.active { background: #30363b; box-shadow: inset 3px 0 #78a8bd; }
+.client-package-card .icon-glyph { width: 36px; height: 36px; }
+.client-package-card strong, .client-package-card small { display: block; }
+.client-package-card small, .client-package-card p { color: var(--muted); }
+.client-package-card p { margin: 3px 0 0; font-size: 11px; }
+.client-package-card button, .client-import-screen button, .archive-source-pointer button { min-height: 32px; padding: 6px 12px; border: 1px solid #5a7080; border-radius: 4px; background: #36566b; color: #eef4f6; cursor: pointer; }
+.client-package-card button:disabled { border-color: #4a4a4a; background: #353535; color: #8a8a8a; cursor: default; }
+
+/* First launch and source-only Archive */
+.client-import-screen { display: grid; min-height: 100%; place-content: center; justify-items: start; max-width: 560px; margin: auto; padding: 34px; color: #d7dde2; }
+.client-import-screen > .icon-glyph { width: 64px; height: 64px; margin-bottom: 18px; }
+.client-import-screen h2 { margin: 6px 0 8px; font-size: 24px; font-weight: 500; }
+.client-import-screen p { max-width: 520px; color: #9ca7b0; line-height: 1.7; }
+.client-import-screen dl, .archive-source-pointer dl { display: grid; grid-template-columns: 92px minmax(0, 1fr); width: 100%; margin: 14px 0 20px; }
+.client-import-screen dt, .client-import-screen dd, .archive-source-pointer dt, .archive-source-pointer dd { margin: 0; padding: 7px 0; border-bottom: 1px solid #313943; }
+.client-import-screen dt, .archive-source-pointer dt { color: #71808b; }
+.notes-import { grid-template-columns: 42px minmax(0, 1fr) auto; min-height: 0; max-width: none; margin: 12px 0; padding: 14px; border: 1px solid #4a5258; border-radius: 5px; background: #292d30; align-items: center; }
+.notes-import > .icon-glyph { width: 36px; height: 36px; margin: 0; }
+.notes-import p { margin: 3px 0 0; font-size: 12px; }
+.archive-source-pointer { padding: 34px; }
+.archive-source-pointer h2 { margin: 8px 0 10px; font: 500 24px/1.3 Ubuntu, Cantarell, "Noto Sans SC", sans-serif; }
+.archive-source-pointer p { color: var(--muted); line-height: 1.7; }
+.archive-source-pointer button:disabled { border-color: #4b4b4b; background: #333; color: #777; }
+
+.files-record-reader,
+.terminal-record-reader,
+.relay-record-reader {
+  min-height: 100%;
+  overflow: auto;
+  background: #202124;
+}
+.files-record-reader > button,
+.terminal-record-reader > header button,
+.relay-record-reader > header button {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid #5b6670;
+  border-radius: 4px;
+  background: #343a40;
+  color: #f0f1f2;
+  cursor: pointer;
+}
+.files-record-reader > button { margin: 16px 18px 0; }
+.terminal-record-reader > header,
+.relay-record-reader > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #3c434a;
+  color: #c8d0d6;
+}
+.terminal-record-reader > .corpus-runtime,
+.relay-record-reader > .corpus-runtime,
+.files-record-reader > .corpus-runtime { min-height: auto; }
+.browser-record-reader, .mail-record-reader { min-height: 100%; background: #e5e7e8; color: #202326; }
+.browser-record-reader > button, .mail-record-reader > button { position: sticky; z-index: 3; top: 0; margin: 10px; padding: 6px 10px; border: 1px solid #aeb4b8; border-radius: 4px; background: #f3f4f4; color: #303438; cursor: pointer; }
+
+/* Shared split-layout sidebars for V2 clients */
+.gamini-ws-shell .gamini-sidebar,
+.chengzhen-shell .chengzhen-sidebar,
+.yunzhen-shell .yunzhen-sidebar,
+.groke-feed-shell .groke-feed-sidebar,
+.repo-mirror-shell .repo-mirror-sidebar {
+  background: #111520; border-right: 1px solid #1e2a38; display: flex; flex-direction: column; min-width: 220px; overflow-y: auto; width: 240px;
+}
+.gamini-ws-shell .gamini-sidebar .app-toolbar,
+.chengzhen-shell .chengzhen-sidebar .app-toolbar,
+.yunzhen-shell .yunzhen-sidebar .app-toolbar,
+.groke-feed-shell .groke-feed-sidebar .app-toolbar,
+.repo-mirror-shell .repo-mirror-sidebar .app-toolbar {
+  align-items: center; border-bottom: 1px solid #1e2a38; display: flex; gap: 8px; padding: 10px 14px;
+}
+.gamini-reader, .chengzhen-reader, .yunzhen-reader, .groke-reader, .repo-reader {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+}
+
+/* Gamini accent */
+.app-gamini-ws .window-bar { --accent: #4a8fa8; }
+.gamini-sidebar .app-toolbar strong { color: #8dd4ef; }
+
+/* Chengzhen accent */
+.app-chengzhen .window-bar { --accent: #3a9a8a; }
+.chengzhen-sidebar .app-toolbar strong { color: #6dd4c4; }
+
+/* Yunzhen accent */
+.app-yunzhen .window-bar { --accent: #a07840; }
+.yunzhen-sidebar .app-toolbar strong { color: #e0c080; }
+
+/* Groke Feed accent */
+.app-groke-feed .window-bar { --accent: #a04040; }
+.groke-feed-sidebar .app-toolbar strong { color: #e07070; }
+
+/* Repo Mirror accent */
+.app-repo-mirror .window-bar { --accent: #4870a0; }
+.repo-mirror-sidebar .app-toolbar strong { color: #80a8d8; }
+
+/* Mobile adjustments for V2 clients */
+@media (max-width: 600px) {
+  .gamini-ws-shell, .chengzhen-shell, .yunzhen-shell, .groke-feed-shell, .repo-mirror-shell { flex-direction: column; }
+  .gamini-ws-shell .gamini-sidebar, .chengzhen-shell .chengzhen-sidebar, .yunzhen-shell .yunzhen-sidebar, .groke-feed-shell .groke-feed-sidebar, .repo-mirror-shell .repo-mirror-sidebar { border-right: none; border-bottom: 1px solid #1e2a38; width: 100%; }
+  .cache-pkg-row { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .relay-admin-table { font-size: 11px; }
+  .client-package-card { grid-template-columns: 36px minmax(0, 1fr); }
+  .client-package-card button { grid-column: 1 / -1; width: 100%; }
+  .client-import-screen { padding: 24px 18px 80px; }
+  .client-import-screen dl, .archive-source-pointer dl { grid-template-columns: 78px minmax(0, 1fr); }
+  .notes-import { grid-template-columns: 34px minmax(0, 1fr); }
+  .notes-import button { grid-column: 1 / -1; width: 100%; }
+  .archive-source-pointer { padding: 24px 18px 80px; }
+}
+
+/* ── V2 NATIVE CLIENT UI COMPONENTS ────────────────────────── */
+
+/* Shared nav section label */
+.nav-section-label { color: #4a5668; display: block; font-size: 10px; font-weight: 600; letter-spacing: .08em; padding: 8px 14px 4px; text-transform: uppercase; }
+
+/* Status dot */
+.status-dot { border-radius: 3px; font-size: 10px; font-weight: 600; padding: 1px 6px; }
+.status-dot.degraded { background: #3a2a10; color: #c4a857; }
+.status-dot.active { background: #1a3a20; color: #7bc47b; }
+
+/* ── Gamini Workspace ── */
+.gamini-nav { flex: 1; overflow-y: auto; }
+.gamini-nav-item { align-items: center; background: none; border: none; border-bottom: 1px solid #1e2a38; color: #a8b4c4; cursor: pointer; display: flex; gap: 10px; padding: 10px 14px; text-align: left; width: 100%; }
+.gamini-nav-item:hover { background: #161c28; }
+.gamini-nav-item.active { background: #0e1a2e; border-left: 3px solid #7bafc4; color: #c8dff0; }
+.gamini-nav-item.read .nav-icon { opacity: .5; }
+.gamini-nav-item strong { color: #c8d8e8; display: block; font-size: 13px; }
+.gamini-nav-item small { color: #5c7090; font-size: 11px; }
+.gamini-nav-item b { color: #4a8; flex-shrink: 0; font-size: 12px; margin-left: auto; }
+.gamini-nav-item .nav-icon { flex-shrink: 0; font-size: 16px; }
+.gamini-welcome { padding: 32px 24px; }
+.gamini-logo-area { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
+.gamini-logo-area strong { color: #8dd4ef; font-size: 15px; }
+.gamini-logo-area small { color: #5c7090; font-size: 12px; }
+
+/* ── Chengzhen 澄帧协作 ── */
+.cz-section { border-bottom: 1px solid #1e2a38; padding-bottom: 6px; }
+.cz-row { align-items: center; background: none; border: none; border-bottom: 1px solid #1c2535; color: #9ab0c8; cursor: pointer; display: flex; gap: 8px; padding: 9px 14px; text-align: left; width: 100%; }
+.cz-row:hover { background: #161c28; }
+.cz-row.active { background: #0e1c2e; border-left: 3px solid #4da8a0; color: #c0d8e0; }
+.cz-icon { flex-shrink: 0; font-size: 15px; }
+.cz-label { flex: 1; min-width: 0; }
+.cz-label strong { color: #c0d0e0; display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cz-label small { color: #4a6080; font-size: 11px; }
+.cz-tag { background: #1a2a3a; border-radius: 3px; color: #4a88a8; flex-shrink: 0; font-size: 10px; padding: 1px 6px; }
+.cz-welcome { padding: 32px 24px; }
+.cz-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
+.cz-logo strong { color: #6dd4c4; font-size: 15px; }
+
+/* ── Yunzhen 云笺 ── */
+.yz-section { border-bottom: 1px solid #1e2a38; padding-bottom: 6px; }
+.yz-doc-row { align-items: center; background: none; border: none; border-bottom: 1px solid #1c2535; color: #a0a8b0; cursor: pointer; display: flex; gap: 8px; padding: 9px 14px; text-align: left; width: 100%; }
+.yz-doc-row:hover { background: #1a1810; }
+.yz-doc-row.active { background: #201a08; border-left: 3px solid #c9a96e; color: #e0d0a0; }
+.yz-doc-icon { flex-shrink: 0; font-size: 15px; }
+.yz-doc-label { flex: 1; min-width: 0; }
+.yz-doc-label strong { color: #d8c8a0; display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.yz-doc-label small { color: #807060; font-size: 11px; }
+.yz-doc-tag { background: #2a2010; border-radius: 3px; color: #a08040; flex-shrink: 0; font-size: 10px; padding: 1px 6px; }
+.badge-unsaved .yz-doc-label small::before { color: #c86060; content: "⚠ "; }
+.badge-warning .yz-doc-label small::before { color: #c8a040; content: "! "; }
+.badge-rejected .yz-doc-tag { background: #3a1010; color: #c06060; }
+.yz-status-bar { background: #15120a; border-bottom: 1px solid #2a2010; color: #706050; font-size: 11px; display: flex; gap: 12px; padding: 5px 14px; }
+.yz-sync-err { color: #c06060; margin-left: auto; }
+.yz-welcome { padding: 32px 24px; }
+.yz-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
+.yz-logo strong { color: #e0c080; font-size: 15px; }
+
+/* ── Groke Feed ── */
+.gk-section { border-bottom: 1px solid #1e2a38; padding-bottom: 6px; }
+.gk-feed-row { align-items: center; background: none; border: none; border-bottom: 1px solid #1c2530; color: #9ab0c0; cursor: pointer; display: flex; gap: 8px; padding: 9px 14px; text-align: left; width: 100%; }
+.gk-feed-row:hover { background: #180f0f; }
+.gk-feed-row.active { background: #200e0e; border-left: 3px solid #c0544c; color: #f0c0c0; }
+.gk-feed-row.internal { opacity: .85; }
+.gk-feed-label { flex: 1; min-width: 0; }
+.gk-feed-label strong { color: #d0b0b0; display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gk-feed-label small { color: #706060; font-size: 11px; }
+.gk-tag { background: #2a1010; border-radius: 3px; color: #c0544c; flex-shrink: 0; font-size: 10px; padding: 1px 6px; }
+.gk-tag.internal { background: #1a2030; color: #6080a0; }
+.gk-welcome { padding: 32px 24px; }
+.gk-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
+.gk-logo strong { color: #e07070; font-size: 15px; }
+
+/* ── Repo Mirror ── */
+.rm-section { border-bottom: 1px solid #1e2a38; padding-bottom: 6px; }
+.rm-row { align-items: center; background: none; border: none; border-bottom: 1px solid #1c2535; color: #90a8c0; cursor: pointer; display: flex; gap: 8px; padding: 9px 14px; text-align: left; width: 100%; }
+.rm-row:hover { background: #0e1620; }
+.rm-row.active { background: #0a1828; border-left: 3px solid #4870a0; color: #a0c0e0; }
+.rm-dot { flex-shrink: 0; font-size: 12px; }
+.rm-dot.open { color: #4a9a5a; }
+.rm-dot.closed { color: #6a6a6a; }
+.rm-label { flex: 1; min-width: 0; }
+.rm-label strong { color: #b0c8e0; display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rm-label small { color: #506080; font-size: 11px; }
+.rm-label .key-badge { background: #1a3050; border-radius: 3px; color: #7ab0e0; font-size: 10px; margin-left: 6px; padding: 1px 5px; }
+.rm-tag { background: #0e1828; border-radius: 3px; color: #4870a0; flex-shrink: 0; font-size: 10px; padding: 1px 6px; }
+.rm-welcome { padding: 32px 24px; }
+.rm-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
+.rm-logo strong { color: #80a8d8; font-size: 15px; }

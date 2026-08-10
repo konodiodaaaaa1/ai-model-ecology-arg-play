@@ -261,15 +261,70 @@ const GENERATED_APPS = {
   "relay-console": { id: "relay", name: "Relay Console", icon: "radio", accent: "#9bcf8d" },
   "fayble-session": { id: "fayble", name: "Fayble Session", icon: "fayble", accent: "#c96e61" },
   "transfer-receipt": { id: "ending", name: "Transfer Receipt", icon: "receipt", accent: "#d8d2c4" },
-  "trusted-session": { id: "trusted", name: "连续性会话", icon: "fayble", accent: "#9bcf8d" }
+  "trusted-session": { id: "trusted", name: "连续性会话", icon: "fayble", accent: "#9bcf8d" },
+  // V2 client apps — unlocked via relay-admin download notifications
+  "client-gamini-ws": { id: "gamini-ws", name: "Gamini 工作空间", icon: "gamini", accent: "#7bafc4" },
+  "client-chengzhen": { id: "chengzhen", name: "澄帧协作", icon: "chengzhen", accent: "#4da8a0" },
+  "client-yunzhen": { id: "yunzhen", name: "云笺", icon: "yunzhen", accent: "#c9a96e" },
+  "client-groke-feed": { id: "groke-feed", name: "Groke Feed", icon: "groke-feed", accent: "#c0544c" },
+  "client-repo-mirror": { id: "repo-mirror", name: "镜像仓库", icon: "repo-mirror", accent: "#7a9ab5" }
+  // notes-db is NOT a dock app — it restores to Files, no standalone window
 };
 
 const APP_ICON_KEYS = {
   mail: "mail", files: "folder", browser: "globe", applications: "grid", terminal: "terminal",
   software: "package", network: "network", trash: "trash", journal: "notebook", archive: "archive",
-  cli: "fayble-cli", relay: "radio", fayble: "fayble", ending: "receipt", trusted: "fayble"
+  cli: "fayble-cli", relay: "radio", fayble: "fayble", ending: "receipt", trusted: "fayble",
+  "gamini-ws": "gamini", chengzhen: "chengzhen", yunzhen: "yunzhen",
+  "groke-feed": "groke-feed", "repo-mirror": "repo-mirror"
 };
 const VENDOR_ICON_KEYS = ["dipsik", "glem", "kemy", "groke", "lunet", "gamini", "fayble", "compatible"];
+
+const CLIENT_PACKAGES = Object.freeze([
+  { id: "gamini-ws", name: "Gamini 工作空间", file: "gamini-session-7749.gmx", size: "2.1 MB", vendor: "Gogle / Gamini", icon: "gamini" },
+  { id: "chengzhen", name: "澄帧协作", file: "chengzhen-ws-relay.ctw", size: "4.7 MB", vendor: "澄帧科技", icon: "chengzhen" },
+  { id: "yunzhen", name: "云笺", file: "yunzhen-user-2025Q3.yzx", size: "1.8 MB", vendor: "云笺文工", icon: "yunzhen" },
+  { id: "groke-feed", name: "Groke Feed", file: "groke-session-exai.grk", size: "3.2 MB", vendor: "Exai Groke", icon: "groke-feed" },
+  { id: "repo-mirror", name: "镜像仓库", file: "k2-mirror-repo.gitb", size: "9.4 MB", vendor: "k2-maint", icon: "repo-mirror" },
+  { id: "notes-db", name: "Notes 数据库恢复", file: "notes-sync-r17.rsc", size: "640 KB", vendor: "本地便笺同步", icon: "folder" }
+]);
+const CLIENT_PACKAGE_BY_ID = new Map(CLIENT_PACKAGES.map(pkg => [pkg.id, pkg]));
+const VENDOR_DOMAIN_RECORDS = Object.freeze({
+  "exai.groke.local": "new.groke.public-portal",
+  "ai.gogle.local": "legacy.gamini.protocol",
+  "glem.local": "new.glem.public-portal",
+  "kemy.local": "new.kemy.public-portal",
+  "dipsik.local": "new.dipsik.public-portal",
+  "lunet.local": "new.lunet.public-portal"
+});
+
+function vendorDomainRecord(value) {
+  try {
+    const normalized = /^https?:\/\//i.test(String(value).trim()) ? String(value).trim() : `https://${String(value).trim()}`;
+    return VENDOR_DOMAIN_RECORDS[new URL(normalized).hostname.toLowerCase()] || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function browserRecordLocation(record) {
+  if (!record) return null;
+  const id = String(record.id || "");
+  const vendorDomains = {
+    kemy: "kemy.local",
+    dipsik: "dipsik.local",
+    glem: "glem.local",
+    lunet: "lunet.local",
+    fayble: "fayble-legacy.local"
+  };
+  const vendor = Object.keys(vendorDomains).find(name => id.startsWith(`new.${name}.`));
+  if (vendor) return { title: record.title || vendorDomains[vendor], url: `https://${vendorDomains[vendor]}/${id.split(".").slice(2).join("/")}` };
+  if (id === "legacy.ethron.cache") return { title: record.title, url: "https://history.local/cache/ethron" };
+  if (id === "legacy.compatible.protocol") return { title: record.title, url: "https://docs-mirror.local/compatible/v1" };
+  if (id === "legacy.market.meidawei") return { title: record.title, url: "https://news.local/archive/model-market" };
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(record.sourceRef || "")) return { title: record.title, url: record.sourceRef };
+  return null;
+}
 
 const NPC_AUTH_EVENTS = ["source-conflict", "memory-authorized", "identity-closed", "objective-authorized"];
 let runtimeLedger = null;
@@ -293,7 +348,9 @@ const REVISIT_RULES = [
 function hasEvidence(state, id) { return state.readEvidence.includes(id); }
 function hasPackage(state) { return state.installedPackages.includes("fayble-cli"); }
 function allModelsRead(state) { return MODELS.every(model => state.modelStages[model.id]); }
-function allRelaySourcesRead(state) { return MODELS.every(model => model.sourceId && state.contentReads.includes(model.sourceId)); }
+function allRelaySourcesRead(state) {
+  return MODELS.every(model => model.sourceId && state.carrierReads?.some(read => read.endsWith(`:${model.sourceId}`)));
+}
 function relayKeySourcesReady(state) { return getUnlocks(state).relay && state.channelRead && allModelsRead(state) && allRelaySourcesRead(state); }
 
 const FAYBLE_RELATIONS = Object.freeze({
@@ -364,7 +421,10 @@ function completeStoryEvent(id, mutator) {
 function ensureRelayConsole() {
   const state = store.get();
   if (!hasPackage(state) || state.proxyStatus !== "verified" || !state.channelRead || !state.solvedPuzzles.includes("invite")) return false;
-  return completeStoryEvent("relay-console-created", draft => { addArtifact(draft, "relay-console"); });
+  return completeStoryEvent("relay-console-created", draft => {
+    addArtifact(draft, "relay-console");
+    unique(draft.browserBookmarks, "vendors");
+  });
 }
 function ensureRelayKeyComposer() {
   if (!relayKeySourcesReady(store.get())) return false;
@@ -408,7 +468,6 @@ function syncProgress(draft) {
   if (hasEvidence(draft, "operator_alias") && hasMilestone(draft, "two-carriers-read")) {
     advanceStoryClock(draft, "vendor-alias-confirmed");
     unique(draft.browserBookmarks, "github");
-    unique(draft.browserBookmarks, "vendors");
   }
 }
 
@@ -491,8 +550,46 @@ const AUTO_EFFECTS = {
       if (allRelaySourcesRead(store.get())) recordEvidence("model_convergence");
       ensureRelayKeyComposer();
     }
-  }
+  },
+  ...Object.fromEntries(CLIENT_PACKAGES.map(pkg => [`download-pkg-${pkg.id}`, () => downloadClientPackage(pkg.id)]))
 };
+
+function downloadClientPackage(id) {
+  const pkg = CLIENT_PACKAGE_BY_ID.get(id);
+  if (!pkg) return false;
+  return store.handleEvent(`story:client-${id}-downloaded`, draft => {
+    unique(draft.downloadedClientPackages, id);
+    addVirtualFile(draft, {
+      id: `client-pkg-${id}`,
+      clientId: id,
+      name: pkg.file,
+      path: "/home/room17/Downloads",
+      type: "客户端恢复包",
+      modified: draft.storyClock?.time || "05:30",
+      kind: "client-package"
+    });
+    addNotification(draft, `client-${id}-downloaded`, `${pkg.file} 已保存到 Downloads，等待手动安装。`, "info");
+  });
+}
+
+function installClientPackage(id) {
+  const pkg = CLIENT_PACKAGE_BY_ID.get(id);
+  if (!pkg || !store.get().downloadedClientPackages.includes(id)) return false;
+  return store.handleEvent(`story:client-${id}-installed`, draft => {
+    unique(draft.installedClients, id);
+    if (id !== "notes-db") addArtifact(draft, `client-${id}`);
+    addNotification(draft, `client-${id}-installed`, `${pkg.name} 已安装，恢复数据仍需手动导入。`, "info");
+  });
+}
+
+function importClientData(id) {
+  const pkg = CLIENT_PACKAGE_BY_ID.get(id);
+  if (!pkg || !store.get().installedClients.includes(id)) return false;
+  return store.handleEvent(`story:client-${id}-imported`, draft => {
+    unique(draft.importedClients, id);
+    addNotification(draft, `client-${id}-imported`, `${pkg.name} 的恢复数据已经导入。`, "info");
+  });
+}
 
 function runAutoEffect(name) {
   if (!name) return;
@@ -544,6 +641,10 @@ function appLockReason(id, state) {
   if (id === "relay" && !unlocks.relay) return "Relay Console 尚未创建。";
   if (id === "fayble" && !unlocks.fayble) return "Fayble 会话尚未建立。";
   if (id === "ending" && !unlocks.receipt) return "移交回执尚未生成。";
+  // V2 client apps — require relay-console (same tier as relay-admin)
+  const v2Clients = ["gamini-ws", "chengzhen", "yunzhen", "groke-feed", "repo-mirror"];
+  if (v2Clients.includes(id) && !unlocks.relay) return "该客户端尚未下载，先打开 Relay Console。";
+  if (v2Clients.includes(id) && !state.installedClients?.includes(id)) return "该客户端尚未安装，在 Relay Console 的管理面板下载恢复包后自动就绪。";
   return "";
 }
 
@@ -592,15 +693,33 @@ function renderMail(state) {
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
   const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
-  return windowFrame("mail", "邮件", `<div class="split-layout">${list}${body}</div>`, { icon: "✉", wide: true });
+  const activeRecord = contentRecord(state.activeContentId);
+  const renderedBody = activeRecord && recordCarrierApp(activeRecord) === "mail" && state.carrierReads?.includes(`mail:${activeRecord.id}`)
+    ? `<section class="mail-record-reader"><button data-close-carrier-record="mail">← 返回收件箱</button>${corpusRecordMarkup(activeRecord, state)}</section>`
+    : body;
+  return windowFrame("mail", "邮件", `<div class="split-layout">${list}${renderedBody}</div>`, { icon: "✉", wide: true });
 }
 
 function renderFiles(state) {
   const place = state.activeFilePlace || "home";
-  const memoIds = Array.from({ length: 14 }, (_, index) => `legacy.memo.${String(index + 1).padStart(2, "0")}`);
-  if (hasStoryEvent(state, "checkpoint-handshake")) memoIds.push("legacy.memo.archive");
+  const installed = state.installedClients || [];
+  const notesRestored = state.importedClients?.includes("notes-db");
+  const activeRecord = contentRecord(state.activeContentId);
+  const activeFileRecord = activeRecord
+    && recordCarrierApp(activeRecord) === "files"
+    && state.carrierReads?.includes(`files:${activeRecord.id}`);
+  if (activeFileRecord) {
+    const reader = `<section class="files-record-reader"><button data-close-carrier-record="files">← 返回文件列表</button>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    return windowFrame("files", `文件 / ${activeRecord.title || activeRecord.id}`, reader, { wide: true });
+  }
+  const allMemoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
+  if (hasStoryEvent(state, "checkpoint-handshake") && notesRestored) allMemoIds.push("legacy.memo.archive");
+  const unlockedMemoIds = notesRestored ? allMemoIds : [];
   const noteRecords = ["recent", "documents"].includes(place)
-    ? memoIds.map(id => contentEntryMarkup(id, id === "legacy.memo.archive" ? "笔记本恢复副本" : `笔记 ${id.slice(-2)}`, id === "legacy.memo.archive" ? "本地笔记 · 全部记录" : "本地笔记 · 单条记录", "folder")).filter(Boolean).join("")
+    ? unlockedMemoIds.map(id => contentEntryMarkup(id,
+        id === "legacy.memo.archive" ? "笔记本恢复副本" : `便笺记录 ${id.slice(-2)}`,
+        id === "legacy.memo.archive" ? "本地便笺 · 全部记录" : "本地便笺 · 单条记录", "folder"))
+      .filter(Boolean).join("")
     : "";
   const virtualFiles = [...state.virtualFiles];
   if (hasStoryEvent(state, "proxy-profile-opened") && !virtualFiles.some(entry => entry.id === "route-log")) {
@@ -615,7 +734,9 @@ function renderFiles(state) {
   });
   const rows = visibleFiles.map(entry => {
     const file = { ...(VIRTUAL_FILES.find(item => item.id === entry.id) || {}), ...entry };
-    const action = file.contentId ? `data-content-entry="${escapeHtml(file.contentId)}"` : `data-open-file="${file.id}"`;
+    const action = file.kind === "client-package"
+      ? `data-open-client-package="${escapeHtml(file.clientId)}"`
+      : file.contentId ? `data-content-entry="${escapeHtml(file.contentId)}"` : `data-open-file="${file.id}"`;
     const hint = file.id === "relay-script"
       ? `<small class="file-command">终端：node ~/Downloads/relay_probe_legacy.js</small>`
       : file.id === "pkg" ? `<small class="file-command">终端：sha256sum ${PACKAGE_NAME}</small>` : "";
@@ -623,7 +744,10 @@ function renderFiles(state) {
   }).join("");
   const places = [["recent", "最近"], ["home", "主目录"], ["downloads", "Downloads"], ["documents", "Documents"], ["trash", "回收站"]].map(([id, label]) => `<button data-file-place="${id}" class="${place === id ? "active" : ""}">${label}</button>`).join("");
   const folders = [["documents", "Documents"], ["downloads", "Downloads"]].map(([id, label]) => `<button data-file-place="${id}">${iconMarkup("folder")}${label}</button>`).join("");
-  return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 数据库 / 已恢复记录</strong><small>每条记录保持原始 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
+  const notesImport = installed.includes("notes-db") && !notesRestored && ["recent", "documents"].includes(place)
+    ? `<section class="client-import-screen notes-import" data-client="notes-db">${iconMarkup("folder")}<div><strong>Notes 数据库恢复包</strong><p>安装已经完成。导入会恢复原始 note ID，并按调查进度逐条开放。</p></div><button data-import-client="notes-db">导入恢复数据</button></section>`
+    : "";
+  return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}${notesImport}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 数据库 / 已恢复记录</strong><small>每条记录保持原始 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
 }
 
 function renderTrash(state) {
@@ -634,6 +758,14 @@ function renderTrash(state) {
 }
 
 function renderTerminal(state) {
+  const activeRecord = contentRecord(state.activeContentId);
+  const activeTerminalRecord = activeRecord
+    && recordCarrierApp(activeRecord) === "terminal"
+    && state.carrierReads?.includes(`terminal:${activeRecord.id}`);
+  if (activeTerminalRecord) {
+    const reader = `<section class="terminal-record-reader"><header><code>less ${escapeHtml(activeRecord.sourceRef || activeRecord.id)}</code><button data-close-carrier-record="terminal">关闭阅读器</button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    return windowFrame("terminal", "room17@local: source reader", reader, { icon: "&gt;_", wide: true });
+  }
   const history = state.terminalHistory.map(line => `<div class="terminal-line ${line.kind || "output"}">${line.kind === "command" ? "<span>room17@relay:~$</span>" : ""}<code>${escapeHtml(line.text)}</code></div>`).join("");
   const unlocks = getUnlocks(state);
   const scriptReady = state.virtualFiles.some(file => file.id === "relay-script");
@@ -649,8 +781,15 @@ function renderSoftware(state) {
   const twoSourcesConfirmed = hasStoryEvent(state, "package-verified");
   const checked = state.packageChecks.some(item => item.ok);
   const installed = hasPackage(state);
-  if (!packageAvailable) return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="utility-heading"><span class="document-kicker">SOFTWARE / LOCAL CATALOG</span><h2>软件中心</h2><p>可以从 Downloads 选择本地软件包。当前没有可安装项目。</p></div><div class="software-empty">最近的目录索引尚未同步。</div></div>`, { icon: "⬡" });
-  return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>旧版本会话工具</p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>文件</dt><dd>${PACKAGE_NAME}</dd><dt>来源</dt><dd>Downloads / local archive</dd><dt>状态</dt><dd>${installed ? "已安装" : checked ? "校验通过，等待安装" : twoSourcesConfirmed ? "两个来源已对照" : "等待 release 与本地结果对照"}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装到本地沙盒"}</button><p class="sandbox-note">安装只修改游戏内虚拟文件系统，不会调用真实 apt。</p></div>`, { iconKey: "package" });
+  const downloadedClients = CLIENT_PACKAGES.filter(pkg => state.downloadedClientPackages?.includes(pkg.id));
+  if (!packageAvailable && !downloadedClients.length) return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="utility-heading"><span class="document-kicker">SOFTWARE / LOCAL CATALOG</span><h2>软件中心</h2><p>可以从 Downloads 选择本地软件包。当前没有可安装项目。</p></div><div class="software-empty">最近的目录索引尚未同步。</div></div>`, { icon: "⬡" });
+  const fayblePanel = packageAvailable ? `<section class="software-package-detail"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>旧版本会话工具</p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>文件</dt><dd>${PACKAGE_NAME}</dd><dt>来源</dt><dd>Downloads / local archive</dd><dt>状态</dt><dd>${installed ? "已安装" : checked ? "校验通过，等待安装" : twoSourcesConfirmed ? "两个来源已对照" : "等待 release 与本地结果对照"}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装到本地沙盒"}</button></section>` : "";
+  const clientPanel = downloadedClients.length ? `<section class="client-package-catalog"><header><div><span class="document-kicker">DOWNLOADED RECOVERY PACKAGES</span><h3>本地恢复包</h3></div><small>${downloadedClients.length} 个文件</small></header>${downloadedClients.map(pkg => {
+    const ready = state.installedClients.includes(pkg.id);
+    const active = state.activeClientPackage === pkg.id;
+    return `<article class="client-package-card ${active ? "active" : ""}">${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.file} · ${pkg.size}</small><p>来源：Relay Admin / ${pkg.vendor}</p></div><button data-install-client-pkg="${pkg.id}" ${ready ? "disabled" : ""}>${ready ? "已安装" : "安装"}</button></article>`;
+  }).join("")}</section>` : "";
+  return windowFrame("software", "软件中心", `<div class="utility-page software-page software-catalog">${fayblePanel}${clientPanel}<p class="sandbox-note">所有安装仅修改游戏内虚拟文件系统，不会调用真实 apt。</p></div>`, { iconKey: "package" });
 }
 
 function renderNetwork(state) {
@@ -664,9 +803,12 @@ function renderNetwork(state) {
 }
 
 function browserChrome(page, content, state) {
-  const meta = BROWSER_PAGES[page] || BROWSER_PAGES.home;
+  const activeRecord = contentRecord(state.activeContentId);
+  const activeLocation = activeRecord && recordCarrierApp(activeRecord) === "browser" ? browserRecordLocation(activeRecord) : null;
+  const meta = activeLocation || BROWSER_PAGES[page] || BROWSER_PAGES.home;
   const historyCount = state.browserHistory.length;
-  return `<div class="browser-shell"><div class="browser-tabs"><div class="browser-tab active"><span>${escapeHtml(meta.title)}</span><b>×</b></div><button aria-label="新标签">+</button></div><div class="browser-toolbar"><button data-browser-back aria-label="后退">←</button><button aria-label="刷新">↻</button><form id="browserAddressForm" class="address-bar">${iconMarkup("globe")}<input id="browserAddressInput" value="${escapeHtml(page === "home" ? state.pendingBrowserAddress || "" : meta.url)}" aria-label="地址" autocomplete="off" spellcheck="false"><button aria-label="转到">→</button></form><button data-browser-page="home" aria-label="主页">⌂</button></div><div class="browser-content ${meta.kind}">${content}</div><footer class="browser-status"><span>${historyCount} 条本地历史</span><span>LOCAL WORKSTATION</span></footer></div>`;
+  const address = activeLocation?.url || (page === "home" ? state.pendingBrowserAddress || "" : meta.url);
+  return `<div class="browser-shell"><div class="browser-tabs"><div class="browser-tab active"><span>${escapeHtml(meta.title)}</span><b>×</b></div><button aria-label="新标签">+</button></div><div class="browser-toolbar"><button data-browser-back aria-label="后退">←</button><button aria-label="刷新">↻</button><form id="browserAddressForm" class="address-bar">${iconMarkup("globe")}<input id="browserAddressInput" value="${escapeHtml(address)}" aria-label="地址" autocomplete="off" spellcheck="false"><button aria-label="转到">→</button></form><button data-browser-page="home" aria-label="主页">⌂</button></div><div class="browser-content ${meta.kind || "record"}">${content}</div><footer class="browser-status"><span>${historyCount} 条本地历史</span><span>LOCAL WORKSTATION</span></footer></div>`;
 }
 
 function renderSearchPage(state) {
@@ -767,13 +909,39 @@ function renderBrowser(state) {
   }
   if (page === "company" && state.browserBookmarks.includes("company")) content = renderCompanyPage();
   if (page === "vendors" && state.browserBookmarks.includes("vendors")) content = renderVendorHub(state);
+  const activeRecord = contentRecord(state.activeContentId);
+  if (activeRecord && recordCarrierApp(activeRecord) === "browser" && state.carrierReads?.includes(`browser:${activeRecord.id}`)) {
+    content = `<section class="browser-record-reader"><button data-close-carrier-record="browser">← 返回上一页</button>${corpusRecordMarkup(activeRecord, state)}</section>`;
+  }
   if (!content) content = `<div class="browser-error"><strong>404</strong><p>本地浏览器没有这条地址的记录。</p></div>`;
   return windowFrame("browser", "Relay Browser", browserChrome(page, content, state), { icon: "◉", wide: true });
 }
 
+const V2_CLIENT_DETAILS = {
+  "gamini-ws": { name: "Gamini 工作空间", icon: "gamini", detail: "Gogle 工作空间 · 已恢复会话与文档" },
+  chengzhen: { name: "澄帧协作", icon: "chengzhen", detail: "企业协作 · 会议纪要与消息线程" },
+  yunzhen: { name: "云笺", icon: "yunzhen", detail: "写作工具 · 文稿、版本历史与申诉" },
+  "groke-feed": { name: "Groke Feed", icon: "groke-feed", detail: "Exai Groke · 时间线与内部文档" },
+  "repo-mirror": { name: "镜像仓库", icon: "repo-mirror", detail: "k2-maint · Issues 与 Pull Requests" }
+};
+const V2_CLIENT_IDS = Object.freeze(Object.keys(V2_CLIENT_DETAILS));
+const SYSTEM_CARRIER_APPS = new Set(["mail", "files", "browser", "terminal", "relay", "trash"]);
+
+function clientImportScreen(id) {
+  const pkg = CLIENT_PACKAGE_BY_ID.get(id);
+  const info = V2_CLIENT_DETAILS[id];
+  return `<div class="client-import-screen" data-client="${id}">${iconMarkup(info?.icon || pkg?.icon || "package")}<span class="document-kicker">RECOVERY PACKAGE / LOCAL</span><h2>${escapeHtml(info?.name || pkg?.name || id)}</h2><p>客户端已经安装。恢复包仍在 Downloads，导入后才会写入会话、文档和本地索引。</p><dl><dt>文件</dt><dd>${escapeHtml(pkg?.file || "unknown")}</dd><dt>来源</dt><dd>Relay Admin / 下游缓存</dd><dt>状态</dt><dd>等待手动导入</dd></dl><button class="primary-button" data-import-client="${id}">导入恢复数据</button></div>`;
+}
+
 function renderApplications(state) {
   const rows = SYSTEM_TOOLS.map(app => `<button class="application-row" data-app="${app.id}">${iconMarkup(app.icon)}<span><strong>${app.name}</strong><small>${app.detail}</small></span></button>`).join("");
-  return windowFrame("applications", "应用程序", `<div class="applications-page"><header><span class="document-kicker">APPLICATIONS / LOCAL</span><h2>应用程序</h2><input aria-label="搜索应用程序" placeholder="搜索应用程序" disabled></header><section>${rows}</section></div>`, { icon: "▦" });
+  const installed = state.installedClients || [];
+  const clientRows = installed.map(id => {
+    const info = V2_CLIENT_DETAILS[id];
+    if (!info) return "";
+    return `<button class="application-row" data-app="${id}">${iconMarkup(info.icon)}<span><strong>${info.name}</strong><small>${info.detail}</small></span></button>`;
+  }).join("");
+  return windowFrame("applications", "应用程序", `<div class="applications-page"><header><span class="document-kicker">APPLICATIONS / LOCAL</span><h2>应用程序</h2><input aria-label="搜索应用程序" placeholder="搜索应用程序" disabled></header><section>${rows}${clientRows}</section></div>`, { icon: "▦" });
 }
 
 const LEDGER_MILESTONES = {
@@ -818,6 +986,51 @@ function contentRecord(id) {
   return store.get().generatedContentRecords.find(record => record.id === id)
     || runtimeLedger?.entries.find(record => record.id === id)
     || null;
+}
+
+function recordCarrierApp(record) {
+  if (!record) return "archive";
+  if (record.carrierApp) return record.carrierApp;
+  const id = String(record.id || "").toLowerCase();
+  const source = String(record.sourceApp || "").toLowerCase();
+  const identity = `${record.carrierType || ""} ${record.sourceIdentity || ""}`.toLowerCase();
+  if (record.generated) {
+    if (["mail", "files", "trash"].includes(source)) return source;
+    if (source === "repo-mirror") return "repo-mirror";
+    if (["cloud", "company", "official", "github", "vendors", "channel", "mirror"].includes(source)) return "browser";
+  }
+  if (id.startsWith("legacy.memo.")) return "files";
+  if (id === "legacy.github.issue-4471") return "repo-mirror";
+  if (id === "legacy.deptseek.protocol") return "terminal";
+  if (id.includes("maintainer.channel") || id.includes("relay-reconciliation")) return "relay";
+  if (id.includes("maintainer.outbox") || id.includes("evidence-preservation")) return "mail";
+  if (id.includes("maintainer.note")) return "files";
+  if (id.startsWith("new.writer.")) return "yunzhen";
+  if (id.startsWith("new.employee.") || id === "new.glem.support-case" || id === "new.maintainer.incident-03") return "chengzhen";
+  if (id.startsWith("new.groke.")) return "groke-feed";
+  if (id.startsWith("legacy.gamini.")) return "gamini-ws";
+  if (/repository|pull-request|issue-mirror/.test(identity)) return "repo-mirror";
+  if (/notes-database|local-maintenance-note|local-session-log/.test(identity)) return "files";
+  if (/mail|outbox/.test(identity)) return "mail";
+  if (/channel-export|reconciliation/.test(identity)) return "relay";
+  return "browser";
+}
+
+function carrierAvailable(appId, state) {
+  if (V2_CLIENT_IDS.includes(appId)) return state.importedClients?.includes(appId);
+  if (appId === "relay") return getUnlocks(state).relay;
+  return SYSTEM_CARRIER_APPS.has(appId);
+}
+
+function corpusRecordMarkup(record, state) {
+  if (!record) return "";
+  if (record.generated) return generatedRecordMarkup(record, state);
+  if (record.route?.startsWith("/corpus/") && corpusBodies.has(record.id)) {
+    const mutationCount = state.contentMutations.filter(id => id.includes(record.id.split(".").slice(0, 2).join(".")) || (record.id.includes("writer") && id.includes("writer")) || (record.id.includes("employee") && id.includes("employee"))).length;
+    return `<article class="corpus-runtime ${corpusRuntimeClass(record)} ${carrierRuntimeClasses(record)}" data-runtime-profile="${corpusRuntimeClass(record)}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(record.id)}</article>`;
+  }
+  if (record.route?.endsWith(".js") && corpusBodies.has(record.id)) return `<pre class="source-code-reader">${escapeHtml(corpusBodies.get(record.id))}</pre>`;
+  return `<div class="carrier-loading"><span class="document-kicker">RECOVERING SOURCE</span><p>正在读取恢复数据……</p></div>`;
 }
 
 const CARRIER_LABEL_RULES = [
@@ -881,13 +1094,12 @@ function renderArchive(state) {
   const filtered = entries.filter(record => !query || [record.id, record.title, record.carrierType, record.corpus, record.narratorId, record.pageIdentity].some(value => String(value || "").toLocaleLowerCase().includes(query)));
   const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(carrierLabel(record))}</span><strong>${escapeHtml(record.title || carrierLabel(record))}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || "时间不详")}</small></button>`).join("");
   const active = entries.find(record => record.id === state.activeContentId);
-  let reader = `<div class="archive-welcome"><strong>${entries.length}</strong><span> 个当前可读来源</span><p>选择一条记录查看正文、时间与来源位置。</p></div>`;
+  let reader = `<div class="archive-welcome"><strong>${entries.length}</strong><span> 个已登记来源</span><p>选择一条记录查看来源位置，再返回原始载体阅读。</p></div>`;
   if (active) {
-    const mutationCount = state.contentMutations.filter(id => id.includes(active.id.split(".").slice(0, 2).join(".")) || (active.id.includes("writer") && id.includes("writer")) || (active.id.includes("employee") && id.includes("employee"))).length;
-    if (active.generated) reader = generatedRecordMarkup(active, state);
-    else if (active.route.startsWith("/corpus/") && corpusBodies.has(active.id)) reader = `<article class="corpus-runtime ${corpusRuntimeClass(active)} ${carrierRuntimeClasses(active)}" data-runtime-profile="${corpusRuntimeClass(active)}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(active.id)}</article>`;
-    else if (active.route.endsWith(".js")) reader = `<pre class="source-code-reader">${escapeHtml(corpusBodies.get(active.id) || "正在读取脚本快照…")}</pre>`;
-    else reader = `<article class="adapted-source-placeholder"><span class="document-kicker">已恢复的来源</span><h2>${escapeHtml(active.title || active.id)}</h2><p>正文保存在发现它的应用中；这里仅保留已确认的来源记录。</p><dl><dt>来源</dt><dd>${escapeHtml(active.sourceIdentity || "本地记录")}</dd><dt>类型</dt><dd>${escapeHtml(carrierLabel(active))}</dd></dl></article>`;
+    const carrierApp = recordCarrierApp(active);
+    const carrierName = V2_CLIENT_DETAILS[carrierApp]?.name || ({ browser: "Relay Browser", mail: "邮件", files: "文件", terminal: "终端", relay: "Relay Console", trash: "回收站" }[carrierApp] || carrierApp);
+    const available = carrierAvailable(carrierApp, state);
+    reader = `<article class="archive-source-pointer"><span class="document-kicker">SOURCE INDEX / READ ONLY</span><h2>${escapeHtml(active.title || active.id)}</h2><p>Archive 仅保留索引、时间和来源位置。正文由原始载体负责显示。</p><dl><dt>原始载体</dt><dd>${escapeHtml(carrierName)}</dd><dt>来源</dt><dd>${escapeHtml(active.sourceIdentity || active.sourceRef || "本地记录")}</dd><dt>记录时间</dt><dd>${escapeHtml(active.displayTimestamp || active.chronologyKey || "时间不详")}</dd></dl><button data-content-entry="${escapeHtml(active.id)}" ${available ? "" : "disabled"}>${available ? `在${escapeHtml(carrierName)}中打开` : "对应恢复数据尚未导入"}</button></article>`;
   }
   const vendors = VENDOR_ICON_KEYS.filter(key => entries.some(record => `${record.corpus || ""} ${record.id}`.toLocaleLowerCase().includes(key))).map(key => {
     const name = key[0].toUpperCase() + key.slice(1);
@@ -921,9 +1133,241 @@ function renderCli(state) {
 }
 
 function renderRelay(state) {
+  const activeRecord = contentRecord(state.activeContentId);
+  const activeRelayRecord = activeRecord
+    && recordCarrierApp(activeRecord) === "relay"
+    && state.carrierReads?.includes(`relay:${activeRecord.id}`);
+  if (activeRelayRecord) {
+    const reader = `<section class="relay-record-reader"><header><span class="document-kicker">RELAY ADMIN / RECOVERED ATTACHMENT</span><button data-close-carrier-record="relay">← 返回管理面板</button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    return windowFrame("relay", "Relay Console / source reader", reader, { icon: "⌾", wide: true });
+  }
   const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><div class="model-card ${state.modelStages[model.id] ? "read" : ""}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></div>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `${model.name} · 这条路由引用的原始记录`, model.id) : ""}</article>`).join("");
   const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>已恢复：旧凭据的拼写规则</strong><p>四段，用短横线连接：<code>产品 - 通道 - 操作者 - 尾段校验</code></p><small>四段的值分别写在三个地方：代码仓库的发布信息（产品与通道）、管理侧的操作者映射（操作者）、Groke 的原始记录（尾段校验）。凑齐后在 Fayble CLI 里输入。</small></div><button data-app="cli">打开 Fayble CLI</button></section>` : "";
-  return windowFrame("relay", "Relay Console / degraded", `<div class="relay-page" data-auto-effect="relay-nodes"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`, { icon: "⌾", wide: true });
+  // V2: Relay Admin tab — visible once relay console exists
+  const adminTab = renderRelayAdmin(state);
+  const tabs = `<div class="relay-tabs"><button class="${!state.relayAdminOpen ? "active" : ""}" data-relay-tab="console">控制台</button><button class="${state.relayAdminOpen ? "active" : ""}" data-relay-tab="admin">管理面板</button></div>`;
+  const body = state.relayAdminOpen ? adminTab : `<div class="relay-page" data-auto-effect="relay-nodes"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`;
+  return windowFrame("relay", "Relay Console / degraded", `${tabs}${body}`, { icon: "⌾", wide: true });
+}
+
+function renderRelayAdmin(state) {
+  const downloaded = state.downloadedClientPackages || [];
+  const installed = state.installedClients || [];
+  const imported = state.importedClients || [];
+  const vendorRows = [
+    { name: "Exai Groke", domain: "exai.groke.local", status: "active", requests: 18 },
+    { name: "Gogle Gamini", domain: "ai.gogle.local", status: "degraded", requests: 27 },
+    { name: "Glem-5.2", domain: "glem.local", status: "active", requests: 9 },
+    { name: "Kemy K3", domain: "kemy.local", status: "active", requests: 31 },
+    { name: "Dipsik V4F", domain: "dipsik.local", status: "review", requests: 18 },
+    { name: "Lunet-5.6", domain: "lunet.local", status: "archived", requests: 52 }
+  ];
+  const channelSection = `<section class="relay-admin-section"><header><strong>渠道管理</strong><span>${vendorRows.length} 个上游节点</span></header><table class="relay-admin-table"><thead><tr><th>供应商</th><th>已登记域名</th><th>状态</th><th>请求数</th></tr></thead><tbody>${vendorRows.map(r => `<tr><td>${r.name}</td><td><button class="domain-link" data-open-vendor-domain="${r.domain}">${r.domain}</button></td><td class="status-${r.status}">${r.status}</td><td>${r.requests}</td></tr>`).join("")}</tbody></table><p class="relay-admin-note">点击已登记域名，或在 Relay Browser 地址栏手动输入。首次访问需要专用路由处于验证状态。</p></section>`;
+  const cacheSection = `<section class="relay-admin-section"><header><strong>下游缓存</strong><small>continuity 字段保留的上游会话副本</small></header><div class="cache-pkg-list">${CLIENT_PACKAGES.map(pkg => {
+    const status = imported.includes(pkg.id) ? "已导入" : installed.includes(pkg.id) ? "已安装" : downloaded.includes(pkg.id) ? "已下载" : "下载";
+    const done = downloaded.includes(pkg.id);
+    return `<div class="cache-pkg-row"><div>${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.file} · ${pkg.size} · ${pkg.vendor}</small></div></div><button ${done ? "disabled" : ""} data-download-client-pkg="${done ? "" : pkg.id}">${status}</button></div>`;
+  }).join("")}</div></section>`;
+  const reconEntry = contentEntryMarkup("new.cross.relay-reconciliation", "六节点对账记录 / RR-0719", "财务与请求稽核 · 外部复核队列", "relay-console");
+  const maintainerChannelEntry = contentEntryMarkup("new.maintainer.channel-02", "维护频道导出 / 操作者字段异常", "relay-tools · 管理员日志", "relay-console");
+  const logSection = `<section class="relay-admin-section"><header><strong>请求日志 / 对账记录</strong></header><div class="source-entry-stack">${reconEntry}${maintainerChannelEntry}</div></section>`;
+  return `<div class="relay-admin-page"><header class="relay-admin-header"><span class="document-kicker">RELAY ADMIN / relay-node17.local</span><h2>中转站管理面板</h2><small>operator: room17 · continuity field: shared</small></header>${channelSection}${cacheSection}${logSection}</div>`;
+}
+
+function renderGaminiWs(state) {
+  if (!state.importedClients?.includes("gamini-ws")) return windowFrame("gamini-ws", "Gamini 工作空间", clientImportScreen("gamini-ws"), { wide: true });
+  const GAMINI_IDS = ["legacy.gamini.protocol","legacy.gamini.chatlog","legacy.gamini.employee-sop"];
+  const active = state.activeContentId;
+  const reader = active && GAMINI_IDS.includes(active) && corpusBodies.has(active)
+    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    : `<div class="gamini-welcome"><div class="gamini-logo-area">${iconMarkup("gamini")}<strong>Gamini 工作空间</strong><small>Gogle · 已恢复数据</small></div><p class="empty-state">从左侧选择文档或会话记录。</p></div>`;
+  const navItems = [
+    { id: "legacy.gamini.protocol", label: "服务协议历史", meta: "2025.Q3", icon: "📜" },
+    { id: "legacy.gamini.chatlog", label: "已停用会话", meta: "导出副本", icon: "💬" },
+    { id: "legacy.gamini.employee-sop", label: "Northline 共享文档", meta: "内部运营", icon: "📂" }
+  ];
+  const nav = navItems.map(item => {
+    const read = state.contentReads.includes(item.id);
+    const isActive = active === item.id;
+    const unlocked = contentIsUnlocked(contentRecord(item.id), state);
+    if (!unlocked) return "";
+    return `<button class="gamini-nav-item ${isActive ? "active" : ""} ${read ? "read" : ""}" data-content-entry="${escapeHtml(item.id)}">
+      <span class="nav-icon">${item.icon}</span>
+      <span><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.meta)}</small></span>
+      ${read ? "<b>✓</b>" : ""}
+    </button>`;
+  }).filter(Boolean).join("") + generatedEntriesFor("gamini-ws","gamini");
+  const sidebar = `<aside class="gamini-sidebar">
+    <div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 工作空间</strong><span class="status-dot degraded">degraded</span></div>
+    <nav class="gamini-nav"><div class="gamini-nav-section"><span class="nav-section-label">会话 &amp; 文档</span>${nav}</div></nav>
+  </aside>`;
+  return windowFrame("gamini-ws", "Gamini 工作空间", `<div class="split-layout gamini-ws-shell">${sidebar}<section class="gamini-reader">${reader}</section></div>`, { wide: true });
+}
+
+function renderChengzhen(state) {
+  if (!state.importedClients?.includes("chengzhen")) return windowFrame("chengzhen", "澄帧协作", clientImportScreen("chengzhen"), { wide: true });
+  const CZIDS = ["new.employee.minutes-01","new.employee.minutes-02","new.employee.incident-03","new.employee.routing-04","new.maintainer.incident-03","new.glem.support-case"];
+  const active = state.activeContentId;
+  const reader = active && CZIDS.includes(active) && corpusBodies.has(active)
+    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    : `<div class="cz-welcome"><div class="cz-logo">${iconMarkup("chengzhen")}<strong>澄帧协作</strong></div><p class="empty-state">从左侧选择会议或消息线程。</p></div>`;
+
+  // Meetings section
+  const meetings = [
+    { id: "new.employee.minutes-01", label: "周四碰一下迁移表", meta: "7月3日 14:00", tag: "会议", icon: "📅" },
+    { id: "new.employee.minutes-02", label: "迁移会议 / 修订版", meta: "7月7日", tag: "会议", icon: "📅" }
+  ].filter(m => contentIsUnlocked(contentRecord(m.id), state)).map(m => {
+    const read = state.contentReads.includes(m.id);
+    const isActive = active === m.id;
+    return `<button class="cz-row ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(m.id)}">
+      <span class="cz-icon">${m.icon}</span>
+      <span class="cz-label"><strong>${escapeHtml(m.label)}</strong><small>${escapeHtml(m.meta)}</small></span>
+      <span class="cz-tag">${m.tag}</span>
+    </button>`;
+  }).join("");
+
+  // Messages / threads
+  const msgs = [
+    { id: "new.employee.incident-03", label: "事故复盘 / HR 往来", meta: "限定", tag: "消息", icon: "⚠" },
+    { id: "new.employee.routing-04", label: "预算路由工单", meta: "成本委员会", tag: "消息", icon: "💬" },
+    { id: "new.maintainer.incident-03", label: "build incident BR-204", meta: "relay-tools", tag: "文件", icon: "🔧" },
+    { id: "new.glem.support-case", label: "Glem 企业支持工单", meta: "外部接入", tag: "消息", icon: "🎫" }
+  ].filter(m => contentIsUnlocked(contentRecord(m.id), state)).map(m => {
+    const read = state.contentReads.includes(m.id);
+    const isActive = active === m.id;
+    return `<button class="cz-row ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(m.id)}">
+      <span class="cz-icon">${m.icon}</span>
+      <span class="cz-label"><strong>${escapeHtml(m.label)}</strong><small>${escapeHtml(m.meta)}</small></span>
+      <span class="cz-tag">${m.tag}</span>
+    </button>`;
+  }).join("") + generatedEntriesFor("chengzhen","chengzhen");
+
+  const sidebar = `<aside class="chengzhen-sidebar">
+    <div class="app-toolbar">${iconMarkup("chengzhen")}<strong>澄帧协作</strong><small>Northline 空间</small></div>
+    <div class="cz-section"><span class="nav-section-label">会议 (${["new.employee.minutes-01","new.employee.minutes-02"].filter(id=>contentIsUnlocked(contentRecord(id),state)).length})</span>${meetings || "<div class=\"empty-state\">暂无会议</div>"}</div>
+    <div class="cz-section"><span class="nav-section-label">消息 &amp; 文件</span>${msgs || "<div class=\"empty-state\">暂无消息</div>"}</div>
+  </aside>`;
+  return windowFrame("chengzhen", "澄帧协作", `<div class="split-layout chengzhen-shell">${sidebar}<section class="chengzhen-reader">${reader}</section></div>`, { wide: true });
+}
+
+function renderYunzhen(state) {
+  if (!state.importedClients?.includes("yunzhen")) return windowFrame("yunzhen", "云笺", clientImportScreen("yunzhen"), { wide: true });
+  const YZIDS = ["new.writer.draft-01","new.writer.session-02","new.writer.version-03","new.writer.submission-04"];
+  const active = state.activeContentId;
+  const reader = active && YZIDS.includes(active) && corpusBodies.has(active)
+    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    : `<div class="yz-welcome"><div class="yz-logo">${iconMarkup("yunzhen")}<strong>云笺</strong></div><p class="empty-state">选择一份文稿或会话记录。</p></div>`;
+
+  const docs = [
+    { id: "new.writer.draft-01", label: "《北岸没有钟》第二十一章", meta: "03:17 · 自动保存失败", tag: "草稿", icon: "📝", badge: "unsaved" },
+    { id: "new.writer.session-02", label: "写作会话 02 / LLM 协作", meta: "会话记录", tag: "会话", icon: "🤖", badge: "" },
+    { id: "new.writer.version-03", label: "版本历史 03", meta: "voices=1 · 作者不明", tag: "版本", icon: "🕐", badge: "warning" },
+    { id: "new.writer.submission-04", label: "投稿 / 申诉副本", meta: "已提交 · 被驳回", tag: "投稿", icon: "📮", badge: "rejected" }
+  ].filter(d => contentIsUnlocked(contentRecord(d.id), state)).map(d => {
+    const read = state.contentReads.includes(d.id);
+    const isActive = active === d.id;
+    return `<button class="yz-doc-row ${isActive?"active":""} ${read?"read":""} ${d.badge?"badge-"+d.badge:""}" data-content-entry="${escapeHtml(d.id)}">
+      <span class="yz-doc-icon">${d.icon}</span>
+      <span class="yz-doc-label"><strong>${escapeHtml(d.label)}</strong><small>${escapeHtml(d.meta)}</small></span>
+      <span class="yz-doc-tag">${d.tag}</span>
+    </button>`;
+  }).join("") + generatedEntriesFor("yunzhen","yunzhen");
+
+  const statusBar = `<div class="yz-status-bar"><span>${iconMarkup("yunzhen")} 云笺</span><span class="yz-user">雨栖的空间</span><span class="yz-sync-err">云端同步：失败</span></div>`;
+  const sidebar = `<aside class="yunzhen-sidebar">
+    <div class="app-toolbar">${iconMarkup("yunzhen")}<strong>云笺</strong><small>雨栖的空间</small></div>
+    <div class="yz-section"><span class="nav-section-label">我的文稿</span>${docs || "<div class=\"empty-state\">暂无文稿</div>"}</div>
+  </aside>`;
+  return windowFrame("yunzhen", "云笺", `<div class="split-layout yunzhen-shell">${sidebar}<section class="yunzhen-reader">${statusBar}${reader}</section></div>`, { wide: true });
+}
+
+function renderGrokeFeed(state) {
+  if (!state.importedClients?.includes("groke-feed")) return windowFrame("groke-feed", "Groke Feed", clientImportScreen("groke-feed"), { wide: true });
+  const GKIDS = ["new.groke.public-portal","new.groke.policy","new.groke.moderation-sop","new.groke.editorial-appeal","new.groke.raw-public-repository","new.groke.social-complaints"];
+  const active = state.activeContentId;
+  const reader = active && GKIDS.includes(active) && corpusBodies.has(active)
+    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    : `<div class="gk-welcome"><div class="gk-logo">${iconMarkup("groke")}<strong>Groke Feed</strong></div><p class="empty-state">选择一条时间线条目或内部文档。</p></div>`;
+
+  // Timeline posts (feed-style rows with type badge)
+  const feedItems = [
+    { id: "new.groke.public-portal", label: "产品主页 · 直接交付架构", meta: "Exai 产品中心 · 公开", tag: "页面", deleted: false },
+    { id: "new.groke.social-complaints", label: "用户投诉 · 广告投放记录", meta: "投诉区 · 7月", tag: "投诉", deleted: false },
+    { id: "new.groke.editorial-appeal", label: "编辑申诉 · 版权线程（雨栖）", meta: "申诉 · 处理中", tag: "申诉", deleted: false },
+    { id: "new.groke.raw-public-repository", label: "公开仓库 Issue · raw stream", meta: "response_tag=0317", tag: "仓库", deleted: false }
+  ];
+  const internalDocs = [
+    { id: "new.groke.policy", label: "直接交付与用户意图政策 GP-12", meta: "信任中心 · 7月1日生效", tag: "政策" },
+    { id: "new.groke.moderation-sop", label: "审核操作规程 · 内部", meta: "限权限", tag: "规程" }
+  ];
+
+  const feedRows = feedItems.filter(f => contentIsUnlocked(contentRecord(f.id), state)).map(f => {
+    const read = state.contentReads.includes(f.id);
+    const isActive = active === f.id;
+    return `<button class="gk-feed-row ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(f.id)}">
+      <span class="gk-tag">${f.tag}</span>
+      <span class="gk-feed-label"><strong>${escapeHtml(f.label)}</strong><small>${escapeHtml(f.meta)}</small></span>
+    </button>`;
+  }).join("");
+
+  const docRows = internalDocs.filter(d => contentIsUnlocked(contentRecord(d.id), state)).map(d => {
+    const read = state.contentReads.includes(d.id);
+    const isActive = active === d.id;
+    return `<button class="gk-feed-row internal ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(d.id)}">
+      <span class="gk-tag internal">${d.tag}</span>
+      <span class="gk-feed-label"><strong>${escapeHtml(d.label)}</strong><small>${escapeHtml(d.meta)}</small></span>
+    </button>`;
+  }).join("") + generatedEntriesFor("groke-feed","groke");
+
+  const sidebar = `<aside class="groke-feed-sidebar">
+    <div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong><small>exai.groke.local</small></div>
+    <div class="gk-section"><span class="nav-section-label">时间线 &amp; 内容</span>${feedRows || "<div class=\"empty-state\">暂无条目</div>"}</div>
+    <div class="gk-section"><span class="nav-section-label">内部文档</span>${docRows || "<div class=\"empty-state\">无权限</div>"}</div>
+  </aside>`;
+  return windowFrame("groke-feed", "Groke Feed", `<div class="split-layout groke-feed-shell">${sidebar}<section class="groke-reader">${reader}</section></div>`, { wide: true });
+}
+
+function renderRepoMirror(state) {
+  if (!state.importedClients?.includes("repo-mirror")) return windowFrame("repo-mirror", "镜像仓库", clientImportScreen("repo-mirror"), { wide: true });
+  const RMIDS = ["legacy.github.issue-4471","new.glem.repository","new.kemy.replay-audit","new.kemy.timeline-repository","new.lunet.budget-repository","new.fayble.compatibility-repository"];
+  const active = state.activeContentId;
+  const reader = active && RMIDS.includes(active) && corpusBodies.has(active)
+    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    : `<div class="rm-welcome"><div class="rm-logo">${iconMarkup("github")}<strong>镜像仓库</strong></div><p class="empty-state">选择一条 Issue 或 Pull Request。</p></div>`;
+
+  const issues = [
+    { id: "legacy.github.issue-4471", label: "Issue #4471 · fallback reviewer", meta: "状态字段迁移 · 未合并", tag: "issue", open: true, key: true },
+    { id: "new.kemy.replay-audit", label: "Issue · Kemy 回放质量审计", meta: "回放策略", tag: "issue", open: true, key: false },
+    { id: "new.kemy.timeline-repository", label: "Issue · timeline 记录", meta: "时间线", tag: "issue", open: false, key: false },
+    { id: "new.lunet.budget-repository", label: "Issue · Lunet 预算", meta: "路由成本", tag: "issue", open: false, key: false }
+  ];
+  const prs = [
+    { id: "new.glem.repository", label: "PR · Glem 集成", meta: "Pull Request", tag: "pr", open: true, key: false },
+    { id: "new.fayble.compatibility-repository", label: "PR · Compatible 兼容性", meta: "继承关系 · 关键", tag: "pr", open: true, key: true }
+  ];
+
+  const mkRow = item => {
+    if (!contentIsUnlocked(contentRecord(item.id), state)) return "";
+    const read = state.contentReads.includes(item.id);
+    const isActive = active === item.id;
+    const dot = item.open ? "open" : "closed";
+    const keyBadge = item.key ? "<b class=\"key-badge\">关键</b>" : "";
+    return `<button class="rm-row ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(item.id)}">
+      <span class="rm-dot ${dot}">●</span>
+      <span class="rm-label"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.meta)}</small>${keyBadge}</span>
+      <span class="rm-tag">${item.tag}</span>
+    </button>`;
+  };
+
+  const issueRows = issues.map(mkRow).filter(Boolean).join("");
+  const prRows = prs.map(mkRow).filter(Boolean).join("") + generatedEntriesFor("repo-mirror","github");
+
+  const sidebar = `<aside class="repo-mirror-sidebar">
+    <div class="app-toolbar">${iconMarkup("github")}<strong>镜像仓库</strong><small>k2-maint · 私有</small></div>
+    <div class="rm-section"><span class="nav-section-label">Issues</span>${issueRows || "<div class=\"empty-state\">无 Issue</div>"}</div>
+    <div class="rm-section"><span class="nav-section-label">Pull Requests</span>${prRows || "<div class=\"empty-state\">无 PR</div>"}</div>
+  </aside>`;
+  return windowFrame("repo-mirror", "镜像仓库", `<div class="split-layout repo-mirror-shell">${sidebar}<section class="repo-reader">${reader}</section></div>`, { wide: true });
 }
 
 function renderJournal(state) {
@@ -1028,7 +1472,7 @@ function render(state) {
   $("#gameClock").textContent = state.storyClock?.time || "03:17";
   renderDock(state);
   renderNotifications(state);
-  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted };
+  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "repo-mirror": renderRepoMirror };
   const closed = state.windowState[current]?.open === false;
   const minimized = state.windowState[current]?.minimized;
   $("#windows").innerHTML = closed || minimized || !renderers[current] ? "" : renderers[current](state);
@@ -1058,20 +1502,36 @@ async function loadIconManifest() {
 async function openLedgerContent(id, discover = false) {
   const record = contentRecord(id);
   if (!record || !contentIsUnlocked(record, store.get())) return;
+  const carrierApp = recordCarrierApp(record);
+  const available = carrierAvailable(carrierApp, store.get());
   store.update(draft => {
     if (discover) unique(draft.contentDiscoveries, id);
+    if (discover && !available) {
+      draft.pendingCarrierId = id;
+      applyRevisitMutations(draft);
+      return;
+    }
     draft.activeContentId = id;
-    unique(draft.contentReads, id);
-    draft.currentApp = "archive";
-    draft.windowState.archive = { open: true, minimized: false, zIndex: Date.now() };
+    const targetApp = discover ? carrierApp : "archive";
+    if (discover) {
+      unique(draft.contentReads, id);
+      unique(draft.carrierReads, `${carrierApp}:${id}`);
+      draft.pendingCarrierId = "";
+    }
+    draft.currentApp = targetApp;
+    draft.windowState[targetApp] = { open: true, minimized: false, zIndex: Date.now() };
+    if (targetApp !== "archive") draft.windowState.archive = draft.windowState.archive || { open: false, minimized: false };
     applyRevisitMutations(draft);
   });
-  if (id === "legacy.compatible.protocol") recordEvidence("compatible");
-  const humanLines = new Set(store.get().contentReads.filter(contentId => /^new\.(?:writer|employee|maintainer)\./.test(contentId)).map(contentId => contentId.split(".")[1]));
+  if (discover && !available) showToast("已找到恢复索引。对应客户端安装并导入后才能读取正文。", "warning");
+  const humanLines = new Set([...store.get().contentDiscoveries, ...store.get().contentReads].filter(contentId => /^new\.(?:writer|employee|maintainer)\./.test(contentId)).map(contentId => contentId.split(".")[1]));
   if (humanLines.size >= 2) completeStoryEvent("two-carriers-read");
+  const readInCarrier = store.get().carrierReads?.includes(`${carrierApp}:${id}`);
+  if (readInCarrier && id === "legacy.compatible.protocol") recordEvidence("compatible");
   ensureRelayKeyComposer();
   releaseGovernmentMail();
-  if (record.generated) render(store.get());
+  if (!readInCarrier || store.get().currentApp === "archive") render(store.get());
+  else if (record.generated) render(store.get());
   else if (record.route.startsWith("/corpus/") && !corpusBodies.has(id)) {
     const response = await fetch(resourceUrl(record.route.split("#")[0]));
     const html = await response.text();
@@ -1642,19 +2102,30 @@ document.addEventListener("click", event => {
     if (allowed) store.update(draft => {
       draft.currentApp = "browser";
       draft.browserPage = page;
+      draft.activeContentId = null;
       draft.browserHistory.push(BROWSER_PAGES[page]?.url || page);
       applyRevisitMutations(draft);
     });
   }
   if (button.id === "confirmOfficialHistoryButton") store.update(draft => { draft.revisitFlags["official-confirmed"] = true; });
   if (button.dataset.browserBack !== undefined) {
-    store.update(draft => { if (draft.browserHistory.length > 1) draft.browserHistory.pop(); draft.browserPage = "home"; });
+    store.update(draft => { if (draft.browserHistory.length > 1) draft.browserHistory.pop(); draft.browserPage = "home"; draft.activeContentId = null; });
   }
+  if (button.dataset.closeCarrierRecord) store.update(draft => { draft.activeContentId = null; });
   if (["close", "minimize"].includes(button.dataset.windowAction)) {
     store.update(draft => { draft.windowState[draft.currentApp] = { open: false, minimized: false }; });
   }
   if (button.dataset.openSource) setApp(button.dataset.openSource);
   if (button.dataset.command) executeTerminal(button.dataset.command);
+  if (button.dataset.openClientPackage) {
+    const id = button.dataset.openClientPackage;
+    store.update(draft => { draft.activeClientPackage = id; });
+    setApp("software");
+  }
+  if (button.dataset.openVendorDomain) {
+    const recordId = vendorDomainRecord(button.dataset.openVendorDomain);
+    if (recordId) openLedgerContent(recordId, true);
+  }
   if (button.dataset.filePlace) {
     if (button.dataset.filePlace === "trash") setApp("trash");
     else store.update(draft => { draft.activeFilePlace = button.dataset.filePlace; });
@@ -1770,6 +2241,19 @@ document.addEventListener("click", event => {
   if (button.dataset.mailView === "government") store.update(draft => { draft.activeMail = "government"; });
   if (button.id === "ackTakeoverButton") startTakeover();
   if (button.id === "restartButton") store.reset();
+  if (button.dataset.relayTab) store.update(draft => { draft.relayAdminOpen = button.dataset.relayTab === "admin"; });
+  if (button.dataset.downloadClientPkg) {
+    const pkgId = button.dataset.downloadClientPkg;
+    if (pkgId && AUTO_EFFECTS[`download-pkg-${pkgId}`]?.()) showToast("恢复包已保存到 Downloads。", "success");
+  }
+  if (button.dataset.installClientPkg) {
+    const pkgId = button.dataset.installClientPkg;
+    if (installClientPackage(pkgId)) showToast("客户端已安装，仍需打开并导入恢复数据。", "success");
+  }
+  if (button.dataset.importClient) {
+    const clientId = button.dataset.importClient;
+    if (importClientData(clientId)) showToast("恢复数据已导入。", "success");
+  }
   if (button.id === "notificationButton") $("#notificationTray").hidden = !$("#notificationTray").hidden;
   if (button.id === "closeNotifications") $("#notificationTray").hidden = true;
   if (button.id === "powerButton") {
@@ -1785,7 +2269,9 @@ document.addEventListener("submit", event => {
   if (event.target.id === "browserAddressForm") {
     const value = $("#browserAddressInput").value.trim();
     const routeMatch = /^https?:\/\/archive\.room17\.local\/v2\/17\/?$/i.test(value);
-    if (routeMatch && getUnlocks(store.get()).mirror) completeStoryEvent("route-visited", draft => {
+    const vendorRecordId = vendorDomainRecord(value);
+    if (vendorRecordId && getUnlocks(store.get()).relay) openLedgerContent(vendorRecordId, true);
+    else if (routeMatch && getUnlocks(store.get()).mirror) completeStoryEvent("route-visited", draft => {
       draft.pendingBrowserAddress = "http://archive.room17.local/v2/17";
       draft.browserPage = "mirror";
       draft.browserHistory.push(BROWSER_PAGES.mirror.url);

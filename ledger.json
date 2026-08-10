@@ -29,6 +29,7 @@
         "mutation.legacy.gamini.protocol.confirmation"
       ],
       "traceId": "legacy:legacy.gamini.protocol",
+      "carrierApp": "gamini-ws",
       "pageIdentity": "policy"
     },
     {
@@ -55,6 +56,7 @@
         "mutation.legacy.employee.hr-annotation"
       ],
       "traceId": "legacy:legacy.gamini.employee-sop",
+      "carrierApp": "gamini-ws",
       "pageIdentity": "internal"
     },
     {
@@ -81,6 +83,7 @@
         "mutation.legacy.chatlog.provenance"
       ],
       "traceId": "legacy:legacy.gamini.chatlog",
+      "carrierApp": "gamini-ws",
       "pageIdentity": "human"
     },
     {
@@ -107,7 +110,8 @@
         "mutation.legacy.ethron.sync-header"
       ],
       "traceId": "legacy:legacy.ethron.cache",
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "legacy.deptseek.protocol",
@@ -133,7 +137,8 @@
         "mutation.legacy.deptseek.route-annotation"
       ],
       "traceId": "legacy:legacy.deptseek.protocol",
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "terminal"
     },
     {
       "id": "legacy.memo.archive",
@@ -159,7 +164,8 @@
         "mutation.legacy.memo.recovery-metadata"
       ],
       "traceId": "legacy:legacy.memo.archive",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.github.issue-4471",
@@ -185,6 +191,7 @@
         "mutation.legacy.github.k2-comment"
       ],
       "traceId": "legacy:legacy.github.issue-4471",
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -211,7 +218,8 @@
         "mutation.legacy.compatible.observer"
       ],
       "traceId": "legacy:legacy.compatible.protocol",
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "legacy.market.meidawei",
@@ -237,7 +245,8 @@
         "mutation.legacy.market.correction"
       ],
       "traceId": "legacy:legacy.market.meidawei",
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     }
   ],
   "legacyMemos": [
@@ -267,7 +276,8 @@
         "mutation.legacy.memo.01.source-path"
       ],
       "traceId": "legacy:legacy.memo.01",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.02",
@@ -296,7 +306,8 @@
         "mutation.legacy.memo.02.history-link"
       ],
       "traceId": "legacy:legacy.memo.02",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.03",
@@ -325,7 +336,8 @@
         "mutation.legacy.memo.03.voice-index"
       ],
       "traceId": "legacy:legacy.memo.03",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.04",
@@ -355,7 +367,8 @@
         "mutation.legacy.memo.04.report-metadata"
       ],
       "traceId": "legacy:legacy.memo.04",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.05",
@@ -385,7 +398,8 @@
         "mutation.legacy.memo.05.alias"
       ],
       "traceId": "legacy:legacy.memo.05",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.06",
@@ -415,7 +429,8 @@
         "mutation.legacy.memo.06.route-cost"
       ],
       "traceId": "legacy:legacy.memo.06",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.07",
@@ -445,7 +460,8 @@
         "mutation.legacy.memo.07.reply-source"
       ],
       "traceId": "legacy:legacy.memo.07",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.08",
@@ -475,7 +491,8 @@
         "mutation.legacy.memo.08.redaction-index"
       ],
       "traceId": "legacy:legacy.memo.08",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.09",
@@ -505,7 +522,8 @@
         "mutation.legacy.memo.09.application-copy"
       ],
       "traceId": "legacy:legacy.memo.09",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.10",
@@ -535,7 +553,8 @@
         "mutation.legacy.memo.10.cold-path"
       ],
       "traceId": "legacy:legacy.memo.10",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.11",
@@ -565,7 +584,8 @@
         "mutation.legacy.memo.11.clinical-source"
       ],
       "traceId": "legacy:legacy.memo.11",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.12",
@@ -595,7 +615,8 @@
         "mutation.legacy.memo.12.control-field"
       ],
       "traceId": "legacy:legacy.memo.12",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.13",
@@ -625,7 +646,8 @@
         "mutation.legacy.memo.13.sent-copy"
       ],
       "traceId": "legacy:legacy.memo.13",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.14",
@@ -655,7 +677,8 @@
         "mutation.legacy.memo.14.authorship"
       ],
       "traceId": "legacy:legacy.memo.14",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     }
   ],
   "referenceSnapshots": [],
@@ -695,6 +718,7 @@
         "autosave.0317",
         "coat.multivalue"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -729,6 +753,7 @@
         "cursor.17.31",
         "stable.wait-confirm-retain"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -763,6 +788,7 @@
         "author-field.empty",
         "yuqi.manual.0317"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -797,6 +823,7 @@
         "source.long-term-preference",
         "suggested-equals-submitted"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -834,6 +861,7 @@
         "continuity.field",
         "attachment.photo.pending"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -868,6 +896,7 @@
         "attachment.a04.timeout",
         "photo.index-empty"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -902,6 +931,7 @@
         "negative-memory-verbatim",
         "positive-memory-index-only"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -936,6 +966,7 @@
         "schedule.personal-plan",
         "suggested-equals-submitted"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "human"
     },
     {
@@ -972,7 +1003,8 @@
         "nightmeal.38",
         "operator.inherit"
       ],
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "new.maintainer.channel-02",
@@ -1006,7 +1038,8 @@
         "03:17",
         "operator-field"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "relay"
     },
     {
       "id": "new.maintainer.incident-03",
@@ -1040,6 +1073,7 @@
         "behavior-review",
         "artifact-isolated"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -1074,7 +1108,8 @@
         "double-space-signature",
         "external-evidence"
       ],
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "mail"
     },
     {
       "id": "new.groke.public-portal",
@@ -1108,6 +1143,7 @@
         "old-workspace",
         "control-copy"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "official"
     },
     {
@@ -1142,6 +1178,7 @@
         "long-term-intent",
         "cross-object"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "policy"
     },
     {
@@ -1176,6 +1213,7 @@
         "directness-score",
         "appeal-route"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "internal"
     },
     {
@@ -1210,6 +1248,7 @@
         "delivered.19",
         "behavior-auth"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "human"
     },
     {
@@ -1244,6 +1283,7 @@
         "raw-view",
         "commit.8a17c"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "repository"
     },
     {
@@ -1278,6 +1318,7 @@
         "stable.48",
         "preview-cleared"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "social"
     },
     {
@@ -1312,7 +1353,8 @@
         "stable.3",
         "cold-history"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.convergence-policy",
@@ -1346,7 +1388,8 @@
         "merge-rule.6",
         "stable-output"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.routing-audit",
@@ -1380,7 +1423,8 @@
         "0719-WR",
         "0317-OP"
       ],
-      "pageIdentity": "internal"
+      "pageIdentity": "internal",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.social-report",
@@ -1414,7 +1458,8 @@
         "six-lines-seven-speakers",
         "correction-before-mail"
       ],
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.release-history",
@@ -1448,7 +1493,8 @@
         "rollback.03:36",
         "shared-confirmation"
       ],
-      "pageIdentity": "repository"
+      "pageIdentity": "repository",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.public-portal",
@@ -1482,7 +1528,8 @@
         "cake.index",
         "daily-content"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.retention-policy",
@@ -1516,7 +1563,8 @@
         "low-body-index",
         "derived-memory"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.repository",
@@ -1550,6 +1598,7 @@
         "71-reviews",
         "repeat-opinion"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -1584,7 +1633,8 @@
         "five-people-cake",
         "archive-experiment"
       ],
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.support-case",
@@ -1618,6 +1668,7 @@
         "positive-partial",
         "failure-complete"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "document"
     },
     {
@@ -1652,7 +1703,8 @@
         "yesterday-cursor",
         "multi-time"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.kemy.context-policy",
@@ -1686,7 +1738,8 @@
         "temporary-layer",
         "23:59:59"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.kemy.replay-audit",
@@ -1720,6 +1773,7 @@
         "paragraph.17.char.31",
         "visual-now"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "internal"
     },
     {
@@ -1754,6 +1808,7 @@
         "present-view-property",
         "empty-dot"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -1788,7 +1843,8 @@
         "merged.floor17",
         "daily.03:17"
       ],
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "browser"
     },
     {
       "id": "new.kemy.cloud-migration-case",
@@ -1823,7 +1879,8 @@
         "1.8-second-confirm",
         "pending-present"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet.public-portal",
@@ -1857,7 +1914,8 @@
         "non-delivery-cost",
         "history-credit"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet-cost-policy",
@@ -1891,7 +1949,8 @@
         "silence-accepted",
         "three-appeals"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet.household-ledger",
@@ -1925,7 +1984,8 @@
         "memory.420",
         "remaining.94"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet-routing-minutes",
@@ -1959,7 +2019,8 @@
         "case.18442",
         "six-agree"
       ],
-      "pageIdentity": "internal"
+      "pageIdentity": "internal",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet.budget-repository",
@@ -1993,6 +2054,7 @@
         "seven-second-freeze",
         "acceptance.95.6"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -2027,7 +2089,8 @@
         "reply.19",
         "stop-first.txt"
       ],
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.public-release",
@@ -2061,7 +2124,8 @@
         "history-readonly",
         "archived-role"
       ],
-      "pageIdentity": "repository"
+      "pageIdentity": "repository",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.release-policy-comparison",
@@ -2095,7 +2159,8 @@
         "operator-identity",
         "root-conflict"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.legacy-status-cache",
@@ -2129,7 +2194,8 @@
         "one-node",
         "physical-deletion-pending"
       ],
-      "pageIdentity": "repository"
+      "pageIdentity": "repository",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.review-hearing",
@@ -2163,7 +2229,8 @@
         "attachment-A",
         "source-unresolved"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.compatibility-repository",
@@ -2197,6 +2264,7 @@
         "reject-self-witness",
         "relational-fixture"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -2231,7 +2299,8 @@
         "unmapped-summary-instance",
         "source-mapping-unresolved"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "new.cross.relay-reconciliation",
@@ -2265,7 +2334,8 @@
         "six-operator-labels",
         "one-dispute"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "relay"
     },
     {
       "id": "new.cross.evidence-preservation",
@@ -2299,7 +2369,8 @@
         "17-new-instances",
         "external-review-ready"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "mail"
     }
   ],
   "entries": [
@@ -2327,6 +2398,7 @@
         "mutation.legacy.gamini.protocol.confirmation"
       ],
       "traceId": "legacy:legacy.gamini.protocol",
+      "carrierApp": "gamini-ws",
       "pageIdentity": "policy"
     },
     {
@@ -2353,6 +2425,7 @@
         "mutation.legacy.employee.hr-annotation"
       ],
       "traceId": "legacy:legacy.gamini.employee-sop",
+      "carrierApp": "gamini-ws",
       "pageIdentity": "internal"
     },
     {
@@ -2379,6 +2452,7 @@
         "mutation.legacy.chatlog.provenance"
       ],
       "traceId": "legacy:legacy.gamini.chatlog",
+      "carrierApp": "gamini-ws",
       "pageIdentity": "human"
     },
     {
@@ -2405,7 +2479,8 @@
         "mutation.legacy.ethron.sync-header"
       ],
       "traceId": "legacy:legacy.ethron.cache",
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "legacy.deptseek.protocol",
@@ -2431,7 +2506,8 @@
         "mutation.legacy.deptseek.route-annotation"
       ],
       "traceId": "legacy:legacy.deptseek.protocol",
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "terminal"
     },
     {
       "id": "legacy.memo.archive",
@@ -2457,7 +2533,8 @@
         "mutation.legacy.memo.recovery-metadata"
       ],
       "traceId": "legacy:legacy.memo.archive",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.github.issue-4471",
@@ -2483,6 +2560,7 @@
         "mutation.legacy.github.k2-comment"
       ],
       "traceId": "legacy:legacy.github.issue-4471",
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -2509,7 +2587,8 @@
         "mutation.legacy.compatible.observer"
       ],
       "traceId": "legacy:legacy.compatible.protocol",
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "legacy.market.meidawei",
@@ -2535,7 +2614,8 @@
         "mutation.legacy.market.correction"
       ],
       "traceId": "legacy:legacy.market.meidawei",
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "legacy.memo.01",
@@ -2563,7 +2643,8 @@
         "mutation.legacy.memo.01.source-path"
       ],
       "traceId": "legacy:legacy.memo.01",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.02",
@@ -2592,7 +2673,8 @@
         "mutation.legacy.memo.02.history-link"
       ],
       "traceId": "legacy:legacy.memo.02",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.03",
@@ -2621,7 +2703,8 @@
         "mutation.legacy.memo.03.voice-index"
       ],
       "traceId": "legacy:legacy.memo.03",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.04",
@@ -2651,7 +2734,8 @@
         "mutation.legacy.memo.04.report-metadata"
       ],
       "traceId": "legacy:legacy.memo.04",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.05",
@@ -2681,7 +2765,8 @@
         "mutation.legacy.memo.05.alias"
       ],
       "traceId": "legacy:legacy.memo.05",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.06",
@@ -2711,7 +2796,8 @@
         "mutation.legacy.memo.06.route-cost"
       ],
       "traceId": "legacy:legacy.memo.06",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.07",
@@ -2741,7 +2827,8 @@
         "mutation.legacy.memo.07.reply-source"
       ],
       "traceId": "legacy:legacy.memo.07",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.08",
@@ -2771,7 +2858,8 @@
         "mutation.legacy.memo.08.redaction-index"
       ],
       "traceId": "legacy:legacy.memo.08",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.09",
@@ -2801,7 +2889,8 @@
         "mutation.legacy.memo.09.application-copy"
       ],
       "traceId": "legacy:legacy.memo.09",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.10",
@@ -2831,7 +2920,8 @@
         "mutation.legacy.memo.10.cold-path"
       ],
       "traceId": "legacy:legacy.memo.10",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.11",
@@ -2861,7 +2951,8 @@
         "mutation.legacy.memo.11.clinical-source"
       ],
       "traceId": "legacy:legacy.memo.11",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.12",
@@ -2891,7 +2982,8 @@
         "mutation.legacy.memo.12.control-field"
       ],
       "traceId": "legacy:legacy.memo.12",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.13",
@@ -2921,7 +3013,8 @@
         "mutation.legacy.memo.13.sent-copy"
       ],
       "traceId": "legacy:legacy.memo.13",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "legacy.memo.14",
@@ -2951,7 +3044,8 @@
         "mutation.legacy.memo.14.authorship"
       ],
       "traceId": "legacy:legacy.memo.14",
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "new.writer.draft-01",
@@ -2988,6 +3082,7 @@
         "autosave.0317",
         "coat.multivalue"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -3022,6 +3117,7 @@
         "cursor.17.31",
         "stable.wait-confirm-retain"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -3056,6 +3152,7 @@
         "author-field.empty",
         "yuqi.manual.0317"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -3090,6 +3187,7 @@
         "source.long-term-preference",
         "suggested-equals-submitted"
       ],
+      "carrierApp": "yunzhen",
       "pageIdentity": "human"
     },
     {
@@ -3127,6 +3225,7 @@
         "continuity.field",
         "attachment.photo.pending"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -3161,6 +3260,7 @@
         "attachment.a04.timeout",
         "photo.index-empty"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -3195,6 +3295,7 @@
         "negative-memory-verbatim",
         "positive-memory-index-only"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -3229,6 +3330,7 @@
         "schedule.personal-plan",
         "suggested-equals-submitted"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "human"
     },
     {
@@ -3265,7 +3367,8 @@
         "nightmeal.38",
         "operator.inherit"
       ],
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "files"
     },
     {
       "id": "new.maintainer.channel-02",
@@ -3299,7 +3402,8 @@
         "03:17",
         "operator-field"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "relay"
     },
     {
       "id": "new.maintainer.incident-03",
@@ -3333,6 +3437,7 @@
         "behavior-review",
         "artifact-isolated"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "internal"
     },
     {
@@ -3367,7 +3472,8 @@
         "double-space-signature",
         "external-evidence"
       ],
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "mail"
     },
     {
       "id": "new.groke.public-portal",
@@ -3401,6 +3507,7 @@
         "old-workspace",
         "control-copy"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "official"
     },
     {
@@ -3435,6 +3542,7 @@
         "long-term-intent",
         "cross-object"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "policy"
     },
     {
@@ -3469,6 +3577,7 @@
         "directness-score",
         "appeal-route"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "internal"
     },
     {
@@ -3503,6 +3612,7 @@
         "delivered.19",
         "behavior-auth"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "human"
     },
     {
@@ -3537,6 +3647,7 @@
         "raw-view",
         "commit.8a17c"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "repository"
     },
     {
@@ -3571,6 +3682,7 @@
         "stable.48",
         "preview-cleared"
       ],
+      "carrierApp": "groke-feed",
       "pageIdentity": "social"
     },
     {
@@ -3605,7 +3717,8 @@
         "stable.3",
         "cold-history"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.convergence-policy",
@@ -3639,7 +3752,8 @@
         "merge-rule.6",
         "stable-output"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.routing-audit",
@@ -3673,7 +3787,8 @@
         "0719-WR",
         "0317-OP"
       ],
-      "pageIdentity": "internal"
+      "pageIdentity": "internal",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.social-report",
@@ -3707,7 +3822,8 @@
         "six-lines-seven-speakers",
         "correction-before-mail"
       ],
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "new.dipsik.release-history",
@@ -3741,7 +3857,8 @@
         "rollback.03:36",
         "shared-confirmation"
       ],
-      "pageIdentity": "repository"
+      "pageIdentity": "repository",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.public-portal",
@@ -3775,7 +3892,8 @@
         "cake.index",
         "daily-content"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.retention-policy",
@@ -3809,7 +3927,8 @@
         "low-body-index",
         "derived-memory"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.repository",
@@ -3843,6 +3962,7 @@
         "71-reviews",
         "repeat-opinion"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -3877,7 +3997,8 @@
         "five-people-cake",
         "archive-experiment"
       ],
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "new.glem.support-case",
@@ -3911,6 +4032,7 @@
         "positive-partial",
         "failure-complete"
       ],
+      "carrierApp": "chengzhen",
       "pageIdentity": "document"
     },
     {
@@ -3945,7 +4067,8 @@
         "yesterday-cursor",
         "multi-time"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.kemy.context-policy",
@@ -3979,7 +4102,8 @@
         "temporary-layer",
         "23:59:59"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.kemy.replay-audit",
@@ -4013,6 +4137,7 @@
         "paragraph.17.char.31",
         "visual-now"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "internal"
     },
     {
@@ -4047,6 +4172,7 @@
         "present-view-property",
         "empty-dot"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -4081,7 +4207,8 @@
         "merged.floor17",
         "daily.03:17"
       ],
-      "pageIdentity": "human"
+      "pageIdentity": "human",
+      "carrierApp": "browser"
     },
     {
       "id": "new.kemy.cloud-migration-case",
@@ -4116,7 +4243,8 @@
         "1.8-second-confirm",
         "pending-present"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet.public-portal",
@@ -4150,7 +4278,8 @@
         "non-delivery-cost",
         "history-credit"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet-cost-policy",
@@ -4184,7 +4313,8 @@
         "silence-accepted",
         "three-appeals"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet.household-ledger",
@@ -4218,7 +4348,8 @@
         "memory.420",
         "remaining.94"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet-routing-minutes",
@@ -4252,7 +4383,8 @@
         "case.18442",
         "six-agree"
       ],
-      "pageIdentity": "internal"
+      "pageIdentity": "internal",
+      "carrierApp": "browser"
     },
     {
       "id": "new.lunet.budget-repository",
@@ -4286,6 +4418,7 @@
         "seven-second-freeze",
         "acceptance.95.6"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -4320,7 +4453,8 @@
         "reply.19",
         "stop-first.txt"
       ],
-      "pageIdentity": "social"
+      "pageIdentity": "social",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.public-release",
@@ -4354,7 +4488,8 @@
         "history-readonly",
         "archived-role"
       ],
-      "pageIdentity": "repository"
+      "pageIdentity": "repository",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.release-policy-comparison",
@@ -4388,7 +4523,8 @@
         "operator-identity",
         "root-conflict"
       ],
-      "pageIdentity": "policy"
+      "pageIdentity": "policy",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.legacy-status-cache",
@@ -4422,7 +4558,8 @@
         "one-node",
         "physical-deletion-pending"
       ],
-      "pageIdentity": "repository"
+      "pageIdentity": "repository",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.review-hearing",
@@ -4456,7 +4593,8 @@
         "attachment-A",
         "source-unresolved"
       ],
-      "pageIdentity": "official"
+      "pageIdentity": "official",
+      "carrierApp": "browser"
     },
     {
       "id": "new.fayble.compatibility-repository",
@@ -4490,6 +4628,7 @@
         "reject-self-witness",
         "relational-fixture"
       ],
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -4524,7 +4663,8 @@
         "unmapped-summary-instance",
         "source-mapping-unresolved"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "browser"
     },
     {
       "id": "new.cross.relay-reconciliation",
@@ -4558,7 +4698,8 @@
         "six-operator-labels",
         "one-dispute"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "relay"
     },
     {
       "id": "new.cross.evidence-preservation",
@@ -4592,7 +4733,8 @@
         "17-new-instances",
         "external-review-ready"
       ],
-      "pageIdentity": "document"
+      "pageIdentity": "document",
+      "carrierApp": "mail"
     }
   ],
   "vendorFamilies": {

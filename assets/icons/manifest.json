@@ -18,7 +18,12 @@
     "radio": "relay-console.png",
     "receipt": "transfer-receipt.png",
     "fayble": "fayble.png",
-    "fayble-cli": "fayble-cli.png"
+    "fayble-cli": "fayble-cli.png",
+    "relay-admin": "relay-admin.png",
+    "chengzhen": "chengzhen.png",
+    "yunzhen": "yunzhen.png",
+    "groke-feed": "groke.png",
+    "repo-mirror": "github-mirror.png"
   },
   "sources": {
     "cloud": "cloud-drive.png",
