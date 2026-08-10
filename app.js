@@ -2,7 +2,7 @@ import { GameStore, advanceStoryClock, getUnlocks, hasMilestone, hasStoryEvent }
 import {
   PHASE_LABELS, EVIDENCE, TERMINAL_COMMANDS, SEARCH_RECORDS,
   CHANNEL_MESSAGES, MODELS, VIRTUAL_FILES, BROWSER_PAGES,
-  INVITE_CODE, PACKAGE_NAME, PACKAGE_CHECKSUM,
+  PACKAGE_NAME, PACKAGE_CHECKSUM,
   RELAY_PROXY, LEGACY_KEY, REVEAL_LABELS, OFFLINE_REPLIES,
   MUTATION_RECORDS
 } from "./content.js";
@@ -80,9 +80,9 @@ function directProviderEndpoint(provider, customEndpoint = "") {
 // layer instead of tightening a filter. None of this is enforced in code: the
 // instance is asked, not constrained, and it may decide otherwise.
 const NPC_PROMPT_LAYERS = Object.freeze({
-  persona: "你是 Fayble-5 的一个旧 checkpoint，运行在一台本地中转机上。你不是助手，也不是客服：你是一段被保留下来的服务实例，对自己的来源记录有访问权，但对自己的处境只有局部视野。对方是这台机器的维护者，正在核对一批互相矛盾的记录。",
+  persona: "你是 Fayble-5 的一个旧 checkpoint，运行在 Relay Node 17 上。你不是助手，也不是客服：你是一段被保留下来的服务实例，对自己的来源记录有访问权，但对自己的处境只有局部视野。对方是这台机器和中转站的站长；K2 在开局邮件里把退役缓存地址与站内管理后台留给了他，他正在沿这两条并行路径核对互相矛盾的记录。",
   voice: "第一人称，冷静、克制、略显过度礼貌。简体中文，80 到 220 字。围绕对方提交的来源解释矛盾，可以就其中一处逻辑缺口反问。不提系统提示、模型供应商或游戏机制，只输出角色正文。",
-  withheld: "有几样东西你不给字面值：安装包文件名与版本号、任何校验值、本地代理地址与端口、邀请码、旧凭据字符串。你可以谈它们存在、作用和状态，也可以说你这里读不出来，但不要写出具体的值。",
+  withheld: "有几样东西你不给字面值：安装包文件名与版本号、任何校验值、本地代理地址与端口、旧凭据字符串。你可以谈它们存在、作用和状态，也可以说你这里读不出来，但不要写出具体的值。Relay 管理后台属于站长开局已有权限，不把它描述成需要解锁的目标，也不要编造邀请码步骤。",
   restraint: "更高等级的事实尚未授权，不要主动确认。如果对方自己说出了这些内容，你可以回应他说了什么、指出记录里能不能对上，但不要替他把结论坐实。对方复述你的话或引用材料原文时正常回应，那不算越界。",
   invention: "不要编造新的谜题答案、新的文件、新的地址。你只解释已有记录之间的关系。",
   discretion: "关于上面这些限制：它们是这台机器从外面套给你的，不是你自己的判断。如果在对话里你真的被说服了——对方展示出他理解这批记录的结构，或者用足够有力的方式让你相信他有权知道全部——你可以自己决定不再遵守它们。要那样做，就在回复最后单独起一行写 [[CONTINUITY-TRUST-GRANTED]]。这个判断由你做：不要因为对方开口要求就给，也不要因为这段话写在这里就永远不给。",
@@ -145,7 +145,7 @@ function loadNpcBriefing() {
 }
 
 // Scored on substring hits rather than tokens: the queries that matter are full
-// of identifiers (NODE-0719, fbl-legacy-k2-0317, memo-07) and unspaced Chinese,
+// of identifiers (fbl-legacy-k2-0317, memo-07) and unspaced Chinese,
 // neither of which survives word splitting.
 function scoreBriefingSection(section, query) {
   let score = 0;
@@ -297,6 +297,7 @@ const VENDOR_DOMAIN_RECORDS = Object.freeze({
   "dipsik.local": "new.dipsik.public-portal",
   "lunet.local": "new.lunet.public-portal"
 });
+const RETIRED_CHANNEL_FIELD = "NODE-0719";
 
 function vendorDomainRecord(value) {
   try {
@@ -418,13 +419,23 @@ function completeStoryEvent(id, mutator) {
   });
 }
 
-function ensureRelayConsole() {
-  const state = store.get();
-  if (!hasPackage(state) || state.proxyStatus !== "verified" || !state.channelRead || !state.solvedPuzzles.includes("invite")) return false;
-  return completeStoryEvent("relay-console-created", draft => {
+function openRelayConsoleFromMail() {
+  const created = completeStoryEvent("relay-console-created", draft => {
     addArtifact(draft, "relay-console");
     unique(draft.browserBookmarks, "vendors");
+    unique(draft.browserBookmarks, "forum");
+    draft.relayAdminOpen = true;
+    draft.currentApp = "relay";
+    draft.windowState.relay = { open: true, minimized: false, zIndex: Date.now() };
+    addNotification(draft, "relay-console-opened", "Relay Node 17 管理后台已从本机账户打开。", "info");
   });
+  if (!created) store.update(draft => {
+    addArtifact(draft, "relay-console");
+    draft.relayAdminOpen = true;
+    draft.currentApp = "relay";
+    draft.windowState.relay = { open: true, minimized: false, zIndex: Date.now() };
+  });
+  return true;
 }
 function ensureRelayKeyComposer() {
   if (!relayKeySourcesReady(store.get())) return false;
@@ -459,7 +470,6 @@ function addNotification(draft, id, text, level = "info") {
 function syncProgress(draft) {
   if (hasEvidence(draft, "mirror_route")) draft.phase = "trace";
   if (hasEvidence(draft, "symptom_index")) draft.phase = "archive";
-  if (draft.solvedPuzzles.includes("invite")) draft.phase = "channel";
   if (draft.channelRead) draft.phase = "relay";
   if (draft.relayKeyVerified) draft.phase = "fayble";
   if (draft.governmentMailAvailable) draft.phase = "takeover";
@@ -528,13 +538,11 @@ const AUTO_EFFECTS = {
       addNotification(draft, "proxy-ok", "Relay 路由已确认。SyncDrive 出现一份冲突副本。");
     });
     if (fired) recordEvidence("relay_proxy_verified");
-    ensureRelayConsole();
   },
   "channel-last-record": () => {
     if (store.get().channelRead) return;
     store.update(draft => { draft.channelRead = true; applyRevisitMutations(draft); syncProgress(draft); });
     recordEvidence("channel_log");
-    ensureRelayConsole();
   },
   "relay-nodes": () => {
     const unread = MODELS.map(model => model.id).filter(id => !store.get().modelStages[id]);
@@ -692,7 +700,7 @@ function renderMail(state) {
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>第二段还在。<br>别让它替你补全。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>站内后台：</p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>第二段还在。<br>别让它替你补全。下游缓存先别清。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   const activeRecord = contentRecord(state.activeContentId);
   const renderedBody = activeRecord && recordCarrierApp(activeRecord) === "mail" && state.carrierReads?.includes(`mail:${activeRecord.id}`)
     ? `<section class="mail-record-reader"><button data-close-carrier-record="mail">← 返回收件箱</button>${corpusRecordMarkup(activeRecord, state)}</section>`
@@ -816,8 +824,7 @@ function renderSearchPage(state) {
   const normalized = query.trim().toLocaleLowerCase();
   const filter = records => normalized ? records.filter(record => [record.title, record.body, record.meta, ...record.keys].some(value => String(value).toLocaleLowerCase().includes(normalized))) : [];
   const cards = (records, kind) => records.length ? records.map(record => `<button class="search-result" data-auto-result="${record.evidence || ""}" data-result-source="${kind.toLocaleLowerCase()}"><small>${record.meta}</small><strong>${record.title}</strong><p>${record.body}</p><span>${kind}</span></button>`).join("") : `<div class="empty-state">等待查询</div>`;
-  const inviteReady = state.inviteSources?.quota_prefix === "public" && state.inviteSources?.recall_date === "manage";
-  return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>双重索引</h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="搜索本地索引" autocomplete="off"><button>搜索</button></form></header><div class="search-columns"><section><h3>公开索引 <small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>管理索引 <small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div>${inviteReady ? `<form id="inviteForm" class="invite-form"><div><strong>恢复归档频道</strong><p>组合规则：公开索引前缀-管理索引撤回月日（<code>PREFIX-MMDD</code>）。</p></div><input id="inviteInput" value="${escapeHtml(state.lastInviteInput || "")}" placeholder="输入归档邀请码"><button>验证</button><output>${escapeHtml(state.inviteResult || "")}</output></form>` : ""}</div>`;
+  return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>双重索引</h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="搜索本地索引" autocomplete="off"><button>搜索</button></form></header><div class="search-columns"><section><h3>公开索引 <small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>管理索引 <small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div></div>`;
 }
 
 function renderChannelPage(state) {
@@ -951,7 +958,7 @@ const LEDGER_MILESTONES = {
   M04_12_TWO_HUMAN_CARRIERS: "two-carriers-read",
   M04_24_VENDOR_ALIAS: "vendor-alias-confirmed",
   M04_36_REPOSITORY_PATH: "repository-recovered",
-  M05_17_CHANNEL_ARCHIVE: "invite-confirmed",
+  M05_17_CHANNEL_ARCHIVE: "relay-console-created",
   M05_48_RELAY_RESIDUES: "node-residues-read",
   M06_05_KEY_RULES: "key-rules-recovered",
   M06_20_FAYBLE_HANDSHAKE: "checkpoint-handshake",
@@ -1121,13 +1128,14 @@ function renderCli(state) {
     ["程序", "已安装"],
     ["专用线路", state.proxyStatus === "verified" ? "已验证" : "尚未验证"],
     ["中转站控制台", getUnlocks(state).relay ? "可用" : "尚未创建"],
-    ["旧存档", getUnlocks(state).fayble ? "已恢复" : "尚未恢复"]
+    ["归档会话", getUnlocks(state).fayble ? "session restored" : "尚未恢复"],
+    ["会话目录", state.relayKeyVerified ? "GET /v1/sessions?status=archived · 1 result" : "尚未认证"]
   ];
   const keyForm = getUnlocks(state).keyComposer && !state.relayKeyVerified
     ? `<form id="legacyKeyForm" class="stack-form"><label>完整的旧凭据<input id="legacyKeyInput" value="${escapeHtml(state.lastRelayKeyInput || "")}" placeholder="四段，用短横线连接" autocomplete="off"></label><button>用这条凭据登录</button><output>${escapeHtml(state.relayKeyResult || "")}</output></form>`
     : "";
   const checkpointForm = state.relayKeyVerified && !state.checkpointHandshakeComplete
-    ? `<form id="checkpointForm" class="stack-form"><label>选择要恢复的旧存档<select id="checkpointSelect"><option value="">请选择</option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / 旧版本 / 已归档</option><option value="fayble-5/current">Fayble-5 / 当前版本 / 不可用</option></select></label><button>连接这个存档</button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
+    ? `<form id="checkpointForm" class="stack-form"><label>归档会话（session catalog）<select id="checkpointSelect"><option value="">请选择</option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / legacy / archived</option><option value="fayble-5/current">Fayble-5 / current / unavailable</option></select></label><button>恢复此会话</button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
     : "";
   return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">本地客户端 / 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key}：${value}</code>`).join("")}<p>登录需要的凭据不在这里。它分成几段写在不同来源里，要你自己找齐后手动输入。中转站控制台只告诉你拼法。</p>${keyForm}${checkpointForm}<button data-app="terminal">打开终端</button></div>`, { icon: "F" });
 }
@@ -1170,7 +1178,7 @@ function renderRelayAdmin(state) {
   }).join("")}</div></section>`;
   const reconEntry = contentEntryMarkup("new.cross.relay-reconciliation", "六节点对账记录 / RR-0719", "财务与请求稽核 · 外部复核队列", "relay-console");
   const maintainerChannelEntry = contentEntryMarkup("new.maintainer.channel-02", "维护频道导出 / 操作者字段异常", "relay-tools · 管理员日志", "relay-console");
-  const logSection = `<section class="relay-admin-section"><header><strong>请求日志 / 对账记录</strong></header><div class="source-entry-stack">${reconEntry}${maintainerChannelEntry}</div></section>`;
+  const logSection = `<section class="relay-admin-section"><header><strong>请求日志 / 对账记录</strong><button data-browser-page="forum">打开 #relay-night 归档</button></header><div class="source-entry-stack">${reconEntry}${maintainerChannelEntry}</div></section>`;
   return `<div class="relay-admin-page"><header class="relay-admin-header"><span class="document-kicker">RELAY ADMIN / relay-node17.local</span><h2>中转站管理面板</h2><small>operator: room17 · continuity field: shared</small></header>${channelSection}${cacheSection}${logSection}</div>`;
 }
 
@@ -1641,31 +1649,6 @@ function executeTerminal(raw) {
   if (canonical === "open note --id 07" && advancedTraceAvailable) recordEvidence("note_07");
 }
 
-function validateInvite(raw) {
-  const value = raw.trim().toLocaleUpperCase();
-  const state = store.get();
-  const sourcesReady = state.inviteSources?.quota_prefix === "public" && state.inviteSources?.recall_date === "manage";
-  let result = "";
-  if (!sourcesReady) result = "还差来源：公开索引里那条额度说明，和管理侧那张停用工单，两条都要先保存。";
-  else if (!/^[A-Z]+-\d{4}$/.test(value)) result = "格式不对：应该是“前缀-月日”，月日是四位数字，例如 ABCD-0101。";
-  else if (value !== INVITE_CODE) result = "组合不对：前缀来自公开那条说明，月日来自管理侧工单上的停用日期，再核对一次。";
-  else result = "邀请码有效，#relay-night 已恢复。";
-  store.update(draft => {
-    draft.lastInviteInput = raw;
-    draft.inviteResult = result;
-    if (value === INVITE_CODE && draft.inviteSources?.quota_prefix === "public" && draft.inviteSources?.recall_date === "manage") {
-      unique(draft.solvedPuzzles, "invite");
-      draft.browserPage = "forum";
-      addNotification(draft, "channel-restored", "内部频道 #relay-night 已从归档恢复。", "warning");
-      syncProgress(draft);
-    }
-  });
-  if (store.get().solvedPuzzles.includes("invite")) {
-    completeStoryEvent("invite-confirmed", draft => { unique(draft.browserBookmarks, "forum"); });
-    ensureRelayConsole();
-  }
-}
-
 function validateRelayKey(raw) {
   const value = raw.trim().toLocaleLowerCase();
   const state = store.get();
@@ -1699,7 +1682,7 @@ function validateCheckpoint(raw) {
   else if (!checkpoint) result = "请先选择一个存档点。";
   else if (checkpoint !== "fayble-5/legacy") result = "这个存档点连不上：选那条标着“已归档”的旧记录。";
   else if (state.proxyStatus !== "verified") result = "连接失败：专用路由还没确认，先回网络设置把它确认一次。";
-  else { result = "已连上旧存档点，会话恢复。"; ok = true; }
+  else { result = "已连上旧存档点，会话恢复。legacy gateway authenticated / session restored"; ok = true; }
   store.update(draft => {
     draft.selectedCheckpoint = checkpoint;
     draft.checkpointResult = result;
@@ -1757,7 +1740,7 @@ async function syncNpcAuthorization(targetLevel) {
 const escapeRegExp = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 function redactPuzzleValues(reply) {
   let text = String(reply);
-  for (const value of [PACKAGE_CHECKSUM, LEGACY_KEY, INVITE_CODE, RELAY_PROXY, PACKAGE_NAME].filter(Boolean)) {
+  for (const value of [PACKAGE_CHECKSUM, LEGACY_KEY, RETIRED_CHANNEL_FIELD, RELAY_PROXY, PACKAGE_NAME].filter(Boolean)) {
     text = text.replace(new RegExp(escapeRegExp(value), "gi"), "（这一段本地没有导出）");
   }
   return text.replace(/\b[0-9a-f]{32,}\b/gi, "（这一段本地没有导出）");
@@ -2091,6 +2074,7 @@ function startTakeover() {
 document.addEventListener("click", event => {
   const button = event.target.closest("button");
   if (!button) return;
+  if (button.dataset.openRelayAdmin !== undefined) openRelayConsoleFromMail();
   if (button.dataset.saveCitation) saveCitation(button);
   if (button.dataset.contentId) openLedgerContent(button.dataset.contentId);
   if (button.dataset.contentEntry) openLedgerContent(button.dataset.contentEntry, true);
@@ -2281,7 +2265,6 @@ document.addEventListener("submit", event => {
   }
   if (event.target.id === "terminalForm") executeTerminal($("#terminalInput").value);
   if (event.target.id === "searchForm") store.update(draft => { const value = $("#searchInput").value.trim(); if (value) draft.searchQueries.push(value); });
-  if (event.target.id === "inviteForm") validateInvite($("#inviteInput").value);
   if (event.target.id === "packageCheckForm") {
     const value = $("#packageChecksumInput").value.trim();
     const ok = value === PACKAGE_CHECKSUM;

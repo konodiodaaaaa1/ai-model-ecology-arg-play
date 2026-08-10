@@ -127,6 +127,8 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .app-mail .mail-sign { font-family: inherit; font-size: 15px; }
 .mail-minimal { margin: 26px 0 34px; font-size: 15px; line-height: 1.85; }
 .mail-minimal code { padding: 2px 5px; background: #d0c9ba; color: #35352f; }
+.mail-route-link { padding: 2px 5px; border: 0; border-radius: 0; background: #d0c9ba; color: #245b87; font: inherit; text-decoration: underline; cursor: pointer; }
+.mail-route-link:hover, .mail-route-link:focus-visible { background: #c2d7e7; color: #173f61; }
 .raw-source { max-width: 720px; margin-top: 28px; padding: 12px 14px; border: 1px solid #aaa394; background: #d8d1c2; }
 .raw-source summary { cursor: pointer; font-weight: 700; }
 .raw-source pre { overflow-x: auto; white-space: pre-wrap; word-break: break-word; }

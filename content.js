@@ -213,7 +213,6 @@ export const MUTATION_RECORDS = [
   },
 ];
 
-export const INVITE_CODE = "NODE-0719";
 export const PACKAGE_NAME = "fayble-cli_0.9.7-legacy_amd64.deb";
 export const PACKAGE_CHECKSUM = "3bb3c70e6328582757aededa1afb67fb8424929c6e030dce9ee22bd74db62400";
 export const RELAY_PROXY = "127.0.0.1:9057";
