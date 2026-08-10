@@ -437,6 +437,25 @@ function openRelayConsoleFromMail() {
   });
   return true;
 }
+
+function openMirrorFromMail() {
+  const opened = completeStoryEvent("route-visited", draft => {
+    draft.pendingBrowserAddress = BROWSER_PAGES.mirror.url;
+    draft.browserPage = "mirror";
+    draft.browserHistory.push(BROWSER_PAGES.mirror.url);
+    unique(draft.browserBookmarks, "mirror");
+    draft.currentApp = "browser";
+    draft.windowState.browser = { open: true, minimized: false, zIndex: Date.now() };
+  });
+  if (!opened) store.update(draft => {
+    draft.pendingBrowserAddress = BROWSER_PAGES.mirror.url;
+    draft.browserPage = "mirror";
+    draft.currentApp = "browser";
+    draft.windowState.browser = { open: true, minimized: false, zIndex: Date.now() };
+  });
+  return true;
+}
+
 function ensureRelayKeyComposer() {
   if (!relayKeySourcesReady(store.get())) return false;
   const added = completeStoryEvent("key-rules-recovered");
@@ -700,7 +719,7 @@ function renderMail(state) {
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><code>http://archive.room17.local/v2/17</code></p><p>站内后台：</p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>第二段还在。<br>别让它替你补全。下游缓存先别清。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><button class="mail-route-link" data-open-mirror>http://archive.room17.local/v2/17</button></p><p>站内后台：</p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>第二段还在。<br>别让它替你补全。下游缓存先别清。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   const activeRecord = contentRecord(state.activeContentId);
   const renderedBody = activeRecord && recordCarrierApp(activeRecord) === "mail" && state.carrierReads?.includes(`mail:${activeRecord.id}`)
     ? `<section class="mail-record-reader"><button data-close-carrier-record="mail">← 返回收件箱</button>${corpusRecordMarkup(activeRecord, state)}</section>`
@@ -2074,6 +2093,7 @@ function startTakeover() {
 document.addEventListener("click", event => {
   const button = event.target.closest("button");
   if (!button) return;
+  if (button.dataset.openMirror !== undefined) openMirrorFromMail();
   if (button.dataset.openRelayAdmin !== undefined) openRelayConsoleFromMail();
   if (button.dataset.saveCitation) saveCitation(button);
   if (button.dataset.contentId) openLedgerContent(button.dataset.contentId);
