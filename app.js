@@ -83,6 +83,99 @@ let takeoverPreludeRunning = false;
 let npcConfig = null;
 let iconManifest = null;
 let pendingRevealSelector = "";
+// Store scroll state outside the save file because every state update rebuilds all open window markup.
+const windowScrollMemory = new Map();
+let restoringScrollPositions = false;
+
+function scrollRegionBaseKey(node, appWindow) {
+  if (node.dataset.scrollKey) return `key:${node.dataset.scrollKey}`;
+  if (node.id) return `id:${node.id}`;
+  const classes = [...node.classList].filter(name => !["active", "read", "selected", "focused", "open", "closed", "trusted"].includes(name));
+  if (classes.length) return `${node.tagName.toLowerCase()}.${classes.join(".")}`;
+  const path = [];
+  for (let current = node; current && current !== appWindow; current = current.parentElement) {
+    const siblings = current.parentElement ? [...current.parentElement.children].filter(item => item.tagName === current.tagName) : [];
+    path.unshift(`${current.tagName.toLowerCase()}:${Math.max(0, siblings.indexOf(current))}`);
+  }
+  return `path:${path.join("/")}`;
+}
+
+function scrollRegions(appWindow) {
+  const counters = new Map();
+  return [...appWindow.querySelectorAll("*")].flatMap(node => {
+    const style = getComputedStyle(node);
+    const scrollX = /^(auto|scroll|overlay)$/.test(style.overflowX);
+    const scrollY = /^(auto|scroll|overlay)$/.test(style.overflowY);
+    if (!scrollX && !scrollY) return [];
+    const base = scrollRegionBaseKey(node, appWindow);
+    const occurrence = counters.get(base) || 0;
+    counters.set(base, occurrence + 1);
+    const key = `${base}:${occurrence}`;
+    node.dataset.scrollMemoryKey = key;
+    return [{ node, key, scrollX, scrollY }];
+  });
+}
+
+function syncScrollMemory(event) {
+  const node = event.target;
+  if (!(node instanceof HTMLElement)) return;
+  const appWindow = node.closest("#windows [data-app-window]");
+  if (!appWindow || restoringScrollPositions) return;
+  const key = node.dataset.scrollMemoryKey;
+  if (!key) return;
+  const style = getComputedStyle(node);
+  const scrollX = /^(auto|scroll|overlay)$/.test(style.overflowX);
+  const scrollY = /^(auto|scroll|overlay)$/.test(style.overflowY);
+  const maxTop = Math.max(0, node.scrollHeight - node.clientHeight);
+  const followsEnd = node.matches("#terminalOutput, #chatStream, [data-follow-scroll-end]");
+  const appRegions = windowScrollMemory.get(appWindow.dataset.appWindow) || new Map();
+  appRegions.set(key, {
+    top: scrollY ? node.scrollTop : 0,
+    left: scrollX ? node.scrollLeft : 0,
+    followBottom: scrollY && followsEnd && maxTop - node.scrollTop < 32
+  });
+  windowScrollMemory.set(appWindow.dataset.appWindow, appRegions);
+}
+
+function rememberWindowScrollPositions() {
+  for (const appWindow of document.querySelectorAll("#windows [data-app-window]")) {
+    const regions = new Map(scrollRegions(appWindow).map(({ node, key, scrollX, scrollY }) => {
+      const maxTop = Math.max(0, node.scrollHeight - node.clientHeight);
+      const followsEnd = node.matches("#terminalOutput, #chatStream, [data-follow-scroll-end]");
+      return [key, {
+        top: scrollY ? node.scrollTop : 0,
+        left: scrollX ? node.scrollLeft : 0,
+        followBottom: scrollY && followsEnd && maxTop - node.scrollTop < 32
+      }];
+    }));
+    windowScrollMemory.set(appWindow.dataset.appWindow, regions);
+  }
+}
+
+function restoreWindowScrollPositions(openWindows, options = {}) {
+  restoringScrollPositions = true;
+  for (const [appId] of openWindows) {
+    const appWindow = document.querySelector(`[data-app-window="${appId}"]`);
+    if (!appWindow) continue;
+    const savedRegions = windowScrollMemory.get(appId);
+    for (const { node, key, scrollX, scrollY } of scrollRegions(appWindow)) {
+      const saved = savedRegions?.get(key);
+      if (!saved) {
+        if (options.initializeFollowEnd && scrollY && node.matches("#terminalOutput, #chatStream, [data-follow-scroll-end]")) {
+          node.scrollTop = node.scrollHeight;
+          const maxTop = Math.max(0, node.scrollHeight - node.clientHeight);
+          const appRegions = windowScrollMemory.get(appId) || new Map();
+          appRegions.set(key, { top: node.scrollTop, left: scrollX ? node.scrollLeft : 0, followBottom: maxTop - node.scrollTop < 32 });
+          windowScrollMemory.set(appId, appRegions);
+        }
+        continue;
+      }
+      if (scrollX) node.scrollLeft = saved.left;
+      if (scrollY) node.scrollTop = saved.followBottom ? node.scrollHeight : saved.top;
+    }
+  }
+  restoringScrollPositions = false;
+}
 
 const DIRECT_PROVIDER_ENDPOINTS = Object.freeze({
   openai: "https://api.openai.com/v1/chat/completions",
@@ -1601,6 +1694,7 @@ function renderNotifications(state) {
 }
 
 function render(state) {
+  rememberWindowScrollPositions();
   document.body.dataset.phase = state.phase;
   document.body.classList.toggle("horror-stage-1", state.readEvidence.length >= 5);
   document.body.classList.toggle("horror-stage-2", state.modelStages && Object.keys(state.modelStages).length >= 3);
@@ -1619,16 +1713,8 @@ function render(state) {
   const openWindows = Object.entries(state.windowState)
     .filter(([id, window]) => renderers[id] && window?.open && !window.minimized)
     .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0));
-  const scrollState = [...document.querySelectorAll("#windows [data-app-window]")].map(window => ({
-    appId: window.dataset.appWindow,
-    regions: [...window.querySelectorAll(".window-content, .terminal-output, .relay-admin-main, .chat-stream")].map((region, index) => ({
-      index,
-      scrollTop: region.scrollTop,
-      fromBottom: region.scrollHeight - region.clientHeight - region.scrollTop,
-      stickToBottom: region.scrollHeight - region.clientHeight - region.scrollTop < 32
-    }))
-  }));
   $("#windows").innerHTML = openWindows.map(([id]) => renderers[id](state)).join("");
+  restoreWindowScrollPositions(openWindows, { initializeFollowEnd: true });
   const intervention = $("#faybleIntervention");
   const rainActive = ["fayble-blackout", "fayble-rain", "fayble-cut"].includes(state.takeoverStage);
   intervention.hidden = !rainActive;
@@ -1640,24 +1726,7 @@ function render(state) {
   }
   $("#onboarding").hidden = state.onboardingSeen;
   afterPaint(() => {
-    for (const savedWindow of scrollState) {
-      const window = document.querySelector(`[data-app-window="${savedWindow.appId}"]`);
-      if (!window) continue;
-      const regions = [...window.querySelectorAll(".window-content, .terminal-output, .relay-admin-main, .chat-stream")];
-      savedWindow.regions.forEach(saved => {
-        const region = regions[saved.index];
-        if (!region) return;
-        region.scrollTop = saved.stickToBottom ? region.scrollHeight : saved.scrollTop;
-      });
-    }
-    if (openWindows.some(([id]) => id === "terminal")) {
-      const out = $("#terminalOutput");
-      if (out) out.scrollTop = out.scrollHeight;
-    }
-    if (openWindows.some(([id]) => id === "fayble")) {
-      const out = $("#chatStream");
-      if (out) out.scrollTop = out.scrollHeight;
-    }
+    restoreWindowScrollPositions(openWindows);
     if (pendingRevealSelector) {
       document.querySelector(pendingRevealSelector)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
       pendingRevealSelector = "";
@@ -2520,6 +2589,8 @@ document.addEventListener("click", event => {
     $("#providerSetup").hidden = false;
   }
 });
+
+document.addEventListener("scroll", syncScrollMemory, true);
 
 let windowDrag = null;
 let windowResize = null;
