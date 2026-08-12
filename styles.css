@@ -561,7 +561,15 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .horror-deptseek-block { clip-path: polygon(0 0, 68% 0, 68% 35%, 100% 35%, 100% 100%, 34% 100%, 34% 66%, 0 66%); transform: translate(2px,-1px); }
 .horror-deptseek-block-heavy { animation: deptseek-block-shift 6.5s steps(3) both; background-image: linear-gradient(90deg, transparent 0 22%, rgba(65,116,91,.12) 22% 39%, transparent 39% 62%, rgba(65,116,91,.1) 62% 79%, transparent 79%); }
 .horror-memo-shell { animation: memo-paper-drift .9s ease both; }
-.horror-memo-drift { transform: translateX(5px); opacity: .88; }
+.horror-memo-drift, .horror-memo-drift-mild { display: block; transform: translateX(3px); opacity: .92; }
+.horror-memo-drift-more { display: block; transform: translateX(-5px) translateY(1px); opacity: .92; }
+.horror-memo-date-drift { display: inline-block; transform: translateX(-5px) translateY(1px); letter-spacing: .06em; opacity: .7; }
+.horror-memo-line-crush { display: block; overflow: visible; color: #69726f; line-height: .6 !important; letter-spacing: 0 !important; text-shadow: 0 1px 0 rgba(23,107,91,.12); }
+.horror-memo-char-mirror-h { display: inline-block; transform: scaleX(-1); opacity: .82; text-shadow: 1px 0 2px rgba(23,107,91,.16); }
+.horror-memo-char-mirror-v { display: inline-block; transform: scaleY(-1) translateY(-1px); opacity: .72; filter: blur(.3px); }
+.horror-memo-date-spiral { display: inline-block; transform: rotate(3deg) skewX(1.5deg) translateX(6px); transform-origin: left center; color: #8b5048; opacity: .78; text-shadow: 0 0 8px rgba(139,80,72,.15); }
+.horror-memo-line-wave { display: block; }
+.horror-memo-reversed { unicode-bidi: plaintext; }
 .horror-memo-wave { animation: memo-line-wave 1.8s ease-in-out 1 both; }
 .horror-memo-collapse { animation: memo-line-collapse 6.2s steps(4) both; transform-origin: left center; }
 @keyframes ethron-chain-drag { 0%,100% { transform:none; filter:none; } 28% { transform:translateX(-3px); filter:contrast(1.08); } 51% { transform:translateX(2px) skewX(-1deg); } 74% { transform:translateY(2px); box-shadow:inset 0 0 60px rgba(99,58,122,.16), 0 0 0 2px rgba(99,58,122,.28); } }

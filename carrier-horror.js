@@ -26,17 +26,105 @@ export function stagePolicy(stage = "H0") {
   return value.includes("H0") ? "mixed-protected" : "controlled";
 }
 
+function embeddedAuthorshipStage(root, record) {
+  const embedded = [...root.querySelectorAll("[data-authorship-stage]")]
+    .find(element => !record?.id || element.dataset.contentId === record.id);
+  return embedded?.dataset.authorshipStage || record?.authorshipStage || root.dataset.authorshipStage || "H0";
+}
+
 let activeRuntime = null;
 
 const protectedSelector = "input, textarea, select, button, [contenteditable], [data-horror-safe], .chat-avatar.user, .chat-bubble.user";
 
 function temporaryClass(runtime, element, className, duration) {
   if (!element || element.matches(protectedSelector) || element.closest(protectedSelector)) return false;
+  const previousClass = element.getAttribute("class");
   element.classList.add(className);
-  const cleanup = () => element.classList.remove(className);
+  let restored = false;
+  const cleanup = () => {
+    if (restored) return;
+    restored = true;
+    if (previousClass === null) element.removeAttribute("class");
+    else element.setAttribute("class", previousClass);
+  };
   runtime.cleanup.push(cleanup);
   runtime.timers.push(setTimeout(cleanup, duration));
   return true;
+}
+
+function temporaryMutation(runtime, elements, duration, mutate) {
+  const targets = [...new Set(elements)].filter(element => element && !element.matches(protectedSelector) && !element.closest(protectedSelector));
+  if (!targets.length) return false;
+  const snapshots = targets.map(element => ({
+    element,
+    html: element.innerHTML,
+    attributes: [...element.attributes].map(attribute => [attribute.name, attribute.value])
+  }));
+  let restored = false;
+  const cleanup = () => {
+    if (restored) return;
+    restored = true;
+    for (const snapshot of snapshots) {
+      snapshot.element.innerHTML = snapshot.html;
+      [...snapshot.element.attributes].forEach(attribute => snapshot.element.removeAttribute(attribute.name));
+      snapshot.attributes.forEach(([name, value]) => snapshot.element.setAttribute(name, value));
+    }
+  };
+  runtime.cleanup.push(cleanup);
+  mutate(targets);
+  runtime.timers.push(setTimeout(cleanup, duration));
+  return true;
+}
+
+function markMemoEffect(runtime, name, duration) {
+  const previous = runtime.root.getAttribute("data-memo-horror-effect");
+  runtime.root.setAttribute("data-memo-horror-effect", name);
+  let restored = false;
+  const cleanup = () => {
+    if (restored) return;
+    restored = true;
+    if (previous === null) runtime.root.removeAttribute("data-memo-horror-effect");
+    else runtime.root.setAttribute("data-memo-horror-effect", previous);
+  };
+  runtime.cleanup.push(cleanup);
+  runtime.timers.push(setTimeout(cleanup, duration));
+}
+
+function replaceTextWithSpans(element, classForCharacter) {
+  const fragment = document.createDocumentFragment();
+  [...element.textContent].forEach((character, index) => {
+    const className = classForCharacter(character, index);
+    if (!className || /\s/.test(character)) {
+      fragment.appendChild(document.createTextNode(character));
+      return;
+    }
+    const span = document.createElement("span");
+    if (typeof className === "string") span.className = className;
+    else Object.assign(span.style, className);
+    span.textContent = character;
+    fragment.appendChild(span);
+  });
+  element.replaceChildren(fragment);
+}
+
+function mirrorMemoCharacters(element, orientation, random) {
+  let count = 0;
+  let nextMirror = 3 + Math.floor(random() * 3);
+  replaceTextWithSpans(element, character => {
+    if (/\s/.test(character)) return "";
+    count += 1;
+    if (count < nextMirror) return "";
+    count = 0;
+    nextMirror = 3 + Math.floor(random() * 3);
+    return orientation === "horizontal" ? "horror-memo-char-mirror-h" : "horror-memo-char-mirror-v";
+  });
+}
+
+function waveMemoCharacters(element, frequency, amplitude) {
+  replaceTextWithSpans(element, (character, index) => /\s/.test(character) ? "" : ({
+    display: "inline-block",
+    transform: `translateY(${(Math.sin(index * frequency) * amplitude).toFixed(1)}px)`
+  }));
 }
 
 function addGhost(runtime, text, className, duration) {
@@ -91,15 +179,79 @@ function deptseekEffect(runtime) {
 }
 
 function memoEffect(runtime) {
-  if (runtime.policy === "shell-only") return temporaryClass(runtime, runtime.root, "horror-memo-shell", runtime.level >= 4 ? 4200 : 900);
-  const paragraphs = [...runtime.root.querySelectorAll(".memo-body p, p")].filter(element => !element.closest(protectedSelector));
-  const target = paragraphs[Math.floor(runtime.random() * paragraphs.length)] || runtime.root.querySelector("header") || runtime.root;
-  const className = runtime.policy === "full" && runtime.level >= 4
-    ? "horror-memo-collapse"
-    : runtime.policy === "full"
-      ? "horror-memo-wave"
-      : "horror-memo-drift";
-  return temporaryClass(runtime, target, className, runtime.level >= 4 ? 6200 : 1800);
+  if (runtime.policy === "shell-only") {
+    const paper = runtime.root.closest(".notes-editor") || runtime.root;
+    return temporaryClass(runtime, paper, "horror-memo-shell", runtime.level >= 4 ? 4200 : 900);
+  }
+
+  const entries = [...runtime.root.querySelectorAll(".memo-entry")];
+  const entry = entries[Math.floor(runtime.random() * entries.length)] || null;
+  const body = entry?.querySelector(".memo-body");
+  const date = entry?.querySelector(".memo-date");
+  const paragraphs = body ? [...body.querySelectorAll("p")] : [];
+  if (!entry || (!body && !date)) return temporaryClass(runtime, runtime.root, "horror-memo-shell", 900);
+
+  const duration = runtime.policy === "full" && runtime.level >= 4 ? 6200 : runtime.level >= 3 ? 3600 : 1800;
+  const controlledEffects = ["drift-mild", "date-drift"];
+  const fullEffects = runtime.level <= 2
+    ? controlledEffects
+    : runtime.level === 3
+      ? ["drift-more", "line-crush", "date-spiral", "mirror-horizontal"]
+      : runtime.level === 4
+        ? ["drift-more", "line-crush", "date-spiral", "mirror-horizontal", "mirror-vertical", "line-wave", "character-scale"]
+        : ["date-spiral", "mirror-horizontal", "mirror-vertical", "line-wave", "character-scale", "reverse"];
+  const pool = runtime.policy === "full" ? fullEffects : controlledEffects;
+  const effect = pool[Math.floor(runtime.random() * pool.length)];
+  const paragraph = paragraphs[Math.floor(runtime.random() * paragraphs.length)] || null;
+  let applied = false;
+
+  if (effect === "drift-mild") applied = temporaryClass(runtime, body, "horror-memo-drift-mild", duration);
+  if (effect === "date-drift") applied = temporaryClass(runtime, date || body, "horror-memo-date-drift", duration);
+  if (effect === "drift-more") {
+    applied = temporaryClass(runtime, body, "horror-memo-drift-more", duration);
+    if (date) temporaryClass(runtime, date, "horror-memo-date-drift", duration);
+  }
+  if (effect === "line-crush") applied = temporaryClass(runtime, paragraph || body, "horror-memo-line-crush", duration);
+  if (effect === "date-spiral") applied = temporaryClass(runtime, date || body, "horror-memo-date-spiral", duration);
+  if (effect === "mirror-horizontal" && paragraph) {
+    applied = temporaryMutation(runtime, [paragraph], duration, () => mirrorMemoCharacters(paragraph, "horizontal", runtime.random));
+  }
+  if (effect === "mirror-vertical" && paragraph) {
+    applied = temporaryMutation(runtime, [paragraph], duration, () => mirrorMemoCharacters(paragraph, "vertical", runtime.random));
+  }
+  if (effect === "character-scale" && paragraph) {
+    applied = temporaryMutation(runtime, [paragraph], duration, () => replaceTextWithSpans(paragraph, (character, index) => {
+      if (/\s/.test(character) || runtime.random() >= ((Math.sin(index * 0.5) + 1) * 0.175)) return "";
+      const scale = runtime.random() < 0.5 ? 1.5 + runtime.random() * 1.5 : 0.5 + runtime.random() * 0.25;
+      return { display: "inline-block", transform: `scale(${scale.toFixed(2)})` };
+    }));
+  }
+  if (effect === "line-wave" && paragraphs.length) {
+    applied = temporaryMutation(runtime, paragraphs, duration, () => {
+      paragraphs.forEach((item, index) => {
+        const offset = Math.sin(index * 1.3) * 6 + (runtime.random() * 4 - 2);
+        item.classList.add("horror-memo-line-wave");
+        item.style.marginTop = `${offset.toFixed(1)}px`;
+        item.style.marginBottom = `${(-offset * 0.5).toFixed(1)}px`;
+      });
+      waveMemoCharacters(paragraphs[0], 0.35, 4);
+      if (paragraphs[2]) waveMemoCharacters(paragraphs[2], 0.28, 3.5);
+      if (paragraphs[3]) replaceTextWithSpans(paragraphs[3], (character, index) => {
+        if (/\s/.test(character) || runtime.random() >= ((Math.sin(index * 0.5) + 1) * 0.175)) return "";
+        const scale = runtime.random() < 0.5 ? 1.5 + runtime.random() * 1.5 : 0.5 + runtime.random() * 0.25;
+        return { display: "inline-block", transform: `scale(${scale.toFixed(2)})` };
+      });
+    });
+  }
+  if (effect === "reverse" && paragraphs.length) {
+    applied = temporaryMutation(runtime, paragraphs, duration, () => paragraphs.forEach(item => {
+      item.textContent = [...item.textContent].reverse().join("");
+      item.classList.add("horror-memo-reversed");
+    }));
+  }
+
+  if (applied) markMemoEffect(runtime, effect, duration);
+  return applied;
 }
 
 function glemEffect(runtime) {
@@ -171,7 +323,7 @@ export function mountCarrierHorror({ root, record, state, random = Math.random }
   const visits = state?.carrierHorror?.visits?.[record.id] || 1;
   const level = horrorLevel(visits);
   const config = horrorConfig(visits);
-  const policy = stagePolicy(record.authorshipStage);
+  const policy = stagePolicy(embeddedAuthorshipStage(root, record));
   const runtime = { root, record, level, policy, timers: [], cleanup: [], triggers: 0, random };
   activeRuntime = runtime;
   root.dataset.horrorLevel = String(level);
