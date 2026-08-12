@@ -890,22 +890,24 @@ function renderSoftware(state) {
   const category = pkg => pkg.id === "repo-mirror" ? "开发工具" : ["gamini-ws", "groke-feed", "glem-memory", "kemy-space"].includes(pkg.id) ? "生产力" : "系统工具";
   const stateLabel = pkg => {
     if (state.installedClients.includes(pkg.id)) return "已安装";
-    if (!hasMilestone(state, pkg.unlock)) return "暂不可用";
+    if (!hasMilestone(state, pkg.unlock)) return "";
     return "获取";
   };
-  const clientCards = CLIENT_PACKAGES.map(pkg => {
+  const visiblePackages = state.storeCategory === "全部" ? CLIENT_PACKAGES : CLIENT_PACKAGES.filter(pkg => category(pkg) === state.storeCategory);
+  const clientCards = visiblePackages.map(pkg => {
     const ready = state.installedClients.includes(pkg.id);
     const unlocked = hasMilestone(state, pkg.unlock);
     const action = ready
       ? `<button class="store-action installed" disabled>已安装</button>`
       : unlocked
         ? `<button class="store-action" data-install-client-pkg="${pkg.id}">获取</button>`
-        : `<button class="store-action unavailable" disabled>暂不可用</button>`;
-    return `<article class="store-app-card ${ready ? "is-installed" : ""}"><div class="store-app-icon">${iconMarkup(pkg.icon)}</div><div class="store-app-info"><div class="store-app-title"><h3>${pkg.name}</h3><span>${stateLabel(pkg)}</span></div><p>${pkg.vendor}</p><small>${category(pkg)} · ${pkg.size} · 版本随本地目录更新</small></div>${action}</article>`;
+        : `<button class="store-action unavailable" disabled>获取</button>`;
+    return `<article class="store-app-card ${ready ? "is-installed" : ""}"><div class="store-app-icon">${iconMarkup(pkg.icon)}</div><div class="store-app-info"><div class="store-app-title"><h3>${pkg.name}</h3>${stateLabel(pkg) ? `<span>${stateLabel(pkg)}</span>` : ""}</div><p>${pkg.vendor}</p><small>${category(pkg)} · ${pkg.size} · 免费</small></div>${action}</article>`;
   }).join("");
   const faybleCard = packageAvailable ? `<article class="store-feature-card"><div class="store-feature-icon">${iconMarkup("fayble-cli")}</div><div><span class="store-eyebrow">已下载项目</span><h2>Fayble CLI</h2><p>旧版会话工具 · 0.9.7-legacy</p><small>${installed ? "已安装在本机" : twoSourcesConfirmed ? "可以安装" : "等待完成安全检查"}</small></div><button class="store-feature-action" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装"}</button></article>` : "";
-  const categories = ["全部", "生产力", "系统工具", "开发工具"].map((label, index) => `<button class="store-category ${index === 0 ? "active" : ""}" data-store-category="${label}">${label}</button>`).join("");
-  return windowFrame("software", "软件中心", `<div class="software-store"><header class="store-header"><div><span class="store-eyebrow">本机软件中心</span><h1>发现适合这台工作站的应用</h1><p>从本地目录获取、安装和管理应用。</p></div><div class="store-account"><span class="store-account-avatar">R</span><span>room17</span></div></header><nav class="store-categories">${categories}</nav>${faybleCard ? `<section class="store-section"><h2>继续使用</h2>${faybleCard}</section>` : ""}<section class="store-section"><div class="store-section-heading"><div><h2>推荐应用</h2><p>来自本机软件目录</p></div><button class="store-link-button">查看全部</button></div><div class="store-app-list">${clientCards}</div></section><footer class="store-footer">应用会安装到本地沙盒 · 不会调用真实系统包管理器</footer></div>`, { iconKey: "package", wide: true });
+  const categories = ["全部", "生产力", "系统工具", "开发工具"].map(label => `<button class="store-category ${state.storeCategory === label ? "active" : ""}" data-store-category="${label}">${label}</button>`).join("");
+  const appList = clientCards || `<div class="store-empty"><strong>此分类暂时没有应用</strong><span>切换其他分类查看可用应用。</span></div>`;
+  return windowFrame("software", "软件中心", `<div class="software-store"><header class="store-header"><div><span class="store-eyebrow">本机软件中心</span><h1>发现适合这台工作站的应用</h1><p>从本地目录获取、安装和管理应用。</p></div><div class="store-account"><span class="store-account-avatar">R</span><span>room17</span></div></header><nav class="store-categories">${categories}</nav>${faybleCard ? `<section class="store-section"><h2>继续使用</h2>${faybleCard}</section>` : ""}<section class="store-section"><div class="store-section-heading"><div><h2>${state.storeCategory === "全部" ? "推荐应用" : state.storeCategory}</h2><p>来自本机软件目录 · ${visiblePackages.length} 个应用</p></div><button class="store-link-button">查看全部</button></div><div class="store-app-list">${appList}</div></section><footer class="store-footer">应用会安装到本地沙盒 · 不会调用真实系统包管理器</footer></div>`, { iconKey: "package", wide: true });
 }
 function renderNetwork(state) {
   const imported = state.proxyProfiles.includes("relay-node17");
@@ -2524,6 +2526,7 @@ document.addEventListener("click", event => {
   if (button.dataset.relayMonitorRefresh !== undefined) showToast("监控数据已刷新", "success");
   if (button.dataset.relayMonitorExport !== undefined) showToast("当前监控视图已导出到 Downloads", "success");
   if (button.dataset.relayInvestigate !== undefined) store.update(draft => { draft.relayInvestigationStarted = true; });
+  if (button.dataset.storeCategory) store.update(draft => { draft.storeCategory = button.dataset.storeCategory; });
   if (button.dataset.downloadClientPkg) {
     const pkgId = button.dataset.downloadClientPkg;
     if (pkgId && AUTO_EFFECTS[`download-pkg-${pkgId}`]?.()) showToast("恢复包已保存到 Downloads。", "success");

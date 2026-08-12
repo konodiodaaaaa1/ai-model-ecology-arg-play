@@ -127,6 +127,7 @@ export const DEFAULT_STATE = Object.freeze({
     lastTriggeredAt: {}
   },
   activeClientPackage: "",
+  storeCategory: "全部",
   pendingCarrierId: "",
   relayAdminOpen: false,
   relayAdminSection: "overview",
@@ -247,6 +248,7 @@ function normalize(candidate) {
   next.hintLevel = ["investigation", "immersive", "plot"].includes(next.hintLevel) ? next.hintLevel : "investigation";
   next.journalMode = next.journalMode || next.hintLevel;
   next.activeClientPackage = typeof next.activeClientPackage === "string" ? next.activeClientPackage : "";
+  next.storeCategory = ["全部", "生产力", "系统工具", "开发工具"].includes(next.storeCategory) ? next.storeCategory : "全部";
   next.pendingCarrierId = typeof next.pendingCarrierId === "string" ? next.pendingCarrierId : "";
   next.relayAdminOpen = Boolean(next.relayAdminOpen);
   next.relayAdminSection = ["overview", "monitor", "audit"].includes(next.relayAdminSection) ? next.relayAdminSection : "overview";
