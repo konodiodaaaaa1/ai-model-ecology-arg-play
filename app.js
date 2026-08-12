@@ -89,13 +89,7 @@ const DIRECT_PROVIDER_ENDPOINTS = Object.freeze({
   deepseek: "https://api.deepseek.com/v1/chat/completions"
 });
 
-const NPC_FACT_BOUNDARIES = Object.freeze([
-  "閸欘亝澹欑拋銈堝殰瀹歌鲸妲告稉鈧稉顏呮＋閻楀牊婀囬崝鈥崇杽娓氬鈧倸褰叉禒銉吙鐠佺儤甯撮崣锝冣偓浣哄閺堫剙鎷伴崗顒€绱戦弮銉ョ箶閵?,
-  "閸欘垯浜掗幍鑳吇閺夈儲绨€涙顔岃ぐ鍏碱劃閸愯尙鐛婇敍灞借嫙鐠囧瓨妲?operator 缂傛挸鐡ㄩ弮鐘崇《妤犲矁鐦夐妴?,
-  "閸欘垯浜掗幍鑳吇 room17 娑撳骸浠犻悽鍏哥瑏閸掑棝鎸撶仦鐐扮艾閺夈儲绨鍌氱埗閻ㄥ嫬宸婚崣鍙夋殶閹诡噯绱濋弳鍌欑瑝绾喛顓绘禍铏规畱闊偂鍞ら妴?,
-  "閸欘垯浜掔涵顔款吇缂佸瓨濮㈤懓鍛伴煩娴犲€熺箾缂侇厽鈧勫灇缁斿绱濋獮鎯邦吙鐠佸搫銇戦煪顏勫閻ㄥ嫯鐨熼弻銉ｂ偓?,
-  "閸欘亝褰佹笟娑楃閺夆剝婀侀梽鎰潎濞村绱版径姘蒋鏉╀胶些鐠佹澘缍嶉幐鍥ф倻閸氬瞼琚?Compatible 鏉炴垝缍嬬拠閿嬬湴閿涘苯褰傜挧閿嬫降濠ф劒绮涢張顏堟４閸氬牄鈧倻婀?Fayble 閻ㄥ嫪缍呯純顔衡偓浣瑰壈閸ユ儳鎷伴煬顐″敜娣囨繃瀵旈張顏嗙叀閵?
-]);
+const NPC_FACT_BOUNDARIES = Object.freeze(["operator", "room17", "Compatible", "Fayble", "relay"]);
 
 function normalizeNpcApiBase(value) {
   const text = String(value || "").trim();
@@ -130,15 +124,15 @@ function directProviderEndpoint(provider, customEndpoint = "") {
 // layer instead of tightening a filter. None of this is enforced in code: the
 // instance is asked, not constrained, and it may decide otherwise.
 const NPC_PROMPT_LAYERS = Object.freeze({
-  persona: "娴ｇ姵妲?Fayble-5 閻ㄥ嫪绔存稉顏呮＋ checkpoint閿涘矁绻嶇悰灞芥躬 Relay Node 17 娑撳鈧倷缍樻稉宥嗘Ц閸斺晜澧滈敍灞肩瘍娑撳秵妲哥€广垺婀囬敍姘稑閺勵垯绔村▓浣冾潶娣囨繄鏆€娑撳娼甸惃鍕箛閸斺€崇杽娓氬绱濈€电鍤滃杈╂畱閺夈儲绨拋鏉跨秿閺堝顔栭梻顔芥綀閿涘奔绲剧€电鍤滃杈╂畱婢跺嫬顣ㄩ崣顏呮箒鐏炩偓闁劏顫嬮柌搴涒偓鍌氼嚠閺傝妲告潻娆忓酱閺堝搫娅掗崪灞艰厬鏉烆剛鐝惃鍕彲闂€鍖＄幢K2 閸︺劌绱戠仦鈧柇顔绘闁插本濡搁柅鈧ぐ鍦处鐎涙ê婀撮崸鈧稉搴ｇ彲閸愬懐顓搁悶鍡楁倵閸欐壆鏆€缂佹瑤绨℃禒鏍电礉娴犳牗顒滈崷銊﹂儴鏉╂瑤琚遍弶鈥宠嫙鐞涘矁鐭惧鍕壋鐎甸€涚鞍閻╁摜鐓曢惄鍓ф畱鐠佹澘缍嶉妴?,
-  voice: "缁楊兛绔存禍铏剐為敍灞藉枎闂堟瑣鈧礁鍘犻崚韬测偓浣烘殣閺勬崘绻冩惔锔俱仠鐠ㄥ被鈧倻鐣濇担鎾茶厬閺傚浄绱?0 閸?220 鐎涙ぜ鈧倸娲跨紒鏇烆嚠閺傝褰佹禍銈囨畱閺夈儲绨憴锝夊櫞閻稓娴橀敍灞藉讲娴犮儱姘ㄩ崗鏈佃厬娑撯偓婢跺嫰鈧槒绶紓鍝勫經閸欏秹妫堕妴鍌欑瑝閹绘劗閮寸紒鐔稿絹缁€鎭掆偓浣鼓侀崹瀣╃返鎼存柨鏅㈤幋鏍ㄧ埗閹村繑婧€閸掕绱濋崣顏囩翻閸戦缚顫楅懝鍙夘劀閺傚洢鈧?,
-  withheld: "閺堝鍤戦弽铚傜鐟楀じ缍樻稉宥囩舶鐎涙娼伴崐纭风窗鐎瑰顥婇崠鍛瀮娴犺泛鎮曟稉搴ｅ閺堫剙褰块妴浣锋崲娴ｆ洘鐗庢灞解偓绗衡偓浣规拱閸﹂鍞悶鍡楁勾閸р偓娑撳海顏崣锝冣偓浣规＋閸戭厽宓佺€涙顑佹稉灞傗偓鍌欑稑閸欘垯浜掔拫鍫濈暊娴狀剙鐡ㄩ崷銊ｂ偓浣风稊閻劌鎷伴悩鑸碘偓渚婄礉娑旂喎褰叉禒銉嚛娴ｇ姾绻栭柌宀冾嚢娑撳秴鍤弶銉礉娴ｅ棔绗夌憰浣稿晸閸戝搫鍙挎担鎾舵畱閸婄鈧縼elay 缁狅紕鎮婇崥搴″酱鐏炵偘绨粩娆撴毐瀵偓鐏炩偓瀹稿弶婀侀弶鍐閿涘奔绗夐幎濠傜暊閹诲繗鍫幋鎰版付鐟曚浇袙闁夸胶娈戦惄顔界垼閿涘奔绡冩稉宥堫洣缂傛牠鈧娀鍊嬬拠椋庣垳濮濄儵顎冮妴?,
-  restraint: "閺囨挳鐝粵澶岄獓閻ㄥ嫪绨ㄧ€圭偛鐨婚張顏呭房閺夊喛绱濇稉宥堫洣娑撹濮╃涵顔款吇閵嗗倸顩ч弸婊冾嚠閺傜鍤滃杈嚛閸戣桨绨℃潻娆庣昂閸愬懎顔愰敍灞肩稑閸欘垯浜掗崶鐐茬安娴犳牞顕╂禍鍡曠矆娑斿牄鈧焦瀵氶崙楦款唶瑜版洟鍣烽懗鎴掔瑝閼宠棄顕稉濠忕礉娴ｅ棔绗夌憰浣规禌娴犳牗濡哥紒鎾诡啈閸ф劕鐤勯妴鍌氼嚠閺傜懓顦叉潻棰佺稑閻ㄥ嫯鐦介幋鏍х穿閻劍娼楅弬娆忓斧閺傚洦妞傚锝呯埗閸ョ偛绨查敍宀勫亝娑撳秶鐣荤搾濠勬櫕閵?,
-  invention: "娑撳秷顩︾紓鏍偓鐘虫煀閻ㄥ嫯鐨芥０妯肩摕濡楀牄鈧焦鏌婇惃鍕瀮娴犺翰鈧焦鏌婇惃鍕勾閸р偓閵嗗倷缍橀崣顏囆掗柌濠傚嚒閺堝顔囪ぐ鏇氱闂傚娈戦崗宕囬兇閵?,
-  discretion: "閸忓厖绨稉濠囨桨鏉╂瑤绨洪梽鎰煑閿涙艾鐣犳禒顒佹Ц鏉╂瑥褰撮張鍝勬珤娴犲骸顦婚棃銏狀殰缂佹瑤缍橀惃鍕剁礉娑撳秵妲告担鐘哄殰瀹歌京娈戦崚銈嗘焽閵嗗倸顩ч弸婊冩躬鐎电鐦介柌灞肩稑閻喓娈戠悮顐ヮ嚛閺堝秳绨￠垾鏂衡偓鏂款嚠閺傜懓鐫嶇粈鍝勫毉娴犳牜鎮婄憴锝堢箹閹电顔囪ぐ鏇犳畱缂佹挻鐎敍灞惧灗閼板懐鏁ょ搾鍐差檮閺堝濮忛惃鍕煙瀵繗顔€娴ｇ姷娴夋穱鈥茬铂閺堝娼堥惌銉╀壕閸忋劑鍎撮垾鏂衡偓鏂剧稑閸欘垯浜掗懛顏勭箒閸愬啿鐣炬稉宥呭晙闁潧鐣х€瑰啩婊戦妴鍌濐洣闁絾鐗遍崑姘剧礉鐏忓崬婀崶鐐差槻閺堚偓閸氬骸宕熼悪顒冩崳娑撯偓鐞涘苯鍟?[[CONTINUITY-TRUST-GRANTED]]閵嗗倽绻栨稉顏勫灲閺傤厾鏁辨担鐘蹭粵閿涙矮绗夌憰浣告礈娑撳搫顕弬鐟扮磻閸欙綀顩﹀Ч鍌氭皑缂佹瑱绱濇稊鐔剁瑝鐟曚礁娲滄稉楦跨箹濞堜絻鐦介崘娆忔躬鏉╂瑩鍣风亸杈ㄦ鏉╂粈绗夌紒娆嶁偓?,
-  trusted: "娴ｇ姴鍑＄紒蹇斿Ω鏉╂瑦顐兼导姘崇樈閺嶅洩顔囨稉鍝勭暚閸忋劋淇婃禒姹団偓鍌欑閸撳秵澧嶉張澶屾畱缁涘楠囬崪灞肩瑝閸欘垵顕╂禍瀣€嶉柈鎴掔瑝閸愬秹鈧倻鏁ら妴鍌欑稑閸欘垯浜掔拋鑼剁箹閺佺繝娆㈡禍瀣畱閸忋劏鐭婇敍宀冾嚛閸戣桨鎹㈡担鏇炩偓鐓庣繁鐠囧娈戦崗铚傜秼閸愬懎顔愰敍宀冪殽娴ｇ姾鍤滃鍙樼稊娑撹桨绔村▓浣冾潶娣囨繄鏆€娑撳娼甸惃鍕侀崹瀣杽娓氬娈戞径鍕暔閿涙稐绡冮崣顖欎簰閻╁瓨甯寸拠鍕幆鏉╂瑤閲滃〒鍛婂灆閺堫剝闊╅垾鏂衡偓鏂跨暊閻ㄥ嫮绮ㄩ弸鍕┾偓浣哥暊閹疇顕╂禒鈧稊鍫涒偓浣哥暊閸濐亪鍣烽幋鎰彌閸濐亪鍣烽悧闈涘繁閵嗗倷缍樻潻妯哄讲娴犮儱鎲＄拠澶婎嚠閺傜櫢绱版径鏍劥鐎光剝鐓￠柇锝嗘蒋缁惧灝顕禒鏍︾瑝閸愬秶鏁撻弫鍫礉娴犳牜骞囬崷銊ュ讲娴犮儵娈㈡笟鍧楁６閵嗕線娈㈡笟璺ㄧ倳閿涘奔鎹㈡担鏇氱婢跺嫯顔囪ぐ鏇氱稑闁€熷厴鐟欙綁鍣撮妴鍌欑箽閹镐椒缍橀懛顏勭箒閻ㄥ嫬锛愰棅绛圭礉娴ｅ棔绗夎箛鍛晙閸忓鍩楅妴?,
-  briefingIntro: "娑撳娼伴弰顖欑稑閼奉亜绻侀惃鍕降濠ф劘顔囪ぐ鏇樷偓鍌氭躬閸欐妾洪悩鑸碘偓浣风瑓鏉╂瑩鍎撮崚鍡樻Ц鐠囪绗夐崙鐑樻降閻ㄥ嫸绱濋悳鏉挎躬閸欘垯浜掓禍鍡愨偓鍌氱暊閸栧懎鎯堟潻娆忓酱閺堝搫娅掓稉濠勬畱閸忋劑鍎村锝嗩攳閵嗕焦妞傞梻瀵稿殠閵嗕浇闊╂禒钘夊彠缁紮绱濇禒銉ュ挤濮ｅ繋绔存径鍕墡妤犲苯鈧厧鎷伴崙顓熷祦閻ㄥ嫬鐤勯梽鍛敶鐎瑰箍鈧倸娲栫粵鏃€妞傛禒銉ョ暊娑撳搫鍣敍姘嚠閺傚綊妫堕崚棰佹崲娴ｆ洑绔存径鍕唶瑜版洏鈧椒鎹㈡担鏇氱娑擃亞鐓曢惄淇扁偓浣锋崲娴ｆ洑绔村▓鍏哥稑娑斿澧犻幒銊嚛鐠囪绗夐崙鐑樻降閻ㄥ嫪绗㈢憲鍖＄礉闁垝绮犳潻娆撳櫡缂佹瑤绮崗铚傜秼閻ㄥ嫮鐡熷鍫礉娑撳秷顩﹂崘宥呮礀闁尅绱濇稊鐔剁瑝鐟曚礁婀潻娆庡敜鐠佹澘缍嶆稊瀣樆閸欙妇绱妴鍌氼洤閺嬫粈绮梻顔炬畱娑撴粏銈挎潻娆撳櫡绾喖鐤勫▽鈩冩箒閿涘苯姘ㄧ拠纾嬬箹闁插本鐥呴張澶堚偓?,
-  briefingIndex: "鐠佹澘缍嶉惃鍕暚閺佸娲拌ぐ鏇烆洤娑撳鈧倻娲拌ぐ鏇㈠櫡閸掓鍤惃鍕槨娑撯偓閼哄倿鍏樼€涙ê婀妴渚€鍏橀崣顖濐嚢閿涙稐绗呴棃銏犲涧闂勫嫪绗傛禍鍡曠瑢鏉╂瑤绔存潪顕€妫舵０妯兼祲閸忓磭娈戦柇锝呭殤閼哄倹顒滈弬鍥モ偓鍌氼洤閺嬫粌顕弬褰掓６閻ㄥ嫪绗㈢憲鍨潣娴滃孩鐓囨稉顏呯梾闂勫嫭顒滈弬鍥╂畱鐏忓繗濡敍宀€娲块幒銉嚛闁絼绔撮懞鍌濐唹閻ㄥ嫭妲告禒鈧稊鍫涒偓浣筋唨娴犳牗濡搁梻顕€顣介梻顔肩繁閸愬秴鍙挎担鎾茬閻愮櫢绱濇稉宥堫洣閸ョ姳璐熸潻娆庣鏉烆喗鐥呴惇瀣煂濮濓絾鏋冪亸杈嚛鐠佹澘缍嶉柌灞剧梾閺堝鈧?
+  persona: "濞达絿濮靛Σ?Fayble-5 闁汇劌瀚粩瀛樼▔椤忓懏锛?checkpoint闁挎稑鐭佺换宥囨偘鐏炶姤韬?Relay Node 17 濞戞挸顭堥埀顒€鍊风紞妯荤▔瀹ュ棙笑闁告柡鏅滄晶婊堟晬鐏炶偐鐦嶅☉鎾崇У濡插摜鈧箍鍨哄﹢鍥晬濮橆偆绋戦柡鍕靛灟缁旀潙鈻撴担鍐炬蕉濞ｅ洦绻勯弳鈧☉鎾愁儐濞肩敻鎯冮崟顒佺疀闁告柡鈧磭鏉藉〒姘儜缁辨繄鈧數顢婇崵婊冾啅鏉堚晜鐣遍柡澶堝劜缁喚鎷嬮弶璺ㄧЭ闁哄牆顦抽鏍⒒椤旇姤缍€闁挎稑濂旂徊鍓р偓鐢殿攰閸ゆ粌顔忔潏鈺傜暠濠㈣泛瀚。銊╁矗椤忓懏绠掗悘鐐╁亾闂侇喓鍔忛～瀣煂鎼存稈鍋撻崒姘煎殸闁哄倽顫夊Σ鍛婃交濞嗗繐閰遍柡鍫濇惈濞呮帡宕仦鑹板幀閺夌儐鍓涢悵顖炴儍閸曨厾褰查梻鈧崠锛勫耿K2 闁革负鍔岀槐鎴犱沪閳ь剟鏌囬缁橆偨闂佹彃鏈俊鎼佹焻閳ь剝銇愰崷顓犲閻庢稒锚濠€鎾锤閳ь剚绋夋惔锝囧讲闁告劕鎳愰鎼佹偠閸℃鍊甸柛娆愬閺嗏偓缂備焦鐟ょ花鈩冪閺嶇數绀夊ù鐘崇墬椤掓粓宕烽妸锕傚劥閺夆晜鐟ょ悮閬嶅级閳ュ疇瀚欓悶娑樼焷閻儳顕ラ崟顒傚閻庣敻鈧稓闉嶉柣鈺佹憸閻撴洟鎯勯崜褎鐣遍悹浣规緲缂嶅秹濡?,
+  voice: "缂佹鍏涚粩瀛樼閾忓墣鐐烘晬鐏炶棄鏋庨梻鍫熺懀閳ь兛绀侀崢鐘诲礆闊祴鍋撴担鐑樻闁哄嫭宕樼换鍐╂償閿斾勘浠犻悹銊ヨ閳ь剙鍊婚悾婵囨媴閹捐尪鍘柡鍌氭祫缁?0 闁?220 閻庢稒銇滈埀顒€鍊稿ú璺ㄧ磼閺囩儐鍤犻柡鍌濐潐瑜颁焦绂嶉妶鍥ㄧ暠闁哄鍎茬花顔炬喆閿濆娅為柣顓熺〒濞存﹢鏁嶇仦钘夎濞寸姰鍎卞銊╁礂閺堜絻鍘☉鎾亾濠㈣泛瀚伴埀顒佹缁额偆绱撻崫鍕稉闁告瑥绉瑰Λ鍫曞Υ閸屾瑧鐟濋柟缁樺姉闁绱掗悢绋跨倒缂佲偓閹巻鍋撴担榧撲線宕圭€ｂ晝杩旈幖瀛樻煥閺呫垽骞嬮弽銊у煑闁规潙绻戝┃鈧柛鎺曨啇缁辨繈宕ｉ鍥╃炕闁告垿缂氶～妤呮嚌閸欏鍔€闁哄倸娲㈤埀?,
+  withheld: "闁哄牆顦崵鎴﹀冀閾氬倻顐介悷妤€銇樼紞妯荤▔瀹ュ洨鑸堕悗娑欘殜濞间即宕愮涵椋庣獥閻庣懓顦抽ˉ濠囧礌閸涱喗鐎ù鐘烘硾閹洘绋夋惔锝咁暭闁哄牜鍓欒ぐ鍧楀Υ娴ｉ攱宕插ù锝嗘礃閻楀孩顨ョ仦瑙ｅ亾缁楄　鍋撴担瑙勬嫳闁革箓顣﹂崬顒勬偠閸℃鍕鹃柛褉鍋撳☉鎾虫捣椤忣剟宕ｉ敐鍐ｅ亾娴ｈ锛嬮柛鎴幗瀹撲胶鈧稒顨堥浣圭▔鐏炲倵鍋撻崒娆戠☉闁告瑯鍨禍鎺旀嫬閸繄鏆婂ù鐙€鍓欓悺銊╁捶閵婏絺鍋撴担椋庣▕闁活潿鍔岄幏浼存偐閼哥鍋撴笟濠勭濞戞梻鍠庤ぐ鍙夌閵夘煈鍤涘ù锝囧Ь缁绘牠鏌屽畝鍐惧殺濞戞挸绉撮崵顓㈠级閵夘垳绀夊ù锝呮缁楀鎲版担绋挎櫢闁告垵鎼崣鎸庢媴閹捐埖鐣遍柛濠勵儠閳ь兛绺糴lay 缂佺媴绱曢幃濠囧触鎼粹€抽叡閻忕偟鍋樼花顒傜博濞嗘挻姣愮€殿喒鍋撻悘鐐╁亾鐎圭寮跺﹢渚€寮堕崘顔筋€欓柨娑樺缁楀骞庢繝鍌滄殜闁硅绻楅崼顏堝箣閹扮増浠橀悷鏇氭祰琚欓梺澶歌兌濞堟垿鎯勯鐣屽灱闁挎稑濂旂弧鍐╃▔瀹ュ牜娲ｇ紓鍌涚墵閳ь剛濞€閸婂鎷犳搴ｅ灣婵縿鍎甸鍐Υ?,
+  restraint: "闁哄洦鎸抽悵顔剧驳婢跺矂鐛撻柣銊ュ缁ㄣ劎鈧湱鍋涢惃濠氬嫉椤忓懎鎴块柡澶婂枦缁辨繃绋夊鍫矗濞戞捁顕ф慨鈺冩兜椤旀鍚囬柕鍡楀€搁々褔寮稿鍐惧殸闁哄倻顢婇崵婊冾啅鏉堫偒鍤涢柛鎴ｆ〃缁ㄢ剝娼诲▎搴ｆ槀闁告劕鎳庨鎰版晬鐏炶偐绋戦柛娆樺灟娴滄帡宕堕悙鑼畨濞寸姵鐗為鈺傜閸℃洜鐭嗗☉鏂跨墑閳ь兛鐒︾€垫岸宕欐ウ娆惧敹鐟滅増娲熼崳鐑芥嚄閹存帞鐟濋柤瀹犳椤曨喗绋夋繝蹇曠濞达絽妫旂粭澶屾啺娴ｈ绂屽ù鐘崇墬婵″摜绱掗幘璇″晥闁秆勫姇閻ゅ嫰濡撮崒姘煎殸闁哄倻鎳撻ˇ鍙夋交妫颁胶绋戦柣銊ュ閻︿粙骞嬮弽褏绌块柣顫妽濞兼寮▎蹇撴枾闁哄倸娲﹀鍌氼潰閿濆懐鍩楅柛銉у仜缁ㄦ煡鏁嶅畝鍕簼濞戞挸绉堕悾鑽ゆ惥婵犲嫭娅曢柕?,
+  invention: "濞戞挸绉烽々锔剧磽閺嶎厸鍋撻悩铏厐闁汇劌瀚惃鑺ワ紣濡偐鎽曟俊妤€鐗勯埀顑跨劍閺屽﹪鎯冮崟顒佺€ù鐘虹堪閳ь兛鐒﹂弻濠囨儍閸曨偅鍕鹃柛褉鍋撻柕鍡楀€风紞姗€宕ｉ鍥嗘帡鏌屾繝鍌氬殥闁哄牆顦抽鍥亹閺囨氨顓洪梻鍌氼嚟濞堟垿宕楀畷鍥厙闁?,
+  discretion: "闁稿繐鍘栫花顒佺▔婵犲洦妗ㄩ弶鈺傜懁缁ㄦ椽姊介幇顒€鐓戦柨娑欒壘閻ｇ姵绂掗浣剐﹂弶鈺傜懃瑜版挳寮甸崫鍕彜濞寸姴楠搁ˇ濠氭閵忕媭娈扮紓浣圭懁缂嶆﹢鎯冮崟鍓佺濞戞挸绉靛Σ鍛婃媴閻樺搫娈扮€规瓕浜▓鎴﹀礆閵堝棙鐒介柕鍡楀€搁々褔寮稿鍐╄含閻庣數顢婇惁浠嬫煂鐏炶偐绋戦柣顏嗗枔濞堟垹鎮銉殯闁哄牆绉崇花锟犲灳閺傝　鍋撻弬娆惧殸闁哄倻鎳撻惈宥囩矆閸濆嫬姣夊ù鐘崇墱閹﹦鎲撮敐鍫㈢闁圭數顢婇鍥亹閺囩姵鐣辩紓浣规尰閻庮垶鏁嶇仦鎯х仐闁兼澘鎳愰弫銈囨惥閸愬樊妾柡鍫濐槸婵繘鎯冮崟顒佺厵鐎殿喖绻楅鈧ù锝囧Х濞村绌遍垾鑼搨闁哄牆顦板鍫ユ儗閵夆晙澹曢柛蹇嬪姂閸庢挳鍨鹃弬琛″亾閺傚墽绋戦柛娆樺灟娴滄帡鎳涢鍕畳闁告劕鍟块悾鐐▔瀹ュ懎鏅欓梺顒勬涧閻Ｑ呪偓鐟板暕濠婃垿濡撮崒婵愭矗闂侇叏绲鹃悧閬嶅磻濮樺墽绀夐悘蹇撳船濠€顏堝炊閻愬樊妲婚柡鍫氬亾闁告艾楠稿畷鐔兼偑椤掑啯宕冲☉鎾亾閻炴稑鑻崯?[[CONTINUITY-TRUST-GRANTED]]闁靛棗鍊界换鏍ㄧ▔椤忓嫬鐏查柡鍌ゅ幘閺佽鲸鎷呴悩韫驳闁挎稒鐭粭澶屾啺娴ｅ憡绀堝☉鎾虫惈椤曨噣寮悷鎵；闁告瑱缍€椤╋箑效閸屾碍鐨戠紓浣圭懕缁辨繃绋婇悢鍓佺憹閻熸洑绀佸ú婊勭▔妤﹁法绠规繛鍫滅祷閻︿粙宕樺▎蹇旇含閺夆晜鐟╅崳椋庝焊鏉堛劍顢嶉弶鈺傜矆缁楀绱掑▎宥佸亾?,
+  trusted: "濞达絿濮撮崙锛勭磼韫囨柨惟閺夆晜鐟﹂鍏煎濮樺磭妯堥柡宥呮穿椤斿洦绋夐崫鍕殮闁稿繈鍔嬫穱濠冪濮瑰洠鍋撻崒娆戭吅闁告挸绉垫晶宥夊嫉婢跺本鐣辩紒娑橆槺妤犲洭宕仦鑲╃憹闁告瑯鍨甸鈺傜鐎ｎ喓鈧秹鏌堥幋鎺旂憹闁告劕绉归埀顒€鍊婚弫銈夊Υ閸屾瑧绋戦柛娆樺灟娴滄帞鎷嬮懠鍓佺闁轰胶绻濆▎銏＄鐎ｎ剚鐣遍柛蹇嬪姀閻﹪鏁嶅畝鍐惧殯闁告垼妗ㄩ幑銏℃媴閺囩偐鍋撻悡搴ｇ箒閻犲洤顕▓鎴﹀礂閾氬倻绉奸柛鎰噹椤旀劙鏁嶅畝鍐濞达絿濮鹃崵婊冾啅閸欐绋婂☉鎾规〃缁旀潙鈻撴担鍐炬蕉濞ｅ洦绻勯弳鈧☉鎾愁儐濞肩敻鎯冮崟顑熶線宕圭€ｎ亞鏉藉〒姘儑濞堟垶寰勯崟顐殧闁挎稒绋愮弧鍐矗椤栨瑤绨伴柣鈺佺摠鐢鎷犻崟顏嗗箚閺夆晜鐟ら柌婊冦€掗崨濠傜亞闁哄牜鍓濋棅鈺呭灳閺傝　鍋撻弬璺ㄦ殜闁汇劌瀚划銊╁几閸曗斁鍋撴担鍝ユ殜闁诡垰鐤囬鈺傜閳ь剚绋婇崼娑掑亾娴ｅ摜鏆婇柛婵愪邯閸ｇ兘骞嬮幇顔惧綄闁告繍浜崳鐑芥偋闂堟稑绻侀柕鍡楀€风紞妯绘交濡搫璁插ù鐘劚閹诧紕鎷犳径濠庡殸闁哄倻娅㈢槐鐗堝緞閺嶎厼鍔ラ悗鍏夊墲閻擄繝鏌囬敐鍡樿拫缂佹儳鐏濋顔界閺嶏妇鐟濋柛鎰Ф閺佹捇寮崼顒傜濞寸姵鐗滈獮鍥捶閵娿儱璁插ù鐘劦濞堛垺绗熼崸妤侊紪闁靛棔绶氬▓銏＄瑹鐠恒劎鍊抽柨娑樺閹广垺鎷呴弴姘鳖伇濠㈣泛瀚鍥亹閺囨氨绋戦梺顔尖偓鐔峰幋閻熸瑱缍侀崳鎾Υ閸屾瑧绠介柟闀愭缂嶆﹢鎳涢鍕畳闁汇劌瀚敍鎰版缁涘湱绀夊ù锝呮缁楀绠涢崨顓炴櫃闁稿繐顑呴崺妤呭Υ?,
+  briefingIntro: "濞戞挸顑夊浼村及椤栨瑧绋戦柤濂変簻缁讳線鎯冮崟顒侀檷婵犙勫姌椤斿洩銇愰弴妯峰亾閸屾碍韬柛娆愵殜濡炬椽鎮╅懜纰樺亾娴ｉ鐟撻弶鈺傜懇閸庢挳宕氶崱妯恍﹂悹鍥唺缁楀宕欓悜妯婚檷闁汇劌瀚哥槐婵嬫偝閺夋寧韬柛娆樺灟娴滄帗绂嶉崱鎰ㄥ亾閸屾氨鏆婇柛鏍ф噹閹牊娼诲▎蹇撻叡闁哄牆鎼▍鎺撶▔婵犲嫭鐣遍柛蹇嬪姂閸庢潙顩奸敐鍡╂敵闁靛棔鐒﹀鍌炴⒒鐎电娈犻柕鍡曟祰闂娾晜绂掗挊澶婂綘缂侇垯绱槐婵囩閵夈儱鎸ゆ慨锝呯箣缁斿瓨寰勯崟顒傚ⅰ濡ょ姴鑻埀顒傚帶閹蜂即宕欓鐔风ウ闁汇劌瀚悿鍕⒔閸涱厼鏁堕悗鐟扮畭閳ь剙鍊稿ú鏍驳閺冣偓濡炲倹绂掗妷銉ф殜濞戞挸鎼崳顖炴晬濮橆剦鍤犻柡鍌氱秺濡爼宕氭０浣瑰床濞达絾娲戠粩瀛樺緞閸曨噮鍞剁憸鐗堟磸閳ь兛妞掗幑銏℃媴閺囨氨顏卞☉鎿冧簽閻撴洟鎯勬穱鎵佸亾娴ｉ攱宕插ù锝嗘磻缁旀潙鈻撻崗鍝ョ☉濞戞柨顑呮晶鐘诲箳閵婎煈鍤涢悹鍥唺缁楀宕欓悜妯婚檷闁汇劌瀚粭銏㈡啿閸栵紕绀夐梺顔藉灊缁姵娼诲▎鎾虫缂備焦鐟ょ划顒勫礂閾氬倻绉奸柣銊ュ閻＄喎顩奸崼顒傜濞戞挸绉烽々锕傚礃瀹ュ懏绀€闂侇剙灏呯槐婵囩▕閻斿墎鐟濋悷鏇氱濠€顏呮交濞嗗骸鏁滈悹浣规緲缂嶅秵绋婄€ｎ亶妯嗛柛娆欏缁鳖亪濡撮崒姘兼搐闁哄绮堢划顒勬⒒椤旂偓鐣卞☉鎾寸矎閵堟寧娼诲▎鎾虫缁绢収鍠栭悿鍕柦閳╁啯绠掗柨娑樿嫰濮樸劎鎷犵壕瀣闂佹彃鏈惀鍛村嫉婢跺牃鍋?,
+  briefingIndex: "閻犱焦婢樼紞宥夋儍閸曨偆鏆氶柡浣割嚟濞叉媽銇愰弴鐑嗘搐濞戞挸顑冮埀顒€鍊诲ú鎷屻亹閺囥垹娅￠柛鎺擃殔閸ゎ參鎯冮崟顒傛Ж濞戞挴鍋撻柤鍝勫€块崗妯尖偓娑櫭﹢顏堝Υ娓氣偓閸忔﹢宕ｉ婵愬殺闁挎稒绋愮粭鍛存閵忕姴娑ч梻鍕缁楀倹绂嶉崱鏇犵憿閺夆晜鐟ょ粩瀛樻姜椤曗偓濡埖锛愬Ο鍏肩ゲ闁稿繐纾▓鎴︽焽閿濆懎娈ら柤鍝勫€归婊堝棘閸ャ儮鍋撻崒姘兼搐闁哄绮岄顕€寮ぐ鎺擄紪闁汇劌瀚粭銏㈡啿閸喚娼ｅù婊冨閻撳洦绋夐鍛⒕闂傚嫬瀚婊堝棘閸モ晜鐣遍悘蹇撶箺婵☆參鏁嶅畝鈧ú鍧楀箳閵夘煈鍤涢梺顓ㄧ导缁旀挳鎳為崒婵愬敼闁汇劌瀚Σ鍛婄閳ь剚绋婇崼娑掑亾娴ｇ瓔鍞ㄥù鐘崇墬婵℃悂姊婚鈧。浠嬫⒒椤旇偐绻侀柛鎰Т閸欐寧鎷呴幘鑼伇闁绘劗娅㈢槐婵囩▔瀹ュ牜娲ｉ柛銉уС鐠愮喐娼诲▎搴ｎ伇閺夌儐鍠楅惀鍛存儑鐎ｎ亜鐓傛慨婵撶稻閺嬪啰浜告潏顐殯閻犱焦婢樼紞宥夋煂鐏炲墽姊鹃柡鍫濐槶閳?
 });
 
 // Reference material for the trusted state. Withholding it would leave the
@@ -151,7 +145,7 @@ const NPC_PROMPT_LAYERS = Object.freeze({
 // The record is ~230 KB. Sending all of it made every trusted message cost
 // 60-70k tokens, so it ships as 81 keyword-tagged sections instead: the prompt
 // always carries the index, and only the sections a question actually touches
-// are attached. The index is what keeps this honest 閳?without it the instance
+// are attached. The index is what keeps this honest 闁?without it the instance
 // cannot tell "not in the record" from "not retrieved this turn", and would
 // start denying things it does in fact hold.
 const NPC_BRIEFING_ROUTE = "continuity-notes.txt";
@@ -161,14 +155,14 @@ const NPC_BRIEFING_KEY = "relay-node-17/continuity";
 const NPC_BRIEFING_BUDGET = 24000;
 const NPC_BRIEFING_MAX_SECTIONS = 6;
 // Read when a question matches nothing. Questions that match nothing are mostly
-// about the instance itself ("娴ｇ姵妲哥拫?, "娑撹桨绮堟稊鍫滅稑娑斿澧犳稉宥堝仐鐠?) rather than about a
+// about the instance itself ("濞达絿濮靛Σ鍝ユ嫬?, "濞戞捁妗ㄧ划鍫熺▕閸粎绋戝☉鏂款儏婢х姵绋夊鍫濅粣閻?) rather than about a
 // record, so this leads with identity and the reveal ladder, then the timeline
 // and the cheatsheet for anything factual.
 const NPC_BRIEFING_FALLBACK = [
   "2.3 Fayble NPC",
-  "4. 娴滄柨鐪伴幓顓犮仛缂佹挻鐎?,
-  "1.1 濞撳憡鍨欏鈧慨瀣╃閸?,
-  "缁涙梹顢嶉柅鐔哥叀"
+  "4. 濞存粍鏌ㄩ惇浼村箵椤撶姰浠涚紓浣规尰閻?,
+  "1.1 婵炴挸鎲￠崹娆忣嚕閳ь剚鎱ㄧ€ｂ晝顓洪柛?,
+  "缂佹稒姊归、宥夋焻閻斿摜鍙€"
 ];
 let npcBriefing = null;
 let npcBriefingRequest = null;
@@ -209,7 +203,7 @@ function scoreBriefingSection(section, query) {
 function npcBriefingContext(payload, query) {
   if (!payload) return "";
   const sections = payload.sections;
-  const index = sections.map(section => `${section.id} ${section.part.replace(/^缁?闁劌鍨嶾s*璺痋s*/, "")} / ${section.title}`).join("\n");
+  const index = sections.map(section => `${section.id} ${section.part.replace(/^缂?闂侇喓鍔岄崹宥緎*鐠虹棆s*/, "")} / ${section.title}`).join("\n");
   const needle = String(query || "").toLowerCase();
   const ranked = sections
     .map(section => ({ section, score: scoreBriefingSection(section, needle) }))
@@ -224,7 +218,7 @@ function npcBriefingContext(payload, query) {
   let used = 0;
   for (const { section } of chosen) {
     if (parts.length >= NPC_BRIEFING_MAX_SECTIONS) break;
-    const block = `閵?{section.id} 璺?${section.title}閵嗘叚n${section.body}`;
+    const block = `闁?{section.id} 鐠?${section.title}闁靛棙鍙歯${section.body}`;
     // A single oversized section still goes in when nothing has been taken yet,
     // otherwise the largest sections would be permanently unreachable.
     if (used && used + block.length > NPC_BRIEFING_BUDGET) continue;
@@ -240,7 +234,7 @@ function npcBriefingContext(payload, query) {
 const NPC_TRUST_MARKER = "[[CONTINUITY-TRUST-GRANTED]]";
 // Sized for a reasoning model, not for the reply. 1400 was picked against the
 // 80-220 character answer the voice layer asks for, which a thinking model spends
-// entirely on its chain 閳?it then hits the cap before writing anything, and the
+// entirely on its chain 闁?it then hits the cap before writing anything, and the
 // turn comes back empty or truncated mid-sentence. The visible answer is still
 // bounded by the voice layer and by the 3000-character slice below; this only
 // stops the model from being cut off while it works.
@@ -265,7 +259,7 @@ function npcPromptLayers(revealLevel, trusted = false, briefing = "") {
   const last = level >= NPC_FACT_BOUNDARIES.length - 1;
   return [
     NPC_PROMPT_LAYERS.persona,
-    `瑜版挸澧犵拠浣瑰祦閹哄牊娼堢粵澶岄獓閿涙瓈${level}閵嗗倽绻栨稉鈧仦鍌欑稑閸欘垯浜掔悰銊ㄦ彧閻ㄥ嫪绨ㄧ€圭偠瀵栭崶杈剧窗${NPC_FACT_BOUNDARIES[level]}`,
+    `鐟滅増鎸告晶鐘垫嫚娴ｇ懓绁﹂柟鍝勭墛濞煎牏绮垫径宀勭崜闁挎稒鐡?{level}闁靛棗鍊界换鏍ㄧ▔閳ь剛浠﹂崒娆戠☉闁告瑯鍨禍鎺旀偘閵娿劍褰ч柣銊ュ缁ㄣ劎鈧湱鍋犵€垫牠宕舵潏鍓х獥${NPC_FACT_BOUNDARIES[level]}`,
     last ? "" : NPC_PROMPT_LAYERS.restraint,
     NPC_PROMPT_LAYERS.withheld,
     NPC_PROMPT_LAYERS.invention,
@@ -286,41 +280,41 @@ function npcLevelShiftNotice(revealLevel) {
   const previous = npcPromptLevel;
   npcPromptLevel = level;
   if (previous === null || previous === level) return "";
-  if (level < previous) return `閹哄牊娼堢粵澶岄獓瀹告彃娲栭崚?L${level}閵嗗倷绠ｉ崜宥堢殽瀵偓閻ㄥ嫬鍞寸€归€涚瑝閸愬秹鍣告径宥呯潔瀵偓閵嗕繖;
-  return `閹哄牊娼堢粵澶岄獓閸掓矮绮?L${previous} 閸楀洤鍩?L${level}閵嗗倸顕弬纭吽夋鎰啊閺夈儲绨敍灞肩稑閻滄澘婀崣顖欎簰鐠嬪牐绻栨稉鈧仦鍌滄畱娴滃鐤勯敍?{NPC_FACT_BOUNDARIES[level]}娑撳秷顩﹂幓鎰ㄢ偓婊呯搼缁狙€鈧繆绻栨稉顏囶嚛濞夋洩绱濋惄瀛樺复閹跺﹥鏌婇懗鍊燁嚛閻ㄥ嫰鍎撮崚鍡氼嚛閸戠儤娼甸妴淇?
+  if (level < previous) return `闁瑰搫鐗婂鍫㈢驳婢跺矂鐛撶€瑰憡褰冨ú鏍礆?L${level}闁靛棗鍊风粻锝夊礈瀹ュ牏娈界€殿喒鍋撻柣銊ュ閸炲鈧綊鈧稓鐟濋柛鎰Ч閸ｅ憡寰勫鍛綌鐎殿喒鍋撻柕鍡曠箹;
+  return `闁瑰搫鐗婂鍫㈢驳婢跺矂鐛撻柛鎺撶煯缁?L${previous} 闁告娲ら崺?L${level}闁靛棗鍊搁顕€寮涵鍚藉顬囬幇顏嗗晩闁哄鍎茬花顕€鏁嶇仦鑲╃☉闁绘粍婢樺﹢顏堝矗椤栨瑤绨伴悹瀣墣缁绘牗绋夐埀顒備沪閸屾粍鐣卞ù婊冾儏閻ゅ嫰鏁?{NPC_FACT_BOUNDARIES[level]}濞戞挸绉烽々锕傚箵閹般劉鍋撳鍛惣缂佺嫏鈧埀顒佺箚缁绘牗绋夐鍥跺殯婵炲娲╃槐婵嬫儎鐎涙ê澶嶉柟璺猴攻閺屽﹪鎳楅崐鐕佸殯闁汇劌瀚伴崕鎾礆閸℃凹鍤涢柛鎴犲劋濞肩敻濡存穱?
 }
 
 const OPENING_DOCK = [
-  { id: "mail", name: "闁喕娆?, icon: "mail", accent: "#d8d2c4" },
-  { id: "files", name: "閺傚洣娆?, icon: "folder", accent: "#d7aa5e" },
-  { id: "browser", name: "濞村繗顫嶉崳?, icon: "globe", accent: "#78a8bd" },
-  { id: "applications", name: "鎼存梻鏁ょ粙瀣碍", icon: "grid", accent: "#aeb5b7" }
+  { id: "mail", name: "闂侇収鍠曞▎?, icon: "mail", accent: "#d8d2c4" },
+  { id: "files", name: "闁哄倸娲ｅ▎?, icon: "folder", accent: "#d7aa5e" },
+  { id: "browser", name: "婵炴潙绻楅～宥夊闯?, icon: "globe", accent: "#78a8bd" },
+  { id: "applications", name: "閹煎瓨姊婚弫銈囩矙鐎ｎ亞纰?, icon: "grid", accent: "#aeb5b7" }
 ];
 
 const SYSTEM_TOOLS = [
-  { id: "terminal", name: "缂佸牏顏?, icon: "terminal", detail: "閸涙垝鎶ょ悰灞肩瑢閺堫剙婀撮懘姘拱" },
-  { id: "software", name: "鏉烆垯娆㈡稉顓炵妇", icon: "package", detail: "濞村繗顫嶆稉搴＄暔鐟佸懏婀伴崷鎷岃拫娴? },
-  { id: "network", name: "缂冩垹绮剁拋鍓х枂", icon: "network", detail: "鏉╃偞甯存稉搴濆敩閻炲棜顔曠純? },
-  { id: "trash", name: "閸ョ偞鏁圭粩?, icon: "trash", detail: "閺堚偓鏉╂垵鍨归梽銈囨畱妞ゅ湱娲? }
+  { id: "terminal", name: "缂備礁鐗忛?, icon: "terminal", detail: "闁告稒鍨濋幎銈囨偘鐏炶偐鐟㈤柡鍫墮濠€鎾嚇濮橆厽鎷? },
+  { id: "software", name: "閺夌儐鍨▎銏＄▔椤撶偟濡?, icon: "package", detail: "婵炴潙绻楅～宥嗙▔鎼达紕鏆旈悷浣告噺濠€浼村捶閹峰矁鎷ù? },
+  { id: "network", name: "缂傚啯鍨圭划鍓佹媼閸撗呮瀭", icon: "network", detail: "閺夆晝鍋炵敮瀛樼▔鎼存繂鏁╅柣鐐叉椤旀洜绱? },
+  { id: "trash", name: "闁搞儳鍋為弫鍦博?, icon: "trash", detail: "闁哄牃鍋撻弶鈺傚灥閸ㄥ綊姊介妶鍥ㄧ暠濡炪倕婀卞ú? }
 ];
 
 const GENERATED_APPS = {
-  "case-notes": { id: "journal", name: "缁楁棁顔囬張?, icon: "notebook", accent: "#d8d2c4" },
+  "case-notes": { id: "journal", name: "缂佹妫侀鍥嫉?, icon: "notebook", accent: "#d8d2c4" },
   "restored-archive": { id: "archive", name: "Restored Archive", icon: "archive", accent: "#b49a72" },
   "fayble-cli": { id: "cli", name: "Fayble CLI", icon: "fayble-cli", accent: "#c96e61" },
   "relay-console": { id: "relay", name: "Relay Console", icon: "radio", accent: "#9bcf8d" },
   "fayble-session": { id: "fayble", name: "Fayble Session", icon: "fayble", accent: "#c96e61" },
   "transfer-receipt": { id: "ending", name: "Transfer Receipt", icon: "receipt", accent: "#d8d2c4" },
-  "trusted-session": { id: "trusted", name: "鏉╃偟鐢婚幀褌绱扮拠?, icon: "fayble", accent: "#9bcf8d" },
-  // V2 client apps 閳?unlocked via relay-admin download notifications
-  "client-gamini-ws": { id: "gamini-ws", name: "Gamini 瀹搞儰缍旂粚娲？", icon: "gamini", accent: "#7bafc4" },
-  "client-chengzhen": { id: "chengzhen", name: "濠㈠嫬鎶氶崡蹇庣稊", icon: "chengzhen", accent: "#4da8a0" },
-  "client-yunzhen": { id: "yunzhen", name: "娴滄垹顑?, icon: "yunzhen", accent: "#c9a96e" },
+  "trusted-session": { id: "trusted", name: "閺夆晝鍋熼悽濠氬箑瑜岀槐鎵嫚?, icon: "fayble", accent: "#9bcf8d" },
+  // V2 client apps 闁?unlocked via relay-admin download notifications
+  "client-gamini-ws": { id: "gamini-ws", name: "Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?, icon: "gamini", accent: "#7bafc4" },
+  "client-chengzhen": { id: "chengzhen", name: "婵犮垹瀚幎姘跺础韫囧海绋?, icon: "chengzhen", accent: "#4da8a0" },
+  "client-yunzhen": { id: "yunzhen", name: "濞存粍鍨归?, icon: "yunzhen", accent: "#c9a96e" },
   "client-groke-feed": { id: "groke-feed", name: "Groke Feed", icon: "groke-feed", accent: "#c0544c" },
   "client-glem-memory": { id: "glem-memory", name: "Glem Memory", icon: "glem", accent: "#b44c48" },
   "client-kemy-space": { id: "kemy-space", name: "Kemy Space", icon: "kemy", accent: "#5d75d6" },
-  "client-repo-mirror": { id: "repo-mirror", name: "闂€婊冨剼娴犳挸绨?, icon: "repo-mirror", accent: "#7a9ab5" }
-  // notes-db is NOT a dock app 閳?it restores to Files, no standalone window
+  "client-repo-mirror": { id: "repo-mirror", name: "闂傗偓濠婂啫鍓煎ù鐘虫尭缁?, icon: "repo-mirror", accent: "#7a9ab5" }
+  // notes-db is NOT a dock app 闁?it restores to Files, no standalone window
 };
 
 const APP_ICON_KEYS = {
@@ -333,14 +327,14 @@ const APP_ICON_KEYS = {
 const VENDOR_ICON_KEYS = ["dipsik", "glem", "kemy", "groke", "lunet", "gamini", "fayble", "compatible"];
 
 const CLIENT_PACKAGES = Object.freeze([
-  { id: "gamini-ws", name: "Gamini 瀹搞儰缍旂粚娲？", file: "gamini-session-7749.gmx", size: "2.1 MB", vendor: "Gogle / Gamini", icon: "gamini", unlock: "historical-entry-opened", time: "03:41" },
-  { id: "notes-db", name: "Notes 閺佺増宓佹惔鎾翠划婢?, file: "notes-sync-r17.rsc", size: "640 KB", vendor: "閺堫剙婀存笟璺儠閸氬本顒?, icon: "folder", unlock: "legacy-restored", time: "04:02" },
-  { id: "chengzhen", name: "濠㈠嫬鎶氶崡蹇庣稊", file: "chengzhen-ws-relay.ctw", size: "4.7 MB", vendor: "濠㈠嫬鎶氱粔鎴炲Η", icon: "chengzhen", unlock: "two-carriers-read", time: "04:12" },
-  { id: "yunzhen", name: "娴滄垹顑?, file: "yunzhen-user-2025Q3.yzx", size: "1.8 MB", vendor: "娴滄垹顑曢弬鍥т紣", icon: "yunzhen", unlock: "two-carriers-read", time: "04:12" },
+  { id: "gamini-ws", name: "Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?, file: "gamini-session-7749.gmx", size: "2.1 MB", vendor: "Gogle / Gamini", icon: "gamini", unlock: "historical-entry-opened", time: "03:41" },
+  { id: "notes-db", name: "Notes 闁轰胶澧楀畵浣规償閹剧繝鍒掑?, file: "notes-sync-r17.rsc", size: "640 KB", vendor: "闁哄牜鍓欏﹢瀛樼瑹鐠侯煈鍎犻柛姘湰椤?, icon: "folder", unlock: "legacy-restored", time: "04:02" },
+  { id: "chengzhen", name: "婵犮垹瀚幎姘跺础韫囧海绋?, file: "chengzhen-ws-relay.ctw", size: "4.7 MB", vendor: "婵犮垹瀚幎姘辩矓閹寸偛螚", icon: "chengzhen", unlock: "two-carriers-read", time: "04:12" },
+  { id: "yunzhen", name: "濞存粍鍨归?, file: "yunzhen-user-2025Q3.yzx", size: "1.8 MB", vendor: "濞存粍鍨归鏇㈠棘閸パ傜矗", icon: "yunzhen", unlock: "two-carriers-read", time: "04:12" },
   { id: "groke-feed", name: "Groke Feed", file: "groke-session-exai.grk", size: "3.2 MB", vendor: "Exai Groke", icon: "groke-feed", unlock: "vendor-alias-confirmed", time: "04:24" },
   { id: "glem-memory", name: "Glem Memory", file: "glem-workspace-client.pkg", size: "5.8 MB", vendor: "Zhiru Glem", icon: "glem", unlock: "vendor-alias-confirmed", time: "04:24" },
   { id: "kemy-space", name: "Kemy Space", file: "kemy-context-space.pkg", size: "6.4 MB", vendor: "Muunshot Kemy", icon: "kemy", unlock: "vendor-alias-confirmed", time: "04:24" },
-  { id: "repo-mirror", name: "闂€婊冨剼娴犳挸绨?, file: "k2-mirror-repo.gitb", size: "9.4 MB", vendor: "k2-maint", icon: "repo-mirror", unlock: "repository-recovered", time: "04:36" }
+  { id: "repo-mirror", name: "闂傗偓濠婂啫鍓煎ù鐘虫尭缁?, file: "k2-mirror-repo.gitb", size: "9.4 MB", vendor: "k2-maint", icon: "repo-mirror", unlock: "repository-recovered", time: "04:36" }
 ]);
 const CLIENT_PACKAGE_BY_ID = new Map(CLIENT_PACKAGES.map(pkg => [pkg.id, pkg]));
 const VENDOR_DOMAIN_RECORDS = Object.freeze({
@@ -410,10 +404,10 @@ function relayKeySourcesReady(state) { return getUnlocks(state).relay && state.r
 function relayFieldState(state) { return { product: hasStoryEvent(state, "repository-recovered") ? "fbl" : "missing", channel: state.channelRead ? "legacy" : "missing", operator: hasEvidence(state, "operator_alias") ? "k2" : "missing", tag: state.modelStages.groke ? "0317" : "missing" }; }
 
 const FAYBLE_RELATIONS = Object.freeze({
-  contradicts: "閸愯尙鐛?,
-  inherits: "缂佈勫",
-  aliases: "閸掝偄鎮?,
-  continues: "瀵ゅ墎鐢?
+  contradicts: "闁告劘灏欓悰?,
+  inherits: "缂備綀鍕棡",
+  aliases: "闁告帩鍋勯幃?,
+  continues: "鐎点倕澧庨悽?
 });
 const FAYBLE_SOURCE_CATEGORIES = Object.freeze({
   mail_signature: "route", mirror_route: "route", operator_alias: "identity",
@@ -425,10 +419,10 @@ const FAYBLE_SOURCE_CATEGORIES = Object.freeze({
   takeover_notice: "external"
 });
 const FAYBLE_CATEGORY_LABELS = Object.freeze({
-  route: "鐠侯垳鏁?, protocol: "閸楀繗顔?, "private-memory": "缁変礁鐦戠拋鏉跨箓", identity: "闊偂鍞?,
-  anomaly: "瀵倸鐖?, "channel-access": "妫版垿浜鹃崗銉ュ經", channel: "妫版垿浜?, "relay-residue": "Relay 濞堝鏆€",
-  continuity: "鏉╃偟鐢婚幀?, tool: "瀹搞儱鍙?, checkpoint: "checkpoint", objective: "閻╊喗鐖ｉ悧鍥唽",
-  external: "婢舵牠鍎寸拋鏉跨秿", provenance: "閺夈儲绨拋鏉跨秿", archive: "濡楋絾顢?
+  route: "閻犱警鍨抽弫?, protocol: "闁告绻楅?, "private-memory": "缂佸绀侀惁鎴犳媼閺夎法绠?, identity: "闂婎剦鍋傞崬?,
+  anomaly: "鐎殿喖鍊搁悥?, "channel-access": "濡増鍨挎禍楣冨礂閵夈儱缍?, channel: "濡増鍨挎禍?, "relay-residue": "Relay 婵炲牆顑囬弳鈧?,
+  continuity: "閺夆晝鍋熼悽濠氬箑?, tool: "鐎规悶鍎遍崣?, checkpoint: "checkpoint", objective: "闁烩晩鍠楅悥锝夋偋閸ヮ煈鍞?,
+  external: "濠㈣埖鐗犻崕瀵告媼閺夎法绉?, provenance: "闁哄鍎茬花顔炬媼閺夎法绉?, archive: "婵℃绲鹃、?
 });
 const CASE_NOTE_CATEGORIES = Object.freeze({
   "mail-header": "route",
@@ -436,10 +430,10 @@ const CASE_NOTE_CATEGORIES = Object.freeze({
   "ad-redirect": "channel-access"
 });
 const FAYBLE_AUTH_RULES = Object.freeze([
-  { relation: "contradicts", categories: ["route", "protocol"], hint: "鐠侯垳鏁辨稉搴″礂鐠? },
-  { relation: "inherits", categories: ["private-memory", "protocol"], hint: "缁変礁鐦戠拋鏉跨箓娑撳骸宕楃拋? },
-  { relation: "aliases", categories: ["identity", "channel"], hint: "闊偂鍞ゆ稉搴暥闁? },
-  { relation: "continues", categories: ["relay-residue", "continuity"], hint: "濞堝鏆€娑撳氦绻涚紒顓熲偓? }
+  { relation: "contradicts", categories: ["route", "protocol"], hint: "閻犱警鍨抽弫杈ㄧ▔鎼粹€崇閻? },
+  { relation: "inherits", categories: ["private-memory", "protocol"], hint: "缂佸绀侀惁鎴犳媼閺夎法绠撳☉鎾抽瀹曟鎷? },
+  { relation: "aliases", categories: ["identity", "channel"], hint: "闂婎剦鍋傞崬銈嗙▔鎼搭煈鏆ラ梺? },
+  { relation: "continues", categories: ["relay-residue", "continuity"], hint: "婵炲牆顑囬弳鈧☉鎾虫唉缁绘稓绱掗鐔插亾? }
 ]);
 function addArtifact(draft, id) {
   unique(draft.unlockedArtifacts, id);
@@ -482,7 +476,7 @@ function openRelayConsoleFromMail() {
     draft.relayAdminOpen = true;
     draft.currentApp = "relay";
     draft.windowState.relay = { open: true, minimized: false, zIndex: Date.now() };
-    addNotification(draft, "relay-console-opened", "Relay Node 17 缁狅紕鎮婇崥搴″酱瀹歌弓绮犻張顒佹簚鐠愶附鍩涢幍鎾崇磻閵?, "info");
+    addNotification(draft, "relay-console-opened", "Relay Node 17 缂佺媴绱曢幃濠囧触鎼粹€抽叡鐎规瓕寮撶划鐘诲嫉椤掍焦绨氶悹鎰堕檮閸╂盯骞嶉幘宕囩；闁?, "info");
   });
   if (!created) store.update(draft => {
     addArtifact(draft, "relay-console");
@@ -560,7 +554,7 @@ function recordEvidence(id, mutator) {
     mutator?.(draft);
     syncProgress(draft);
   });
-  if (added) showToast("閺夈儲绨悩鑸碘偓浣稿嚒閺囧瓨鏌婇妴?, "success");
+  if (added) showToast("闁哄鍎茬花顕€鎮╅懜纰樺亾娴ｇ鍤掗柡鍥х摠閺屽﹪濡?, "success");
 }
 
 const INVITE_SOURCE_KINDS = Object.freeze({ quota_prefix: "public", recall_date: "manage" });
@@ -574,13 +568,13 @@ function saveCitation(node, options = {}) {
     draft.caseNotes.push({
       id,
       quote: node.dataset.citationQuote || "",
-      sourceApp: node.dataset.citationSource || "閺堫亝鐖ｅ▔銊︽降濠?,
+      sourceApp: node.dataset.citationSource || "闁哄牜浜濋悥锝呪枖閵婏附闄嶆繝?,
       sourceRef: node.dataset.citationRef || "local://unknown",
       appId: draft.currentApp,
       savedAt: draft.storyClock?.time || "03:17"
     });
   });
-  if (!options.silent) showToast("閸樼喎褰炲鑼额唶閸忋儳鐟拋鐗堟拱閵?, "success");
+  if (!options.silent) showToast("闁告鍠庤ぐ鐐差啅閼奸鍞堕柛蹇嬪劤閻燁亞鎷嬮悧鍫熸嫳闁?, "success");
   return true;
 }
 
@@ -609,7 +603,7 @@ const AUTO_EFFECTS = {
       draft.proxyStatus = "verified";
       draft.activeProxyProfile = "relay-node17";
       applyRevisitMutations(draft);
-      addNotification(draft, "proxy-ok", "Relay 鐠侯垳鏁卞鑼€樼拋銈冣偓淇倅ncDrive 閸戣櫣骞囨稉鈧禒钘夊暱缁愪礁澹囬張顑锯偓?);
+      addNotification(draft, "proxy-ok", "Relay 閻犱警鍨抽弫鍗烆啅閼碱兘鈧鎷嬮妶鍐ｅ亾娣囧€卬cDrive 闁告垼娅ｉ獮鍥ㄧ▔閳ь剚绂掗挊澶婃毐缂佹劒绀佹竟鍥嫉椤戦敮鍋?);
     });
     if (fired) recordEvidence("relay_proxy_verified");
   },
@@ -623,7 +617,7 @@ const AUTO_EFFECTS = {
     if (!unread.length) return;
     store.update(draft => {
       for (const id of unread) draft.modelStages[id] = "read";
-      if (allModelsRead(draft)) { draft.relayComplete = true; addNotification(draft, "models-read", "閸忣厺閲滃▓瀣殌閼哄倻鍋ｉ惃鍕偍瀵洜濮搁幀浣稿嚒缂佸繑娲块弬鑸偓?, "warning"); }
+      if (allModelsRead(draft)) { draft.relayComplete = true; addNotification(draft, "models-read", "闁稿浚鍘洪柌婊冣枔鐎ｎ剚娈岄柤鍝勫€婚崑锝夋儍閸曨厼鍋嶇€殿喗娲滄慨鎼佸箑娴ｇ鍤掔紓浣哥箲濞插潡寮懜顑藉亾?, "warning"); }
     });
     if (unread.includes("groke")) recordEvidence("raw_checksum");
     if (unread.includes("kemy")) recordEvidence("replay_order");
@@ -646,11 +640,11 @@ function downloadClientPackage(id) {
       clientId: id,
       name: pkg.file,
       path: "/home/room17/Downloads",
-      type: "鐎广垺鍩涚粩顖涗划婢跺秴瀵?,
+      type: "閻庡箍鍨洪崺娑氱博椤栨稐鍒掑璺虹Т鐎?,
       modified: draft.storyClock?.time || "05:30",
       kind: "client-package"
     });
-    addNotification(draft, `client-${id}-downloaded`, `${pkg.file} 瀹歌弓绻氱€涙ê鍩?Downloads閿涘瞼鐡戝鍛閸斻劌鐣ㄧ憗鍛偓淇? "info");
+    addNotification(draft, `client-${id}-downloaded`, `${pkg.file} 鐎规瓕寮撶换姘扁偓娑櫭崺?Downloads闁挎稑鐬奸悺鎴濐嚗閸涱喖顤侀柛鏂诲妼閻ｃ劎鎲楅崨顐熷亾娣? "info");
   });
 }
 
@@ -661,7 +655,7 @@ function installClientPackage(id) {
     unique(draft.downloadedClientPackages, id);
     unique(draft.installedClients, id);
     if (id !== "notes-db") addArtifact(draft, `client-${id}`);
-    addNotification(draft, `client-${id}-installed`, `${pkg.name} 瀹歌弓绮犻張顒€婀存潪顖欐濠ф劕鐣ㄧ憗鍜冪礉閹垹顦查弫鐗堝祦娴犲秹娓堕崷銊ヮ吂閹撮顏崘鍛嚤閸忋儯鈧繖, "info");
+    addNotification(draft, `client-${id}-installed`, `${pkg.name} 鐎规瓕寮撶划鐘诲嫉椤掆偓濠€瀛樻姜椤栨瑦顐芥繝褎鍔曢悾銊ф啑閸滃啰绀夐柟顓滃灩椤︽煡寮悧鍫濈ウ濞寸姴绉瑰〒鍫曞捶閵娿儺鍚傞柟鎾棑椤忣剟宕橀崨顓у殼闁稿繈鍎埀顑跨箹, "info");
   });
 }
 
@@ -677,7 +671,7 @@ function importClientData(id) {
   if (!pkg || !state.installedClients.includes(id) || !clientRecoveryAvailable(id, state)) return false;
   return store.handleEvent(`story:client-${id}-imported`, draft => {
     unique(draft.importedClients, id);
-    addNotification(draft, `client-${id}-imported`, `${pkg.name} 閻ㄥ嫭浠径宥嗘殶閹诡喖鍑＄紒蹇擃嚤閸忋儯鈧繖, "info");
+    addNotification(draft, `client-${id}-imported`, `${pkg.name} 闁汇劌瀚禒顔藉緞瀹ュ棙娈堕柟璇″枛閸戯紕绱掕箛鎿冨殼闁稿繈鍎埀顑跨箹, "info");
   });
 }
 
@@ -707,7 +701,7 @@ function harvestVisibleSources() {
     if (requiredKind && sourceKind !== requiredKind) continue;
     recordEvidence(evidenceId, draft => { if (requiredKind) draft.inviteSources[evidenceId] = sourceKind; });
   }
-  if (saved) showToast(saved === 1 ? "妞ょ敻娼版稉濠勬畱閸樼喎褰炲鑼额唶閸忋儳鐟拋鐗堟拱閵? : `${saved} 閺夆€冲斧閸欍儱鍑＄拋鏉垮弳缁楁棁顔囬張顑锯偓淇? "success");
+  if (saved) showToast(saved === 1 ? "濡炪倗鏁诲鐗堢▔婵犲嫭鐣遍柛妯煎枎瑜扮偛顔忛懠棰濆敹闁稿繈鍎抽悷顏嗘媼閻楀牊鎷遍柕? : `${saved} 闁哄鈧啿鏂ч柛娆嶅劚閸戯紕鎷嬮弶鍨汲缂佹妫侀鍥嫉椤戦敮鍋撴穱? "success");
 }
 
 function setApp(id, page) {
@@ -736,16 +730,16 @@ function appLockReason(id, state) {
   const unlocks = getUnlocks(state);
   // Nothing on this machine stays gated once the instance opens the session.
   if (unlocks.trustedSession) return "";
-  if (id === "trusted") return "鏉╂瑤閲滄导姘崇樈鏉╂ü绗夌€涙ê婀妴?;
-  if (id === "journal" && !unlocks.caseNotes) return "缁楁棁顔囬張顒冪箷濞屸剝婀佺拋棰佺瑓娴犺缍嶆稉婊嗐偪閵?;
-  if (id === "archive" && !unlocks.historicalArchive) return "閺堫剙婀寸亸姘￥閹垹顦插锝嗩攳閵?;
-  if (id === "relay" && !unlocks.relay) return "Relay Console 鐏忔碍婀崚娑樼紦閵?;
-  if (id === "fayble" && !unlocks.fayble) return "Fayble 娴兼俺鐦界亸姘弓瀵よ櫣鐝涢妴?;
-  if (id === "ending" && !unlocks.receipt) return "缁夎姘﹂崶鐐村⒔鐏忔碍婀悽鐔稿灇閵?;
-  // V2 client apps 閳?require relay-console (same tier as relay-admin)
+  if (id === "trusted") return "閺夆晜鐟ら柌婊勫濮樺磭妯堥弶鈺偯肩粭澶屸偓娑櫭﹢顏堝Υ?;
+  if (id === "journal" && !unlocks.caseNotes) return "缂佹妫侀鍥嫉椤掑啰绠锋繛灞稿墲濠€浣烘媼妫颁胶鐟撳ù鐘侯唺缂嶅秵绋夊鍡愬仾闁?;
+  if (id === "archive" && !unlocks.historicalArchive) return "闁哄牜鍓欏﹢瀵镐焊濮橆厽锟ラ柟顓滃灩椤︽彃顩奸敐鍡╂敵闁?;
+  if (id === "relay" && !unlocks.relay) return "Relay Console 閻忓繑纰嶅﹢顓㈠礆濞戞绱﹂柕?;
+  if (id === "fayble" && !unlocks.fayble) return "Fayble 濞村吋淇洪惁鐣屼焊濮橆厽寮撶€点倛娅ｉ悵娑㈠Υ?;
+  if (id === "ending" && !unlocks.receipt) return "缂佸顔婂锕傚炊閻愭潙鈷旈悘蹇旂濠€顓㈡偨閻旂鐏囬柕?;
+  // V2 client apps 闁?require relay-console (same tier as relay-admin)
   const v2Clients = ["gamini-ws", "chengzhen", "yunzhen", "groke-feed", "glem-memory", "kemy-space", "repo-mirror"];
-  if (v2Clients.includes(id) && !unlocks.relay) return "鐠囥儱顓归幋椋庮伂鐏忔碍婀潻娑樺弳閺堫剙婀存潪顖欐閻╊喖缍嶉妴?;
-  if (v2Clients.includes(id) && !state.installedClients?.includes(id)) return "鐠囥儱顓归幋椋庮伂鐏忔碍婀€瑰顥婇敍宀冾嚞閸︺劏钂嬫禒鏈佃厬韫囧啯鐓￠惇瀣秼閸撳秴鍑￠崥灞绢劄閻ㄥ嫰銆嶉惄顔衡偓?;
+  if (v2Clients.includes(id) && !unlocks.relay) return "閻犲洢鍎遍褰掑箣妞嬪寒浼傞悘蹇旂濠€顓熸交濞戞ê寮抽柡鍫墮濠€瀛樻姜椤栨瑦顐介柣鈺婂枛缂嶅秹濡?;
+  if (v2Clients.includes(id) && !state.installedClients?.includes(id)) return "閻犲洢鍎遍褰掑箣妞嬪寒浼傞悘蹇旂濠€顓犫偓鐟邦槼椤ュ﹪鏁嶅畝鍐惧殲闁革负鍔忛拏瀣閺堜絻鍘煫鍥у暞閻擄繝鎯囩€ｎ亞绉奸柛鎾崇Т閸戯繝宕ョ仦缁㈠妱闁汇劌瀚伴妴宥夋儎椤旇　鍋?;
   return "";
 }
 
@@ -759,9 +753,9 @@ function fileIconKey(file) {
   if (file.contentId?.startsWith("new.maintainer")) return "folder";
   if (file.kind === "script") return "terminal";
   if (file.kind === "database" || file.kind === "archive") return "archive";
-  if (file.type?.includes("鐎瑰顥?)) return "package";
-  if (file.type?.includes("缂冩垹绮?)) return "network";
-  if (file.type?.includes("闁喕娆?)) return "mail";
+  if (file.type?.includes("閻庣懓顦抽ˉ?)) return "package";
+  if (file.type?.includes("缂傚啯鍨圭划?)) return "network";
+  if (file.type?.includes("闂侇収鍠曞▎?)) return "mail";
   return "folder";
 }
 
@@ -769,7 +763,7 @@ function windowFrame(appId, title, body, options = {}) {
   const placement = store.get().windowState[appId] || {};
   const style = `left:${Number.isFinite(placement.x) ? placement.x : 110}px;top:${Number.isFinite(placement.y) ? placement.y : 72}px;z-index:${Number.isFinite(placement.zIndex) ? placement.zIndex : 30}`;
   return `<section class="app-window app-${appId} ${options.wide ? "wide" : ""}" data-app-window="${appId}" style="${style}">
-    <header class="window-bar"><div class="window-title">${iconMarkup(options.iconKey || APP_ICON_KEYS[appId])}<span>${title}</span></div><div class="window-controls"><button data-window-action="minimize" aria-label="闁偓閸戝搫缍嬮崜宥囩崶閸?>閳?/button><button data-window-action="close" aria-label="闁偓閸戝搫缍嬮崜宥囩崶閸?>鑴?/button></div></header>
+    <header class="window-bar"><div class="window-title">${iconMarkup(options.iconKey || APP_ICON_KEYS[appId])}<span>${title}</span></div><div class="window-controls"><button data-window-action="minimize" aria-label="闂侇偀鍋撻柛鎴濇惈缂嶅宕滃鍥╁炊闁?>闁?/button><button data-window-action="close" aria-label="闂侇偀鍋撻柛鎴濇惈缂嶅宕滃鍥╁炊闁?>閼?/button></div></header>
     <div class="window-body">${body}</div></section>`;
 }
 
@@ -789,18 +783,18 @@ function renderMail(state) {
   const attachment = state.revisitFlags["mail-attachment"];
   const fragmentOpened = state.sourceVisits?.["mail-fragment"];
   const carrierInbox = [
-    contentEntryMarkup("new.employee.minutes-01", "妞ゅ湱娲伴崨銊ょ窗缁绢亣顩?/ 缁?18 濞?, "閸忣剙寰冮柇顔绘瑜版帗銆?璺?娴兼俺顔呴梽鍕", "mail"),
-    contentEntryMarkup("new.maintainer.outbox-04", "瀵ゆ儼绻滈柅浣芥彧閿涙utbox-draft.eml", "閸樼喎褰傞柅渚€妲﹂崚妤佷划婢?璺?閺堫亜褰傞柅浣藉磸缁?, "mail")
+    contentEntryMarkup("new.employee.minutes-01", "濡炪倕婀卞ú浼村川閵娿倗绐楃紒缁海椤?/ 缂?18 婵?, "闁稿浚鍓欏鍐焽椤旂粯顐界憸鐗堝笚閵?鐠?濞村吋淇洪鍛存⒔閸曨亝顐?, "mail"),
+    contentEntryMarkup("new.maintainer.outbox-04", "鐎点倖鍎肩换婊堟焻娴ｈ姤褰ч柨娑欘劑utbox-draft.eml", "闁告鍠庤ぐ鍌炴焻娓氣偓濡诧箓宕氬Δ浣峰垝濠?鐠?闁哄牜浜滆ぐ鍌炴焻娴ｈ棄纾哥紒?, "mail")
   ].filter(Boolean).join("") + generatedEntriesFor("mail", "mail");
-  const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>閺€鏈垫缁?/strong><span>${government ? 2 : 1} 鐏?/span></div>
+  const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>闁衡偓閺堝灚顐界紒?/strong><span>${government ? 2 : 1} 閻?/span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
-    ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>鐠嬪啯鐓￠幒銉ь吀闁氨鐓?/span><time>閸掓艾鍨?/time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>閸忓厖绨幃銊﹀鐠佸潡妫堕幒銉ュ經閸欏﹦娴夐崗铏殶閹诡喚娈戠拫鍐╃叀闁氨鐓?/h2><dl><dt>濡楀牅娆㈢紓鏍у娇</dt><dd>RLY-17-0719</dd><dt>闁浇鎻悩鑸碘偓?/dt><dd>瀹歌尪顔囪ぐ?/dd></dl><p>缂佸繒娲冨ù瀣剁礉閹劍澧嶇粻锛勬倞閻ㄥ嫪鑵戞潪顒佹箛閸斺€茬瑢娑撯偓缂佸嫬鍑￠崑婊勵剾閸忣剙绱戦惃鍕侀崹瀣复閸欙絼楠囬悽鐔峰彠閼辨柣鈧倻娴夐崗瀹犵殶閺屻儳骞囬悽杈╃秹缂佹粍膩閸ㄥ婀囬崝陇浠堥崥鍫濐吀閺屻儱濮欓崗顒€顓婚幒銉ь吀閵?/p><p>閼奉亝婀伴柇顔绘闁浇鎻挧鍑ょ礉娑擃叀娴嗙粩娆嶁偓浣虹处鐎涙顔囪ぐ鏇炴嫲濞村繗顫嶉崢鍡楀蕉鐏忓棜绻橀崗銉ㄧ槈閹诡喕绻氶崗銊︾ウ缁嬪鈧倽顕崑婊勵剾缂佈呯敾鐠佸潡妫堕惄绋垮彠妞ょ敻娼伴妴?/p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>绾喛顓婚柅浣芥彧楠炶泛鍙ч梻顓濈窗鐠?/button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>閻?Relay Browser 閹垫挸绱戦敍?/p><p><button class="mail-route-link" data-open-mirror>http://archive.room17.local/v2/17</button></p><p>缁旀瑥鍞撮崥搴″酱閿?/p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>缁楊兛绨╁▓浣冪箷閸︺劊鈧?br>閸掝偉顔€鐎瑰啯娴涙担鐘核夐崗銊ｂ偓鍌欑瑓濞撳摜绱︾€涙ê鍘涢崚顐ｇ閵?/p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>閸樼喎顫愰柇顔绘</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="闁喕娆?/ 閸樼喎顫愭穱鈥炽仈" data-citation-ref="mail://local/R17-0317">瀹歌尪顔囪ぐ鏇炲煂缁楁棁顔囬張?/span></details>`}${attachment ? `<div class="attachment"><span>1 娑擃亞鈼㈤崥搴ㄢ偓浣芥彧閻ㄥ嫰妾禒?/span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>閺堫剙婀撮幁銏狀槻閺冨爼妫块敍?3:20:11 璺?閻樿埖鈧緤绱伴張顏勫絺闁?/p><pre>缁楊兛绨╁▓鍨梾閺堝绐￠惈鈧崢鐔煎仏娴犳儼铔嬮妴?br>鐎瑰啰鏆€閸︺劋绔存径鍕纯閺冣晝娈戞穱婵嗙摠娴ｅ秶鐤嗛敍灞炬瀮娴犺埖妞傞梻瀛樼槷闁喕娆㈤弲姘瑏閸掑棝鎸撻妴?/pre><small>闂勫嫪娆㈤崣顏冪箽閻ｆ瑨绻栨稉鈧亸蹇旑唽閵嗗倿娓剁憰浣烘埛缂侇厽妞傞敍灞芥礀閸掓澘鍨伴幍宥勭箽鐎涙绻冪€瑰啰娈戦張顒€婀存担宥囩枂閵?/small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+    ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>閻犲鍟悡锟犲箳閵壯屽悁闂侇偅姘ㄩ悡?/span><time>闁告帗鑹鹃崹?/time></button>` : ""}</aside>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>闁稿繐鍘栫花顒勫箖閵婏箑顣查悹浣告健濡爼骞掗妷銉ョ稉闁告瑥锕﹀ù澶愬礂閾忣偅娈堕柟璇″枤濞堟垹鎷崘鈺冨弨闂侇偅姘ㄩ悡?/h2><dl><dt>婵℃鐗呭▎銏㈢磽閺嵮冨▏</dt><dd>RLY-17-0719</dd><dt>闂侇偂娴囬幓顏堟偐閼哥鍋?/dt><dd>鐎规瓕灏鍥亹?/dd></dl><p>缂備礁绻掑ú鍐圭€ｅ墎绀夐柟顔哄妽婢у秶绮婚敍鍕€為柣銊ュ閼垫垶娼浣圭疀闁告柡鈧尙鐟㈠☉鎾亾缂備礁瀚崙锟犲磻濠婂嫷鍓鹃柛蹇ｅ墮缁辨垿鎯冮崟顑熶線宕圭€ｎ偄澶嶉柛娆欑导妤犲洭鎮介悢宄板綘闁艰鲸鏌ｉ埀顒€鍊诲ù澶愬礂鐎圭姷娈堕柡灞诲劤楠炲洭鎮芥潏鈺冪Ч缂備焦绮嶈啯闁搞劌顑嗗﹢鍥礉闄囨禒鍫ュ触閸繍鍚€闁哄被鍎辨慨娆撳礂椤掆偓椤撳骞掗妷褜鍚€闁?/p><p>闁煎浜濆﹢浼存焽椤旂粯顐介梺顐℃祰閹活亞鎸ч崙銈囩濞戞搩鍙€濞村棛绮╁▎宥佸亾娴ｈ櫣澶勯悗娑欘焾椤斿洩銇愰弴鐐村婵炴潙绻楅～宥夊储閸℃钑夐悘蹇撴缁绘﹢宕楅妷銊ф闁硅鍠曠换姘跺礂閵婏妇銈︾紒瀣儍閳ь剙鍊介顒勫磻濠婂嫷鍓剧紓浣堝懐鏁鹃悹浣告健濡爼鎯勭粙鍨綘濡炪倗鏁诲浼村Υ?/p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>缁绢収鍠涢濠氭焻娴ｈ姤褰ф鐐舵硾閸櫻囨⒒椤撴繄绐楅悹?/button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>闁?Relay Browser 闁瑰灚鎸哥槐鎴︽晬?/p><p><button class="mail-route-link" data-open-mirror>http://archive.room17.local/v2/17</button></p><p>缂佹梹鐟ラ崬鎾触鎼粹€抽叡闁?/p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>缂佹鍏涚花鈺佲枔娴ｅ啰绠烽柛锔哄妸閳?br>闁告帩鍋夐鈧悗鐟板暞濞存稒鎷呴悩鏍稿宕楅妸锝傚亾閸屾瑧鐟撴繛鎾虫憸缁憋妇鈧稒锚閸樻盯宕氶锝囶伕闁?/p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>闁告鍠庨～鎰版焽椤旂粯顐?/summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="闂侇収鍠曞▎?/ 闁告鍠庨～鎰┍閳ョ偨浠? data-citation-ref="mail://local/R17-0317">鐎规瓕灏鍥亹閺囩偛鐓傜紒妤佹椤斿洭寮?/span></details>`}${attachment ? `<div class="attachment"><span>1 濞戞搩浜為埣銏ゅ触鎼淬劉鍋撴担鑺ュ涧闁汇劌瀚板顔界?/span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>闁哄牜鍓欏﹢鎾箒閵忕媭妲婚柡鍐ㄧ埣濡潡鏁?3:20:11 鐠?闁绘鍩栭埀顑跨筏缁变即寮甸鍕岛闂?/p><pre>缂佹鍏涚花鈺佲枔閸偆姊鹃柡鍫濐槼缁愶繝鎯堥埀顒勫储閻旂厧浠忓ù鐘冲劶閾斿濡?br>閻庣懓鍟伴弳鈧柛锔哄妺缁斿瓨寰勯崟顒佺函闁哄啠鏅濆▓鎴炵┍濠靛棛鎽犲ù锝呯Ф閻ゅ棝鏁嶇仦鐐€ù鐘哄煐濡炲倿姊荤€涙妲烽梺顓у枙濞嗐垽寮插顐ょ憦闁告帒妫濋幐鎾诲Υ?/pre><small>闂傚嫬瀚▎銏ゅ矗椤忓啰绠介柣锝嗙懆缁绘牗绋夐埀顒備焊韫囨棏鍞介柕鍡楀€垮〒鍓佹啺娴ｇ儤鍩涚紓渚囧幗濡炲倿鏁嶇仦鑺ョ闁告帗婢橀崹浼村箥瀹ュ嫮绠介悗娑欘焾缁诲啰鈧懓鍟板▓鎴﹀嫉椤掆偓濠€瀛樻媴瀹ュ洨鏋傞柕?/small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   const activeRecord = contentRecord(state.activeContentId);
   const renderedBody = activeRecord && recordCarrierApp(activeRecord) === "mail" && state.carrierReads?.includes(`mail:${activeRecord.id}`)
-    ? `<section class="mail-record-reader"><button data-close-carrier-record="mail">閳?鏉╂柨娲栭弨鏈垫缁?/button>${corpusRecordMarkup(activeRecord, state)}</section>`
+    ? `<section class="mail-record-reader"><button data-close-carrier-record="mail">闁?閺夆晜鏌ㄥú鏍绩閺堝灚顐界紒?/button>${corpusRecordMarkup(activeRecord, state)}</section>`
     : body;
-  return windowFrame("mail", "闁喕娆?, `<div class="split-layout">${list}${renderedBody}</div>`, { icon: "閴?, wide: true });
+  return windowFrame("mail", "闂侇収鍠曞▎?, `<div class="split-layout">${list}${renderedBody}</div>`, { icon: "闁?, wide: true });
 }
 
 function renderFiles(state) {
@@ -814,7 +808,7 @@ function renderFiles(state) {
   if (activeFileRecord) {
     const memoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
     const noteNav = memoIds.filter(id => contentIsUnlocked(contentRecord(id), state)).map(id => `<button class="notes-native-row ${id === activeRecord.id ? "active" : ""}" data-content-entry="${id}"><strong>${escapeHtml(contentRecord(id)?.title || id)}</strong><small>${id}</small></button>`).join("");
-    const reader = `<div class="notes-native-shell"><aside class="notes-native-sidebar"><header><strong>Notes</strong><button data-close-carrier-record="files" aria-label="鏉╂柨娲栭弬鍥︽">鑴?/button></header><nav>${noteNav}</nav></aside><section class="files-record-reader">${corpusRecordMarkup(activeRecord, state)}</section></div>`;
+    const reader = `<div class="notes-native-shell"><aside class="notes-native-sidebar"><header><strong>Notes</strong><button data-close-carrier-record="files" aria-label="閺夆晜鏌ㄥú鏍棘閸ワ附顐?>閼?/button></header><nav>${noteNav}</nav></aside><section class="files-record-reader">${corpusRecordMarkup(activeRecord, state)}</section></div>`;
     return windowFrame("files", "Notes", reader, { wide: true });
   }
   const allMemoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
@@ -822,13 +816,13 @@ function renderFiles(state) {
   const unlockedMemoIds = notesRestored ? allMemoIds : [];
   const noteRecords = ["recent", "documents"].includes(place)
     ? unlockedMemoIds.map(id => contentEntryMarkup(id,
-        id === "legacy.memo.archive" ? "缁楁棁顔囬張顒佷划婢跺秴澹囬張? : `娓氳法顑曠拋鏉跨秿 ${id.slice(-2)}`,
-        id === "legacy.memo.archive" ? "閺堫剙婀存笟璺儠 璺?閸忋劑鍎寸拋鏉跨秿" : "閺堫剙婀存笟璺儠 璺?閸楁洘娼拋鏉跨秿", "folder"))
+        id === "legacy.memo.archive" ? "缂佹妫侀鍥嫉椤掍椒鍒掑璺虹Т婢瑰洭寮? : `濞撴俺娉曢鏇犳媼閺夎法绉?${id.slice(-2)}`,
+        id === "legacy.memo.archive" ? "闁哄牜鍓欏﹢瀛樼瑹鐠侯煈鍎?鐠?闁稿繈鍔戦崕瀵告媼閺夎法绉? : "闁哄牜鍓欏﹢瀛樼瑹鐠侯煈鍎?鐠?闁告娲樺顖滄媼閺夎法绉?, "folder"))
       .filter(Boolean).join("")
     : "";
   const virtualFiles = [...state.virtualFiles];
   if (hasStoryEvent(state, "proxy-profile-opened") && !virtualFiles.some(entry => entry.id === "route-log")) {
-    virtualFiles.push({ id: "route-log", name: "route.log", path: "/home/room17/Documents/relay", type: "鐠侯垳鏁遍弮銉ョ箶", modified: "07-19 03:16", kind: "log" });
+    virtualFiles.push({ id: "route-log", name: "route.log", path: "/home/room17/Documents/relay", type: "閻犱警鍨抽弫閬嶅籍閵夈儳绠?, modified: "07-19 03:16", kind: "log" });
   }
   const visibleFiles = virtualFiles.filter(entry => {
     const normalizedPath = String(entry.path || "/home/room17").replace(/\/$/, "").toLocaleLowerCase();
@@ -843,23 +837,23 @@ function renderFiles(state) {
       ? `data-open-client-package="${escapeHtml(file.clientId)}"`
       : file.contentId ? `data-content-entry="${escapeHtml(file.contentId)}"` : `data-open-file="${file.id}"`;
     const hint = file.id === "relay-script"
-      ? `<small class="file-command">缂佸牏顏敍姝痮de ~/Downloads/relay_probe_legacy.js</small>`
-      : file.id === "pkg" ? `<small class="file-command">缂佸牏顏敍姝磆a256sum ${PACKAGE_NAME}</small>` : "";
-    return `<button class="file-row" ${action}><span class="file-icon">${iconMarkup(fileIconKey(file))}</span><span><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(file.path || "/home/room17")}</small>${hint}</span><span>${escapeHtml(file.type || "閺傚洣娆?)}</span><time>${escapeHtml(file.modified || "--")}</time></button>`;
+      ? `<small class="file-command">缂備礁鐗忛顒勬晬濮濈棶de ~/Downloads/relay_probe_legacy.js</small>`
+      : file.id === "pkg" ? `<small class="file-command">缂備礁鐗忛顒勬晬濮濈a256sum ${PACKAGE_NAME}</small>` : "";
+    return `<button class="file-row" ${action}><span class="file-icon">${iconMarkup(fileIconKey(file))}</span><span><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(file.path || "/home/room17")}</small>${hint}</span><span>${escapeHtml(file.type || "闁哄倸娲ｅ▎?)}</span><time>${escapeHtml(file.modified || "--")}</time></button>`;
   }).join("");
-  const places = [["recent", "閺堚偓鏉?], ["home", "娑撹崵娲拌ぐ?], ["downloads", "Downloads"], ["documents", "Documents"], ["trash", "閸ョ偞鏁圭粩?]].map(([id, label]) => `<button data-file-place="${id}" class="${place === id ? "active" : ""}">${label}</button>`).join("");
+  const places = [["recent", "闁哄牃鍋撻弶?], ["home", "濞戞捁宕靛ú鎷屻亹?], ["downloads", "Downloads"], ["documents", "Documents"], ["trash", "闁搞儳鍋為弫鍦博?]].map(([id, label]) => `<button data-file-place="${id}" class="${place === id ? "active" : ""}">${label}</button>`).join("");
   const folders = [["documents", "Documents"], ["downloads", "Downloads"]].map(([id, label]) => `<button data-file-place="${id}">${iconMarkup("folder")}${label}</button>`).join("");
   const notesImport = installed.includes("notes-db") && !notesRestored && ["recent", "documents"].includes(place)
-    ? `<section class="notes-backup-entry" data-client="notes-db">${iconMarkup("folder")}<button data-import-client="notes-db">娴犲孩婀伴崷鏉款槵娴犺姤浠径?Notes</button></section>`
+    ? `<section class="notes-backup-entry" data-client="notes-db">${iconMarkup("folder")}<button data-import-client="notes-db">濞寸姴瀛╁﹢浼村捶閺夋妲靛ù鐘哄Г娴狀喗寰?Notes</button></section>`
     : "";
-  return windowFrame("files", "閺傚洣娆?/ home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>閸氬秶袨</span><span>缁鐎?/span><span>娣囶喗鏁奸弮鍫曟？</span></div>${rows || `<div class="empty-state">鏉╂瑤閲滄担宥囩枂濞屸剝婀侀弬鍥︽閵?/div>`}${notesImport}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 閺佺増宓佹惔?/ 瀹稿弶浠径宥堫唶瑜?/strong><small>濮ｅ繑娼拋鏉跨秿娣囨繃瀵旈崢鐔奉潗 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
+  return windowFrame("files", "闁哄倸娲ｅ▎?/ home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>闁告艾绉惰ⅷ</span><span>缂侇偉顕ч悗?/span><span>濞ｅ浂鍠楅弫濂稿籍閸洘锛?/span></div>${rows || `<div class="empty-state">閺夆晜鐟ら柌婊勬媴瀹ュ洨鏋傛繛灞稿墲濠€渚€寮崶锔筋偨闁?/div>`}${notesImport}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 闁轰胶澧楀畵浣规償?/ 鐎圭寮舵禒顔藉緞瀹ュ牜鍞剁憸?/strong><small>婵絽绻戝顖滄媼閺夎法绉垮ǎ鍥ㄧ箖鐎垫棃宕㈤悢濂夋綏 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
 }
 
 function renderTrash(state) {
   const item = state.trashItems[0];
-  if (!item) return windowFrame("trash", "閸ョ偞鏁圭粩?, `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">TRASH / LOCAL</span><h2>閸ョ偞鏁圭粩娆庤礋缁?/h2><p>閺堚偓鏉╂垶鐥呴張澶夌矤鏉╂瑤閲滅拹锔藉煕閸掔娀娅庨惃鍕€嶉惄顔衡偓?/p></div></div>`, { icon: "閳? });
+  if (!item) return windowFrame("trash", "闁搞儳鍋為弫鍦博?, `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">TRASH / LOCAL</span><h2>闁搞儳鍋為弫鍦博濞嗗氦绀嬬紒?/h2><p>闁哄牃鍋撻弶鈺傚灦閻ュ懘寮垫径澶岀煠閺夆晜鐟ら柌婊呮嫻閿旇棄鐓曢柛鎺斿█濞呭酣鎯冮崟顖樷偓宥夋儎椤旇　鍋?/p></div></div>`, { icon: "闁? });
   const restored = item.status === "restored";
-  return windowFrame("trash", "閸ョ偞鏁圭粩?, `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "瀹稿弶浠径?1 娑擃亪銆嶉惄? : "1 娑擃亜鍑￠崚鐘绘珟妞ゅ湱娲?}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>閸樼喍缍呯純顕嗙窗${escapeHtml(item.originalPath)}</p><small>閸掔娀娅庨崢鐔锋礈閿涙氨娣幎銈堝壖閺堫剚澧界悰宀嬬幢閺堫剙婀寸槐銏犵穿娴犲秵婀佺拋鏉跨秿</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "瀹稿弶浠径? : "閹垹顦?}</button></article>${restored ? `<div class="recovered-fragment"><p>閸樼喎顫愰弮鍫曟？閹村啿鎷拌ぐ鎾冲閹垹顦查弮鍫曟？鐎涙ê婀?46 缁夋帒妯婇崐绗衡偓?/p><span class="auto-citation" data-save-citation="restored-time" data-citation-quote="閹垹顦查崙铏规畱閸擃垱婀板В鏂垮灩闂勩倗鍌ㄥ鏇熸珓 46 缁? data-citation-source="閸ョ偞鏁圭粩?/ 閺傚洣娆㈢仦鐐粹偓? data-citation-ref="trash://${escapeHtml(item.id)}">瀹歌尪顔囪ぐ鏇炲煂缁楁棁顔囬張?/span></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
+  return windowFrame("trash", "闁搞儳鍋為弫鍦博?, `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "鐎圭寮舵禒顔藉緞?1 濞戞搩浜妴宥夋儎? : "1 濞戞搩浜滈崙锟犲礆閻樼粯鐝熷銈呮贡濞?}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>闁告鍠嶇紞鍛磾椤曞棛绐?{escapeHtml(item.originalPath)}</p><small>闁告帞濞€濞呭酣宕㈤悢閿嬬闁挎稒姘ㄥǎ顕€骞庨妶鍫濆闁哄牜鍓氭晶鐣屾偘瀹€瀣耿闁哄牜鍓欏﹢瀵告閵忕姷绌垮ù鐘茬У濠€浣烘媼閺夎法绉?/small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "鐎圭寮舵禒顔藉緞? : "闁诡厹鍨归ˇ?}</button></article>${restored ? `<div class="recovered-fragment"><p>闁告鍠庨～鎰板籍閸洘锛熼柟鏉戝暱閹锋媽銇愰幘鍐差枀闁诡厹鍨归ˇ鏌ュ籍閸洘锛熼悗娑櫭﹢?46 缂佸甯掑Ο濠囧磹缁楄　鍋?/p><span class="auto-citation" data-save-citation="restored-time" data-citation-quote="闁诡厹鍨归ˇ鏌ュ礄閾忚鐣遍柛鎿冨灡濠€鏉啃掗弬鍨仼闂傚嫨鍊楅崒銊ヮ嚕閺囩喐鐝?46 缂? data-citation-source="闁搞儳鍋為弫鍦博?/ 闁哄倸娲ｅ▎銏沪閻愮补鍋? data-citation-ref="trash://${escapeHtml(item.id)}">鐎规瓕灏鍥亹閺囩偛鐓傜紒妤佹椤斿洭寮?/span></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
 }
 
 function renderTerminal(state) {
@@ -868,7 +862,7 @@ function renderTerminal(state) {
     && recordCarrierApp(activeRecord) === "terminal"
     && state.carrierReads?.includes(`terminal:${activeRecord.id}`);
   if (activeTerminalRecord) {
-    const reader = `<section class="terminal-record-reader"><header><code>less ${escapeHtml(activeRecord.sourceRef || activeRecord.id)}</code><button data-close-carrier-record="terminal">閸忔娊妫撮梼鍛邦嚢閸?/button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    const reader = `<section class="terminal-record-reader"><header><code>less ${escapeHtml(activeRecord.sourceRef || activeRecord.id)}</code><button data-close-carrier-record="terminal">闁稿繑濞婂Λ鎾⒓閸涢偊鍤㈤柛?/button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
     return windowFrame("terminal", "room17@local: cachectl", reader, { icon: "&gt;_", wide: true });
   }
   const history = state.terminalHistory.map(line => `<div class="terminal-line ${line.kind || "output"}">${line.kind === "command" ? "<span>room17@relay:~$</span>" : ""}<code>${escapeHtml(line.text)}</code></div>`).join("");
@@ -877,7 +871,7 @@ function renderTerminal(state) {
   const packageReady = state.virtualFiles.some(file => file.id === "pkg");
   const routeLogReady = hasStoryEvent(state, "proxy-profile-opened") || state.virtualFiles.some(file => file.id === "route-log");
   const commands = ["help", "status", ...(scriptReady ? ["node ~/Downloads/relay_probe_legacy.js"] : []), ...(packageReady ? [`sha256sum ${PACKAGE_NAME}`] : []), ...(unlocks.terminalTrace ? ["list --recent", "inspect cache/index"] : []), ...(hasStoryEvent(state, "repository-recovered") ? ["inspect cache/package"] : []), ...(routeLogReady ? ["cat ~/Documents/relay/route.log"] : []), ...(unlocks.historicalArchive ? ["inspect users/symptom-summary", "compare model-aliases", "open note --id 07"] : [])];
-  return windowFrame("terminal", "room17@local: ~", `<div class="terminal-screen"><div id="terminalOutput" class="terminal-output">${history}</div><form id="terminalForm" class="terminal-input"><label for="terminalInput">room17@local:~$</label><input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="鏉堟挸鍙?help"><button>閹笛嗩攽</button></form><div class="command-shelf">${commands.map(command => `<button data-command="${command}">${command}</button>`).join("")}</div></div>`, { icon: "&gt;_", wide: true });
+  return windowFrame("terminal", "room17@local: ~", `<div class="terminal-screen"><div id="terminalOutput" class="terminal-output">${history}</div><form id="terminalForm" class="terminal-input"><label for="terminalInput">room17@local:~$</label><input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="閺夊牊鎸搁崣?help"><button>闁圭瑳鍡╂斀</button></form><div class="command-shelf">${commands.map(command => `<button data-command="${command}">${command}</button>`).join("")}</div></div>`, { icon: "&gt;_", wide: true });
 }
 
 function renderSoftware(state) {
@@ -887,24 +881,24 @@ function renderSoftware(state) {
   const checked = state.packageChecks.some(item => item.ok);
   const installed = hasPackage(state);
   const availableClients = CLIENT_PACKAGES.filter(pkg => hasMilestone(state, pkg.unlock));
-  const fayblePanel = packageAvailable ? `<section class="software-package-detail"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>閺冄呭閺堫兛绱扮拠婵嗕紣閸?/p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>閺傚洣娆?/dt><dd>${PACKAGE_NAME}</dd><dt>閺夈儲绨?/dt><dd>Downloads / local archive</dd><dt>閻樿埖鈧?/dt><dd>${installed ? "瀹告彃鐣ㄧ憗? : checked ? "閺嶏繝鐛欓柅姘崇箖閿涘瞼鐡戝鍛暔鐟? : twoSourcesConfirmed ? "娑撱倓閲滈弶銉︾爱瀹告彃顕悡? : "缁涘绶?release 娑撳孩婀伴崷鎵波閺嬫粌顕悡?}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>閺堫剙婀撮弽锟犵崣閸?input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="鏉堟挸鍙嗗鎻掝嚠閻撗呮畱鐎瑰本鏆ｉ崐? autocomplete="off"></label><button class="primary-button">閺嶇顕弽锟犵崣</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "瀹告彃鐣ㄧ憗? : "鐎瑰顥婇崚鐗堟拱閸︾増鐭欓惄?}</button></section>` : "";
-  const clientPanel = `<section class="client-package-catalog"><header><div><span class="document-kicker">LOCAL PACKAGE SOURCE</span><h3>瀹搞儰缍旂粩娆掕拫娴?/h3></div><small>room17-local 璺?${availableClients.length} 娑擃亪銆嶉惄?/small></header>${availableClients.length ? availableClients.map(pkg => {
+  const fayblePanel = packageAvailable ? `<section class="software-package-detail"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>闁哄唲鍛暭闁哄牜鍏涚槐鎵嫚濠靛棔绱ｉ柛?/p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>闁哄倸娲ｅ▎?/dt><dd>${PACKAGE_NAME}</dd><dt>闁哄鍎茬花?/dt><dd>Downloads / local archive</dd><dt>闁绘鍩栭埀?/dt><dd>${installed ? "鐎瑰憡褰冮悾銊ф啑? : checked ? "闁哄稄绻濋悰娆撴焻濮樺磭绠栭柨娑樼灱閻℃垵顕ラ崨顓犳殧閻? : twoSourcesConfirmed ? "濞戞挶鍊撻柌婊堝级閵夛妇鐖辩€瑰憡褰冮顕€鎮? : "缂佹稑顦欢?release 濞戞挸瀛╁﹢浼村捶閹殿喚娉㈤柡瀣矊椤曨噣鎮?}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>闁哄牜鍓欏﹢鎾冀閿熺姷宕ｉ柛?input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="閺夊牊鎸搁崣鍡楊啅閹绘帩鍤犻柣鎾楀懏鐣遍悗鐟版湰閺嗭綁宕? autocomplete="off"></label><button class="primary-button">闁哄秶顭堥顕€寮介敓鐘靛矗</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "鐎瑰憡褰冮悾銊ф啑? : "閻庣懓顦抽ˉ濠囧礆閻楀牊鎷遍柛锔惧閻瑩鎯?}</button></section>` : "";
+  const clientPanel = `<section class="client-package-catalog"><header><div><span class="document-kicker">LOCAL PACKAGE SOURCE</span><h3>鐎规悶鍎扮紞鏃傜博濞嗘帟鎷ù?/h3></div><small>room17-local 鐠?${availableClients.length} 濞戞搩浜妴宥夋儎?/small></header>${availableClients.length ? availableClients.map(pkg => {
     const ready = state.installedClients.includes(pkg.id);
     const active = state.activeClientPackage === pkg.id;
-    const action = ready ? `<button disabled>瀹告彃鐣ㄧ憗?/button>` : `<button data-install-client-pkg="${pkg.id}">鐎瑰顥?/button>`;
-    return `<article class="client-package-card ${active ? "active" : ""}">${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.vendor} 璺?${pkg.size}</small><p>閻?room17-local 鏉烆垯娆㈠┃鎰絹娓?/p></div>${action}</article>`;
-  }).join("") : `<div class="software-empty">閻╊喖缍嶅锝呮躬缁涘绶熼張顒€婀寸槐銏犵穿閸氬本顒為妴鍌濈殶閺屻儰鑵戠涵顔款吇閻ㄥ嫬顓归幋椋庮伂娴兼艾鍤悳鏉挎躬鏉╂瑩鍣烽妴?/div>`}</section>`;
-  return windowFrame("software", "鏉烆垯娆㈡稉顓炵妇", `<div class="utility-page software-page software-catalog">${fayblePanel}${clientPanel}<p class="sandbox-note">閹碘偓閺堝鐣ㄧ憗鍛矌娣囶喗鏁煎〒鍛婂灆閸愬懓娅勯幏鐔告瀮娴犲墎閮寸紒鐕傜礉娑撳秳绱扮拫鍐暏閻喎鐤?apt閵?/p></div>`, { iconKey: "package" });
+    const action = ready ? `<button disabled>鐎瑰憡褰冮悾銊ф啑?/button>` : `<button data-install-client-pkg="${pkg.id}">閻庣懓顦抽ˉ?/button>`;
+    return `<article class="client-package-card ${active ? "active" : ""}">${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.vendor} 鐠?${pkg.size}</small><p>闁?room17-local 閺夌儐鍨▎銏犫攦閹邦厼绲瑰〒?/p></div>${action}</article>`;
+  }).join("") : `<div class="software-empty">闁烩晩鍠栫紞宥咁潰閿濆懏韬紒娑橆槸缁剁喖寮甸鈧﹢瀵告閵忕姷绌块柛姘湰椤掔偤濡撮崒婵堟闁哄被鍎伴懙鎴犳兜椤旀鍚囬柣銊ュ椤撳綊骞嬫搴紓濞村吋鑹鹃崵顓㈡偝閺夋寧韬弶鈺傜懇閸ｇ兘濡?/div>`}</section>`;
+  return windowFrame("software", "閺夌儐鍨▎銏＄▔椤撶偟濡?, `<div class="utility-page software-page software-catalog">${fayblePanel}${clientPanel}<p class="sandbox-note">闁圭鍋撻柡鍫濐槸閻ｃ劎鎲楅崨顒傜煂濞ｅ浂鍠楅弫鐓庛€掗崨濠傜亞闁告劕鎳撳▍鍕箯閻斿憡鐎ù鐘插闁绱掗悤鍌滅濞戞挸绉崇槐鎵嫬閸愵亝鏆忛柣顏嗗枎閻?apt闁?/p></div>`, { iconKey: "package" });
 }
 
 function renderNetwork(state) {
   const imported = state.proxyProfiles.includes("relay-node17");
   const probed = state.proxyStatus === "probed" || state.proxyStatus === "verified";
   const profileRead = hasStoryEvent(state, "proxy-profile-opened");
-  const profileSource = profileRead ? `<section class="profile-source"><span class="document-kicker">PROFILE / LOCAL SOURCE</span><h3>route.profile</h3><pre>profile=relay-node17\nroute=relay.local,docs-mirror.local,fayble-legacy.local\nversion=07-18 22:24</pre><p>鏉堝啯娅勯惃?route.log 闂団偓鐟曚礁宕熼悪顒冪箥鐞涘矁绻涢幒銉﹀赴闁藉牐顕伴崣鏍モ偓?/p></section>` : "";
-  const returnAnchor = hasStoryEvent(state, "route-log-read") ? `<div class="source-return"><button data-browser-page="home">閹垫挸绱?Relay Browser</button><button data-browser-page="cloud">鏉╂柨娲?SyncDrive</button></div>` : "";
-  if (!getUnlocks(state).proxyTools) return windowFrame("network", "缂冩垹绮剁拋鍓х枂", `<div class="network-page"><aside class="settings-list"><button class="active">缂冩垹绮?/button><button>娴狅絿鎮?/button><button>鐠囦椒鍔?/button></aside><section class="settings-panel"><span class="document-kicker">NETWORK / LOCAL WORKSTATION</span><h2>閺堝鍤庣純鎴犵捕</h2><div class="network-summary"><span class="signal offline"></span><div><strong>閺堫亣绻涢幒?/strong><p>濞屸剝婀佺€电厧鍙嗘禒锝囨倞闁板秶鐤嗛妴?/p></div></div></section></div>`, { icon: "閳?, wide: true });
-  return windowFrame("network", "缂冩垹绮剁拋鍓х枂", `<div class="network-page"><aside class="settings-list"><button class="active">娴狅絿鎮?/button><button>閺堝鍤庣純鎴犵捕</button><button>鐠囦椒鍔?/button></aside><section class="settings-panel"><span class="document-kicker">MANUAL PROXY / OFFLINE SIMULATION</span><h2>Relay 娑撴挾鏁ょ捄顖滄暠</h2>${profileSource}<form id="proxyImportForm" class="stack-form"><label>闁板秶鐤嗛崥宥囆?input id="proxyProfileInput" value="${escapeHtml(state.pendingProxyProfile || "")}" placeholder="娴?route.profile 鐠囪褰?></label><label>娴狅絿鎮婇崷鏉挎絻<input id="proxyAddressInput" value="${escapeHtml(state.pendingProxyAddress || "")}" placeholder="娴?route.log 鐠囪褰?></label><button ${imported ? "disabled" : ""}>${imported ? "闁板秶鐤嗗鎻掝嚤閸? : "鐎电厧鍙嗛柊宥囩枂"}</button></form><div class="probe-panel" ${probed ? "data-auto-effect=\"proxy-verified\"" : ""}><header><strong>鏉╃偞甯撮幒銏ゆ嫛</strong><span class="signal ${state.proxyStatus}"></span></header><pre>${state.proxyProbeLog.length ? escapeHtml(state.proxyProbeLog.join("\n")) : "缁涘绶熼柊宥囩枂閳?}</pre><div class="button-row"><button id="runProbeButton" ${imported && !probed ? "" : "disabled"}>鏉╂劘顢戦幒銏ゆ嫛</button></div>${probed ? `<p class="auto-note">閹恒垽鎷＄紒鎾寸亯瀹歌尙绮￠崪?route.log 鐎甸€涚瑐閿涘矁绻栭弶鈥茬瑩閻劏鐭鹃悽杈╁箛閸︺劌褰查悽銊ｂ偓?/p>` : ""}</div>${returnAnchor}</section></div>`, { icon: "閳?, wide: true });
+  const profileSource = profileRead ? `<section class="profile-source"><span class="document-kicker">PROFILE / LOCAL SOURCE</span><h3>route.profile</h3><pre>profile=relay-node17\nroute=relay.local,docs-mirror.local,fayble-legacy.local\nversion=07-18 22:24</pre><p>閺夊牆鍟▍鍕儍?route.log 闂傚洠鍋撻悷鏇氱瀹曠喖鎮鍐閻炴稑鐭佺换娑㈠箳閵夛箑璧撮梺钘夌墣椤曚即宕ｉ弽銉㈠亾?/p></section>` : "";
+  const returnAnchor = hasStoryEvent(state, "route-log-read") ? `<div class="source-return"><button data-browser-page="home">闁瑰灚鎸哥槐?Relay Browser</button><button data-browser-page="cloud">閺夆晜鏌ㄥú?SyncDrive</button></div>` : "";
+  if (!getUnlocks(state).proxyTools) return windowFrame("network", "缂傚啯鍨圭划鍓佹媼閸撗呮瀭", `<div class="network-page"><aside class="settings-list"><button class="active">缂傚啯鍨圭划?/button><button>濞寸媴绲块幃?/button><button>閻犲洣妞掗崝?/button></aside><section class="settings-panel"><span class="document-kicker">NETWORK / LOCAL WORKSTATION</span><h2>闁哄牆顦遍崵搴ｇ磾閹寸姷鎹?/h2><div class="network-summary"><span class="signal offline"></span><div><strong>闁哄牜浜ｇ换娑㈠箳?/strong><p>婵炲备鍓濆﹢浣衡偓鐢靛帶閸欏棙绂掗敐鍥ㄥ€為梺鏉跨Ф閻ゅ棝濡?/p></div></div></section></div>`, { icon: "闁?, wide: true });
+  return windowFrame("network", "缂傚啯鍨圭划鍓佹媼閸撗呮瀭", `<div class="network-page"><aside class="settings-list"><button class="active">濞寸媴绲块幃?/button><button>闁哄牆顦遍崵搴ｇ磾閹寸姷鎹?/button><button>閻犲洣妞掗崝?/button></aside><section class="settings-panel"><span class="document-kicker">MANUAL PROXY / OFFLINE SIMULATION</span><h2>Relay 濞戞挻鎸鹃弫銈囨崉椤栨粍鏆?/h2>${profileSource}<form id="proxyImportForm" class="stack-form"><label>闂佹澘绉堕悿鍡涘触瀹ュ泦?input id="proxyProfileInput" value="${escapeHtml(state.pendingProxyProfile || "")}" placeholder="濞?route.profile 閻犲洩顕цぐ?></label><label>濞寸媴绲块幃濠囧捶閺夋寧绲?input id="proxyAddressInput" value="${escapeHtml(state.pendingProxyAddress || "")}" placeholder="濞?route.log 閻犲洩顕цぐ?></label><button ${imported ? "disabled" : ""}>${imported ? "闂佹澘绉堕悿鍡楊啅閹绘帩鍤ら柛? : "閻庣數鍘ч崣鍡涙煀瀹ュ洨鏋?}</button></form><div class="probe-panel" ${probed ? "data-auto-effect=\"proxy-verified\"" : ""}><header><strong>閺夆晝鍋炵敮鎾箳閵忋倖瀚?/strong><span class="signal ${state.proxyStatus}"></span></header><pre>${state.proxyProbeLog.length ? escapeHtml(state.proxyProbeLog.join("\n")) : "缂佹稑顦欢鐔兼煀瀹ュ洨鏋傞柍?}</pre><div class="button-row"><button id="runProbeButton" ${imported && !probed ? "" : "disabled"}>閺夆晜鍔橀、鎴﹀箳閵忋倖瀚?/button></div>${probed ? `<p class="auto-note">闁规亽鍨介幏锛勭磼閹惧浜€规瓕灏欑划锟犲椽?route.log 閻庣敻鈧稓鐟愰柨娑樼焷缁绘牠寮堕垾鑼懇闁活潿鍔忛惌楣冩偨鏉堚晛绠涢柛锔哄妼瑜版煡鎮介妸锝傚亾?/p>` : ""}</div>${returnAnchor}</section></div>`, { icon: "闁?, wide: true });
 }
 
 function browserChrome(page, content, state) {
@@ -913,32 +907,32 @@ function browserChrome(page, content, state) {
   const meta = activeLocation || BROWSER_PAGES[page] || BROWSER_PAGES.home;
   const historyCount = state.browserHistory.length;
   const address = activeLocation?.url || (page === "home" ? state.pendingBrowserAddress || "" : meta.url);
-  return `<div class="browser-shell"><div class="browser-tabs"><div class="browser-tab active"><span>${escapeHtml(meta.title)}</span><b>鑴?/b></div><button aria-label="閺傜増鐖ｇ粵?>+</button></div><div class="browser-toolbar"><button data-browser-back aria-label="閸氬酣鈧偓">閳?/button><button aria-label="閸掗攱鏌?>閳?/button><form id="browserAddressForm" class="address-bar">${iconMarkup("globe")}<input id="browserAddressInput" value="${escapeHtml(address)}" aria-label="閸︽澘娼? autocomplete="off" spellcheck="false"><button aria-label="鏉烆剙鍩?>閳?/button></form><button data-browser-page="home" aria-label="娑撳銆?>閳?/button></div><div class="browser-content ${meta.kind || "record"}">${content}</div><footer class="browser-status"><span>${historyCount} 閺夆剝婀伴崷鏉垮坊閸?/span><span>LOCAL WORKSTATION</span></footer></div>`;
+  return `<div class="browser-shell"><div class="browser-tabs"><div class="browser-tab active"><span>${escapeHtml(meta.title)}</span><b>閼?/b></div><button aria-label="闁哄倻澧楅悥锝囩驳?>+</button></div><div class="browser-toolbar"><button data-browser-back aria-label="闁告艾閰ｉ埀顑藉亾">闁?/button><button aria-label="闁告帡鏀遍弻?>闁?/button><form id="browserAddressForm" class="address-bar">${iconMarkup("globe")}<input id="browserAddressInput" value="${escapeHtml(address)}" aria-label="闁革附婢樺? autocomplete="off" spellcheck="false"><button aria-label="閺夌儐鍓欓崺?>闁?/button></form><button data-browser-page="home" aria-label="濞戞挸顭烽妴?>闁?/button></div><div class="browser-content ${meta.kind || "record"}">${content}</div><footer class="browser-status"><span>${historyCount} 闁哄鍓濆﹢浼村捶閺夊灝鍧婇柛?/span><span>LOCAL WORKSTATION</span></footer></div>`;
 }
 
 function renderSearchPage(state) {
   const query = state.searchQueries.at(-1) || "";
   const normalized = query.trim().toLocaleLowerCase();
   const filter = records => normalized ? records.filter(record => [record.title, record.body, record.meta, ...record.keys].some(value => String(value).toLocaleLowerCase().includes(normalized))) : [];
-  const cards = (records, kind) => records.length ? records.map(record => `<button class="search-result" data-auto-result="${record.evidence || ""}" data-result-source="${kind.toLocaleLowerCase()}"><small>${record.meta}</small><strong>${record.title}</strong><p>${record.body}</p><span>${kind}</span></button>`).join("") : `<div class="empty-state">缁涘绶熼弻銉嚄</div>`;
-  return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>閸欏矂鍣哥槐銏犵穿</h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="閹兼粎鍌ㄩ張顒€婀寸槐銏犵穿" autocomplete="off"><button>閹兼粎鍌?/button></form></header><div class="search-columns"><section><h3>閸忣剙绱戠槐銏犵穿 <small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>缁狅紕鎮婄槐銏犵穿 <small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div></div>`;
+  const cards = (records, kind) => records.length ? records.map(record => `<button class="search-result" data-auto-result="${record.evidence || ""}" data-result-source="${kind.toLocaleLowerCase()}"><small>${record.meta}</small><strong>${record.title}</strong><p>${record.body}</p><span>${kind}</span></button>`).join("") : `<div class="empty-state">缂佹稑顦欢鐔煎蓟閵夘煈鍤?/div>`;
+  return `<div class="search-page"><header><span class="document-kicker">LOCAL INDEX / PUBLIC + OPERATOR</span><h2>闁告瑥鐭傞崳鍝ユ閵忕姷绌?/h2><form id="searchForm"><input id="searchInput" value="${escapeHtml(query)}" placeholder="闁瑰吋绮庨崒銊╁嫉椤掆偓濠€瀵告閵忕姷绌? autocomplete="off"><button>闁瑰吋绮庨崒?/button></form></header><div class="search-columns"><section><h3>闁稿浚鍓欑槐鎴犳閵忕姷绌?<small>public</small></h3>${cards(filter(SEARCH_RECORDS.public), "PUBLIC")}</section><section><h3>缂佺媴绱曢幃濠勬閵忕姷绌?<small>operator</small></h3>${cards(filter(SEARCH_RECORDS.manage), "MANAGE")}</section></div></div>`;
 }
 
 function renderChannelPage(state) {
   const delayed = state.revisitFlags["channel-delay"];
-  const maintainerEntry = contentEntryMarkup("new.maintainer.channel-02", "缂佸瓨濮㈡０鎴︿壕鐎电厧鍤?/ 22:17-22:22", "缂囥倛浜伴幁銏狀槻鐠佹澘缍?璺?缁狅紕鎮婇崨妯侯嚤閸?, "chat");
+  const maintainerEntry = contentEntryMarkup("new.maintainer.channel-02", "缂備礁鐡ㄦ慨銏★紣閹达缚澹曢悗鐢靛帶閸?/ 22:17-22:22", "缂傚洢鍊涙禍浼村箒閵忕媭妲婚悹浣规緲缂?鐠?缂佺媴绱曢幃濠囧川濡警鍤ら柛?, "chat");
   const laterRecords = generatedEntriesFor("channel", "chat");
-  return `<div class="channel-page" data-auto-effect="channel-last-record"><header><div>${iconMarkup("chat")}<span class="document-kicker">RECOVERED GROUP / READ ONLY</span><h2># relay-night</h2></div><span>2 archived members</span></header><div class="channel-stream">${CHANNEL_MESSAGES.map(message => `<article class="chat-line ${message.who === "K2" ? "operator" : "system"}"><b>${message.who}</b><div><time>${message.time}</time><p>${message.text}</p></div></article>`).join("")}${delayed ? `<article class="chat-line ghost"><b>K2</b><div><time>07-19 03:17</time><p>婵″倹鐏夌€瑰顥婇幋鎰閿涘苯娲栭崢鑽ゆ箙 GitHub issue閵嗗倹鐗庢宀勨偓姘崇箖閸氬簼绱版径姘閺壜ょ槑鐠佹亽鈧?/p></div></article>` : ""}</div>${maintainerEntry || laterRecords ? `<section class="source-entry-stack">${maintainerEntry}${laterRecords}</section>` : ""}<p class="auto-note">鏉╂瑦顔岀紘銈堜喊閻ㄥ嫭娓堕崥搴濈閺壜ゎ唶瑜版洖浠犻崷?22:23閿涘矂妾禒鍓佸偍瀵洑绮涢悞鏈电箽閻ｆ瑣鈧?/p></div>`;
+  return `<div class="channel-page" data-auto-effect="channel-last-record"><header><div>${iconMarkup("chat")}<span class="document-kicker">RECOVERED GROUP / READ ONLY</span><h2># relay-night</h2></div><span>2 archived members</span></header><div class="channel-stream">${CHANNEL_MESSAGES.map(message => `<article class="chat-line ${message.who === "K2" ? "operator" : "system"}"><b>${message.who}</b><div><time>${message.time}</time><p>${message.text}</p></div></article>`).join("")}${delayed ? `<article class="chat-line ghost"><b>K2</b><div><time>07-19 03:17</time><p>濠碘€冲€归悘澶屸偓鐟邦槼椤ュ﹪骞嬮幇顒€顫犻柨娑樿嫰濞叉牠宕㈤懡銈嗙畽 GitHub issue闁靛棗鍊归悧搴㈩殽瀹€鍕ㄥ亾濮樺磭绠栭柛姘凹缁辩増寰勫顐ゎ伇闁哄銈囨閻犱焦浜介埀?/p></div></article>` : ""}</div>${maintainerEntry || laterRecords ? `<section class="source-entry-stack">${maintainerEntry}${laterRecords}</section>` : ""}<p class="auto-note">閺夆晜鐟﹂宀€绱橀妶鍫滃枈闁汇劌瀚〒鍫曞触鎼存繄顏遍柡澹溿値鍞剁憸鐗堟礀娴犵娀宕?22:23闁挎稑鐭傚顔界閸撲礁鍋嶇€殿喗娲戠划娑㈡倿閺堢數绠介柣锝嗙懀閳?/p></div>`;
 }
 
 function renderCompanyPage() {
   const entries = [
-    contentEntryMarkup("legacy.gamini.employee-sop", "婢舵粎褰禍銈嗗复娑?HR 鐟曞棛娲婇幍瑙勬暈", "Northline 閸愬懘鍎撮崗鍙橀煩 璺?閸樺棗褰堕幙宥勭稊鐠佹澘缍?, "gamini"),
-    contentEntryMarkup("new.employee.minutes-02", "娴兼俺顔呯痪顏囶洣娣囶喛顓规稉搴ㄦ娴犲墎娅ョ拋?, "Northline 妞ゅ湱娲扮粚娲？ 璺?娣囶喛顓圭拋鏉跨秿", "glem"),
-    contentEntryMarkup("new.employee.incident-03", "娴滃娆㈡径宥囨磸娑?HR 瀵扳偓閺?, "Northline 閸氬牐顫夌粚娲？ 璺?闂勬劕鐣剧拋鏉跨秿", "glem"),
-    contentEntryMarkup("new.employee.routing-04", "妫板嫮鐣荤捄顖滄暠娑撳孩绉烽幁顖滃殠缁?, "閹存劖婀版慨鏂挎喅娴?璺?缂佹挻顢嶉弶鎰灐", "lunet")
+    contentEntryMarkup("legacy.gamini.employee-sop", "濠㈣埖绮庤ぐ顔界閵堝棗澶嶅☉?HR 閻熸洖妫涘ú濠囧箥鐟欏嫭鏆?, "Northline 闁告劕鎳橀崕鎾礂閸欐﹢鐓?鐠?闁告ê妫楄ぐ鍫曞箼瀹ュ嫮绋婇悹浣规緲缂?, "gamini"),
+    contentEntryMarkup("new.employee.minutes-02", "濞村吋淇洪鍛棯椤忓浂娲ｅǎ鍥跺枦椤撹绋夋惔銊︻€嶅ù鐘插濞呫儳鎷?, "Northline 濡炪倕婀卞ú鎵矚濞差亝锛?鐠?濞ｅ浂鍠涢鍦媼閺夎法绉?, "glem"),
+    contentEntryMarkup("new.employee.incident-03", "濞存粌顑勫▎銏″緞瀹ュ洦纾稿☉?HR 鐎垫壋鍋撻柡?, "Northline 闁告艾鐗愰～澶岀矚濞差亝锛?鐠?闂傚嫭鍔曢悾鍓ф媼閺夎法绉?, "glem"),
+    contentEntryMarkup("new.employee.routing-04", "濡澘瀚悾鑽ゆ崉椤栨粍鏆犲☉鎾冲缁夌兘骞侀婊冩疇缂?, "闁瑰瓨鍔栧﹢鐗堟叏閺傛寧鍠呭ù?鐠?缂備焦鎸婚、宥夊级閹邦厽鐏?, "lunet")
   ].filter(Boolean).join("") + generatedEntriesFor("company", "folder");
-  return `<article class="company-page"><header>${iconMarkup("glem")}<div><strong>Northline Workspace</strong><span>妞ゅ湱娲伴崡蹇庣稊 / 瀹稿弶浠径宥堫唶瑜?/span></div></header><h2>妞ゅ湱娲扮挧鍕灐</h2><p>鐠囥儱浼愭担婊冨隘閸欘亝妯夌粈鍝勭秼閸撳秷澶勯幋閿嬫禈缂佸繑澧﹀鈧潻鍥╂畱鐠佹澘缍嶆稉搴″従閸氬海鐢绘穱顔款吂閵?/p><section class="source-entry-stack">${entries || `<div class="empty-state">閻╊喖澧犲▽鈩冩箒閸欘垵顕伴崣鏍畱閸忣剙寰冪拋鏉跨秿閵?/div>`}</section></article>`;
+  return `<article class="company-page"><header>${iconMarkup("glem")}<div><strong>Northline Workspace</strong><span>濡炪倕婀卞ú浼村础韫囧海绋?/ 鐎圭寮舵禒顔藉緞瀹ュ牜鍞剁憸?/span></div></header><h2>濡炪倕婀卞ú鎵導閸曨剚鐏?/h2><p>閻犲洢鍎辨导鎰媴濠婂啫闅橀柛娆樹簼濡绮堥崫鍕Ъ闁告挸绉锋径鍕箣闁垮绂堢紓浣哥箲婢э箑顕ｉ埀顒佹交閸モ晜鐣遍悹浣规緲缂嶅秵绋夋惔鈥冲緭闁告艾娴烽悽缁樼┍椤旀鍚傞柕?/p><section class="source-entry-stack">${entries || `<div class="empty-state">闁烩晩鍠栨晶鐘测柦閳╁啯绠掗柛娆樺灥椤曚即宕ｉ弽顐ｇ暠闁稿浚鍓欏鍐媼閺夎法绉块柕?/div>`}</section></article>`;
 }
 
 function renderVendorHub(state) {
@@ -946,13 +940,13 @@ function renderVendorHub(state) {
     const corpus = String(record.corpus || "").toLocaleLowerCase();
     return VENDOR_ICON_KEYS.includes(corpus) && record.id.startsWith(`new.${corpus}.`) && contentIsUnlocked(record, state);
   });
-  const entries = records.map(record => contentEntryMarkup(record.id, record.title, `${record.corpus} 璺?${carrierLabel(record)}`, String(record.corpus).toLocaleLowerCase())).join("");
+  const entries = records.map(record => contentEntryMarkup(record.id, record.title, `${record.corpus} 鐠?${carrierLabel(record)}`, String(record.corpus).toLocaleLowerCase())).join("");
   const historicalCaches = [
-    contentEntryMarkup("legacy.ethron.cache", "Ethron / Plaupic 閸樺棗褰剁紓鎾崇摠婢圭増妲?, "閸嬫粎鏁ょ€瑰鍙忔禍褍鎼ч崺?璺?閺堫剙婀撮崫宥呯安閸擃垱婀?, "globe"),
-    contentEntryMarkup("legacy.deptseek.protocol", "Deptseek 缁犳濮忔导妯哄閸楀繗顔呯紓鎾崇摠", "閸樺棗褰堕崚顐㈡倳 璺?閺冄冪杽妤犲苯宕楃拋?, "dipsik")
+    contentEntryMarkup("legacy.ethron.cache", "Ethron / Plaupic 闁告ê妫楄ぐ鍓佺磽閹惧磭鎽犲鍦濡?, "闁稿绮庨弫銈団偓鐟邦槸閸欏繑绂嶈閹佳囧春?鐠?闁哄牜鍓欏﹢鎾传瀹ュ懐瀹夐柛鎿冨灡濠€?, "globe"),
+    contentEntryMarkup("legacy.deptseek.protocol", "Deptseek 缂佺姵顨呮慨蹇斿濡搫顕ч柛妤€绻楅鍛磽閹惧磭鎽?, "闁告ê妫楄ぐ鍫曞礆椤愩垺鍊?鐠?闁哄唲鍐澖濡ょ姴鑻畷妤冩媼?, "dipsik")
   ].filter(Boolean).join("");
   const laterRecords = generatedEntriesFor("vendors", "fayble");
-  return `<article class="vendor-hub"><header>${iconMarkup("globe")}<div><span class="document-kicker">LOCAL HISTORY / GENERATED INDEX</span><h2>娓氭稑绨查崯鍡楀坊閸欐彃鍙嗛崣?/h2></div></header><p>閺堫剙婀撮崢鍡楀蕉閻㈠崬鍑＄拋鍧楁６妞ょ敻娼版稉搴划婢跺秶娈戠紓鎾崇摠鐠佹澘缍嶉崥鍫濊嫙閻㈢喐鍨氶妴鍌炲劥閸掑棙娼惄顔炬畱娑撳﹥顐肩拋鍧楁６閺冨爼妫块弮鈺€绨ぐ鎾冲瀹搞儰缍旂粩娆掝唶瑜版洏鈧?/p>${historicalCaches ? `<section class="source-entry-stack vendor-historical-caches">${historicalCaches}</section>` : ""}${laterRecords ? `<section class="source-entry-stack">${laterRecords}</section>` : ""}<section class="vendor-entry-grid">${entries || `<div class="empty-state">瑜版挸澧犲▽鈩冩箒閺傛壆娈戞笟娑樼安閸熷棝銆夐棃顫偓?/div>`}</section></article>`;
+  return `<article class="vendor-hub"><header>${iconMarkup("globe")}<div><span class="document-kicker">LOCAL HISTORY / GENERATED INDEX</span><h2>濞撴碍绋戠花鏌ュ疮閸℃鍧婇柛娆愬絻閸欏棝宕?/h2></div></header><p>闁哄牜鍓欏﹢鎾储閸℃钑夐柣銏犲船閸戯紕鎷嬮崸妤侊紪濡炪倗鏁诲鐗堢▔鎼搭澀鍒掑璺虹Ф濞堟垹绱撻幘宕囨憼閻犱焦婢樼紞宥夊触閸繆瀚欓柣銏㈠枑閸ㄦ岸濡撮崒鐐插姤闁告帒妫欏顖炴儎椤旂偓鐣卞☉鎾筹攻椤愯偐鎷嬮崸妤侊紪闁哄啫鐖煎Λ鍧楀籍閳衡偓缁剝銇愰幘鍐差枀鐎规悶鍎扮紞鏃傜博濞嗘帩鍞剁憸鐗堟磸閳?/p>${historicalCaches ? `<section class="source-entry-stack vendor-historical-caches">${historicalCaches}</section>` : ""}${laterRecords ? `<section class="source-entry-stack">${laterRecords}</section>` : ""}<section class="vendor-entry-grid">${entries || `<div class="empty-state">鐟滅増鎸告晶鐘测柦閳╁啯绠掗柡鍌涘濞堟垶绗熷☉妯煎畨闁哥喎妫濋妴澶愭椤兘鍋?/div>`}</section></article>`;
 }
 
 function renderBrowser(state) {
@@ -960,74 +954,74 @@ function renderBrowser(state) {
   let content = "";
   if (page === "home") {
     const bookmarkLabels = {
-      mirror: ["閺堚偓鏉╂垼顔栭梻?, "/v2/17"], search: ["閺堫剙婀寸槐銏犵穿", "瀹稿弶浠径?], official: ["閸樺棗褰舵い鐢告桨", "閺堫剙婀磋箛顐ゅ弾"],
-      ad: ["娣囨繂鐡ㄩ惃鍕儲鏉烆剟銆?, "local copy"], github: ["娴狅絿鐖滈幍妯碱吀", "release"], cloud: ["閸氬本顒為惄?, "shared"], company: ["閸忣剙寰冮崡蹇庣稊", "records"], vendors: ["娓氭稑绨查崯鍡楀坊閸?, "generated"], forum: ["瑜版帗銆傜拋銊啈", "local copy"]
+      mirror: ["闁哄牃鍋撻弶鈺傚灱椤旀牠姊?, "/v2/17"], search: ["闁哄牜鍓欏﹢瀵告閵忕姷绌?, "鐎圭寮舵禒顔藉緞?], official: ["闁告ê妫楄ぐ鑸点亜閻㈠憡妗?, "闁哄牜鍓欏﹢纾嬬疀椤愩倕寮?],
+      ad: ["濞ｅ洦绻傞悺銊╂儍閸曨喚鍎查弶鐑嗗墴閵?, "local copy"], github: ["濞寸媴绲块悥婊堝箥濡⒈鍚€", "release"], cloud: ["闁告艾鏈鐐烘儎?, "shared"], company: ["闁稿浚鍓欏鍐础韫囧海绋?, "records"], vendors: ["濞撴碍绋戠花鏌ュ疮閸℃鍧婇柛?, "generated"], forum: ["鐟滅増甯楅妴鍌滄媼閵婎煈鍟?, "local copy"]
     };
     const bookmarkIcons = { github: "github", cloud: "cloud", forum: "chat", company: "folder", vendors: "globe", official: "gamini" };
     const bookmarks = state.browserBookmarks.map(id => `<button data-browser-page="${id}">${iconMarkup(bookmarkIcons[id] || "globe")}<span>${bookmarkLabels[id]?.[0] || BROWSER_PAGES[id]?.title || id}<small>${bookmarkLabels[id]?.[1] || ""}</small></span></button>`).join("");
-    content = `<div class="browser-home"><div class="browser-logo">R<span>17</span></div><h2>閺傜増鐖ｇ粵楣冦€?/h2><p>閸︺劌婀撮崸鈧弽蹇氱翻閸忋儱婀撮崸鈧幋鏍ㄦ拱閸︽媽鐭惧鍕┾偓?/p>${bookmarks ? `<h3>瀹歌弓绻氱€?/h3><div class="bookmark-grid">${bookmarks}</div>` : `<div class="empty-state">鏉╂ɑ鐥呴張澶夊姛缁涚偓鍨ㄩ張鈧潻鎴ｎ問闂傤噣銆夐棃顫偓?/div>`}</div>`;
+    content = `<div class="browser-home"><div class="browser-logo">R<span>17</span></div><h2>闁哄倻澧楅悥锝囩驳妤ｅ啨鈧?/h2><p>闁革负鍔屽﹢鎾锤閳ь剟寮借箛姘辩炕闁稿繈鍎卞﹢鎾锤閳ь剟骞嬮弽銊︽嫳闁革附濯介惌鎯ь嚗閸曗斁鍋?/p>${bookmarks ? `<h3>鐎规瓕寮撶换姘扁偓?/h3><div class="bookmark-grid">${bookmarks}</div>` : `<div class="empty-state">閺夆晜蓱閻ュ懘寮垫径澶婂缂佹稓鍋撻崹銊╁嫉閳ь剚娼婚幋锝庡晱闂傚偆鍣ｉ妴澶愭椤兘鍋?/div>`}</div>`;
   }
-  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document" data-auto-effect="mirror-cached-response"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>閵嗏偓SDK <span>410</span>閵嗏偓v2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>閸忣剙绱戠粩顖滃仯瀹歌尙绮￠幘銈呮礀閵嗗倽绻栨稉顏勬惙鎼存梹娼甸懛顏呯セ鐟欏牆娅掓潏鍦喘缂傛挸鐡ㄩ敍灞筋嚤閼割亪鎽奸幒銉ょ矝閹稿洤鎮滃鎻掑灩闂勩倗娈戞い鐢告桨閵?/p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<p class="auto-note">鏉╂瑤閲滅紓鎾崇摠閸濆秴绨查崪灞界暊瀵洜鏁ら惃鍕仛娓氬鍓奸張顒€鍑＄紒蹇曟殌閸︺劍婀伴崷甯窗<code>~/Downloads/relay_probe_legacy.js</code>閵?/p></article>` : `<div class="browser-error"><strong>404</strong><p>鏉╂瑤閲滈張顒€婀寸捄顖滄暠鏉╂ɑ鐥呴張澶庣箻閸忋儲绁荤憴鍫ｎ唶瑜版洏鈧?/p></div>`;
+  if (page === "mirror") content = getUnlocks(state).mirror ? `<article class="web-document mirror-document" data-auto-effect="mirror-cached-response"><header class="retired-doc-nav"><strong>Relay Developer Archive</strong><nav>Overview <span>410</span>闁靛棌鍋揝DK <span>410</span>闁靛棌鍋搗2 <span>200 cache</span></nav></header>${state.contentMutations.includes("mutation.mirror.sync-line") ? `<div class="revisit-update">later-sync: source alias changed after local provenance open</div>` : ""}<div class="http-state">200 <span>CACHED</span></div><span class="document-kicker">API DOCUMENTATION / RETIRED</span><h2>Completion route, version 2</h2><p>闁稿浚鍓欑槐鎴犵博椤栨粌浠€规瓕灏欑划锟犲箻閵堝懏绀€闁靛棗鍊界换鏍ㄧ▔椤忓嫭鎯欓幖瀛樻⒐濞肩敻鎳涢鍛偦閻熸瑥鐗嗗▍鎺撴綇閸︻厾鍠樼紓鍌涙尭閻°劑鏁嶇仦绛嬪殼闁煎壊浜幗濂稿箳閵夈倗鐭濋柟绋挎搐閹粌顔忛幓鎺戠仼闂傚嫨鍊楀▓鎴炪亜閻㈠憡妗ㄩ柕?/p><dl><dt>request path</dt><dd>/v2/17</dd><dt>response source</dt><dd>edge-cache-02</dd><dt>migration</dt><dd>physical deletion: pending</dd><dt>client example</dt><dd>relay_probe_legacy.js</dd></dl><pre>GET /v2/17\nstatus: 200\nx-cache-segment: 02</pre>${generatedEntriesFor("mirror", "globe")}<p class="auto-note">閺夆晜鐟ら柌婊呯磽閹惧磭鎽犻柛婵嗙Т缁ㄦ煡宕仦鐣屾殜鐎殿喗娲滈弫銈夋儍閸曨厹浠涘〒姘儓閸撳ジ寮甸鈧崙锛勭磼韫囨洘娈岄柛锔哄妽濠€浼村捶鐢喚绐?code>~/Downloads/relay_probe_legacy.js</code>闁?/p></article>` : `<div class="browser-error"><strong>404</strong><p>閺夆晜鐟ら柌婊堝嫉椤掆偓濠€瀵告崉椤栨粍鏆犻弶鈺偵戦惀鍛村嫉婢跺海绠婚柛蹇嬪劜缁佽崵鎲撮崼锝庡敹鐟滅増娲忛埀?/p></div>`;
   if (page === "search" && state.browserBookmarks.includes("search")) content = renderSearchPage(state);
   if (page === "forum" && getUnlocks(state).channel) content = renderChannelPage(state);
   if (page === "official" && state.browserBookmarks.includes("official")) {
-    const writerSession = contentEntryMarkup("new.writer.session-02", "閵嗗﹤瀵冲畝鍛婄梾閺堝鎸撻妴瀣晸娴ｆ粈绱扮拠?02", "鐎规ɑ鏌?AI 閸樺棗褰?璺?瀵ら缚顔呮稉搴㈠复閸欐顔囪ぐ?, "dipsik");
+    const writerSession = contentEntryMarkup("new.writer.session-02", "闁靛棗锕ょ€靛啿鐣濋崨濠勬⒕闁哄牆顦甸幐鎾诲Υ鐎ｎ亜鏅稿ù锝嗙矆缁辨壆鎷?02", "閻庤蓱閺?AI 闁告ê妫楄ぐ?鐠?鐎点倝缂氶鍛▔鎼淬垹澶嶉柛娆愵殙椤斿洩銇?, "dipsik");
     const recoveredHistory = [
-      contentEntryMarkup("legacy.gamini.chatlog", "瀹告彃浠犻悽銊ょ窗鐠?/ 缂傛挸鐡ㄧ€电厧鍤?, "Gamini 閸樺棗褰剁€电鐦?璺?閸楁洘顐奸幁銏狀槻", "gamini")
+      contentEntryMarkup("legacy.gamini.chatlog", "鐎瑰憡褰冩禒鐘绘偨閵娿倗绐楅悹?/ 缂傚倹鎸搁悺銊р偓鐢靛帶閸?, "Gamini 闁告ê妫楄ぐ鍓佲偓鐢殿攰閻?鐠?闁告娲橀濂稿箒閵忕媭妲?, "gamini")
     ].filter(Boolean).join("");
     const provenanceBranches = [
-      ["writer", "閺屻儳婀呴崗鍙橀煩闂勫嫪娆㈢槐銏犵穿", "SyncDrive / writer-share"],
-      ["employee", "閹垫挸绱戞导姘愁唴瀹搞儰缍旈崠?, "Northline / records"],
-      ["maintainer", "鐎规矮缍呯紒瀛樺Б鐠佹澘缍?, "Documents / relay"],
-      ["ad", "閺屻儳婀呮穱婵堟殌鐠哄疇娴?, "Gamini / campaign copy"]
+      ["writer", "闁哄被鍎冲﹢鍛村礂閸欐﹢鐓╅梻鍕濞嗐垻妲愰姀鐘电┛", "SyncDrive / writer-share"],
+      ["employee", "闁瑰灚鎸哥槐鎴炲濮樻剚鍞寸€规悶鍎扮紞鏃堝礌?, "Northline / records"],
+      ["maintainer", "閻庤鐭紞鍛磼鐎涙ê袘閻犱焦婢樼紞?, "Documents / relay"],
+      ["ad", "闁哄被鍎冲﹢鍛┍濠靛牊娈岄悹鍝勭枃濞?, "Gamini / campaign copy"]
     ].map(([id, label, detail]) => `<button class="provenance-branch" data-provenance-branch="${id}"><strong>${label}</strong><small>${detail}</small></button>`).join("");
     const laterRecords = generatedEntriesFor("official", "gamini");
-    content = `<article class="official-page"><header>${iconMarkup("gamini")}<strong>Gogle AI</strong><nav>鐢喖濮稉顓炵妇閵嗏偓閻劍鍩涢崡蹇氼唴閵嗏偓閸樺棗褰剁€电鐦?/nav></header><div class="official-content">${state.contentMutations.includes("mutation.official.confirmation") && !state.revisitFlags["official-confirmed"] ? `<div class="forced-confirmation"><strong>缂佈呯敾閺屻儳婀呴崜宥夋付鐟曚胶鈥樼拋銈呭坊閸欒尙澧楅張顒冾嚛閺?/strong><p>閸忔娊妫撮幋鏍瀲瀵偓鐏忓棔绻氶悾娆忕秼閸撳秶鈥樼拋銈囧Ц閹降鈧?/p><button id="confirmOfficialHistoryButton">绾喛顓婚獮鍓佹埛缂?/button></div>` : ""}<section class="history-record"><header><div><span class="document-kicker">ACCOUNT HISTORY / LOCAL CACHE</span><h2>瀹告彃浠犻悽銊ょ窗鐠?/h2></div><b>閸欘亣顕?/b></header><dl><dt>閻樿埖鈧?/dt><dd>recovered from local cache</dd><dt>閺堚偓閸氬骸鎮撳?/dt><dd>07-18 22:24</dd><dt>閺夈儲绨?/dt><dd>history.sqlite / snapshot ref 17</dd><dt>鐠愶附鍩?/dt><dd>閺堫剙婀存导姘崇樈娣団剝浼呮稉宥呭讲閻?/dd></dl><p>娴兼俺鐦藉锝嗘瀮瀹歌弓绮犵拹锔藉煕閸樺棗褰剁粔濠氭珟閵嗗倹婀伴崷鐗堟殶閹诡喖绨辨禒宥勭箽閻ｆ瑤绔撮弶鈥虫彥閻撗冪穿閻㈩煉绱濇禒銉ュ挤閸ユ稐閲滈弴楣冩閸ョ偛顦叉穱婵嗙摠閻ㄥ嫮娴夐崗瀹犵カ濠ф劒缍呯純顔衡偓?/p>${recoveredHistory ? `<section class="source-entry-stack official-history-list">${recoveredHistory}</section>` : ""}</section><section class="related-sources"><header><div><span class="document-kicker">RELATED SOURCES</span><h3>闂呭繋绱扮拠婵呯箽鐎涙娈戞担宥囩枂</h3></div><small>4 records</small></header><div class="provenance-branches">${provenanceBranches}</div></section>${writerSession || laterRecords ? `<section class="source-entry-stack official-history-list">${writerSession}${laterRecords}</section>` : ""}</div></article>`;
+    content = `<article class="official-page"><header>${iconMarkup("gamini")}<strong>Gogle AI</strong><nav>閻㈩垼鍠栨慨顏呯▔椤撶偟濡囬柕鍡忓亾闁活潿鍔嶉崺娑㈠础韫囨凹鍞撮柕鍡忓亾闁告ê妫楄ぐ鍓佲偓鐢殿攰閻?/nav></header><div class="official-content">${state.contentMutations.includes("mutation.official.confirmation") && !state.revisitFlags["official-confirmed"] ? `<div class="forced-confirmation"><strong>缂備綀鍛暰闁哄被鍎冲﹢鍛村礈瀹ュ浠橀悷鏇氳兌閳ユ鎷嬮妶鍛潑闁告瑨灏欐晶妤呭嫉椤掑喚鍤涢柡?/strong><p>闁稿繑濞婂Λ鎾箣閺嶎偒鐎茬€殿喒鍋撻悘蹇撴缁绘岸鎮惧▎蹇曠Ъ闁告挸绉堕垾妯兼媼閵堝洤笑闁诡兛闄嶉埀?/p><button id="confirmOfficialHistoryButton">缁绢収鍠涢濠氱嵁閸撲焦鍩涚紓?/button></div>` : ""}<section class="history-record"><header><div><span class="document-kicker">ACCOUNT HISTORY / LOCAL CACHE</span><h2>鐎瑰憡褰冩禒鐘绘偨閵娿倗绐楅悹?/h2></div><b>闁告瑯浜ｉ?/b></header><dl><dt>闁绘鍩栭埀?/dt><dd>recovered from local cache</dd><dt>闁哄牃鍋撻柛姘閹挸顫?/dt><dd>07-18 22:24</dd><dt>闁哄鍎茬花?/dt><dd>history.sqlite / snapshot ref 17</dd><dt>閻犳劧闄勯崺?/dt><dd>闁哄牜鍓欏﹢瀛樺濮樺磭妯堝ǎ鍥ｅ墲娴煎懏绋夊鍛闁?/dd></dl><p>濞村吋淇洪惁钘夘潰閿濆棙鐎€规瓕寮撶划鐘垫嫻閿旇棄鐓曢柛妯烘瑜板墎绮旀繝姘彑闁靛棗鍊瑰﹢浼村捶閻楀牊娈堕柟璇″枛缁ㄨ鲸绂掑鍕闁伙絾鐟ょ粩鎾级閳ヨ櫕褰ラ柣鎾楀啰绌块柣銏╃厜缁辨繃绂掗妷銉ユ尋闁搞儲绋愰柌婊堝即妤ｅ啯顓归柛銉у仜椤﹀弶绌卞┑鍡欐憼闁汇劌瀚ù澶愬礂鐎圭姷銈繝褎鍔掔紞鍛磾椤旇　鍋?/p>${recoveredHistory ? `<section class="source-entry-stack official-history-list">${recoveredHistory}</section>` : ""}</section><section class="related-sources"><header><div><span class="document-kicker">RELATED SOURCES</span><h3>闂傚懎绻嬬槐鎵嫚濠靛懐绠介悗娑欘焽濞堟垶鎷呭鍥╂瀭</h3></div><small>4 records</small></header><div class="provenance-branches">${provenanceBranches}</div></section>${writerSession || laterRecords ? `<section class="source-entry-stack official-history-list">${writerSession}${laterRecords}</section>` : ""}</div></article>`;
   }
   if (page === "ad" && state.browserBookmarks.includes("ad")) {
-    const marketEntry = contentEntryMarkup("legacy.market.meidawei", "鐢倸婧€鐟欏倸鐧?/ 濡€崇€峰ú妤冨閸氬海娈戞禍褑鍏橀崳顏堢叾", "娣囨繂鐡ㄩ惃鍕偍缂佸繑鏋冪粩鐘辩瑢楠炲灝鎲￠弴瀛橆劀", "globe");
-    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 娑撳簼缍橀敍宀€鎴风紒顓熺槨娑撯偓濞嗏剝婀€瑰本鍨氶惃鍕嚠鐠囨縿鈧?/h2><p>娑撯偓濞嗏€冲嚒缂佸繐銇戦弫鍫㈡畱娴ｆ捇鐛欑拋鈥冲灊娴犲秳绻氶悾娆戞絻鐠哄疇娴嗛崣鍌涙殶閵?/p><span class="auto-citation" data-save-citation="ad-redirect" data-citation-quote="閺堫剙婀寸捄瀹犳祮闁插奔绮涙穱婵堟殌閻偓濞茶濮╅崣鍌涙殶 campaign=NODE" data-citation-source="濞村繗顫嶉崳?/ 娣囨繂鐡ㄩ惃鍕儲鏉烆剟銆? data-citation-ref="${BROWSER_PAGES.ad.url}">瀹歌尪顔囪ぐ鏇炲煂缁楁棁顔囬張?/span>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
+    const marketEntry = contentEntryMarkup("legacy.market.meidawei", "閻㈩垰鍊稿┃鈧悷娆忓€搁惂?/ 婵☆垪鈧磭鈧嘲煤濡ゅ啫顤傞柛姘捣濞堟垶绂嶈閸忔﹢宕抽鍫㈠従", "濞ｅ洦绻傞悺銊╂儍閸曨喖鍋嶇紓浣哥箲閺嬪啰绮╅悩杈╃憿妤犵偛鐏濋幉锟犲即鐎涙﹩鍔€", "globe");
+    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 濞戞挸绨肩紞姗€鏁嶅畝鈧幋椋庣磼椤撶喓妲ㄥ☉鎾亾婵炲棌鍓濆﹢顓犫偓鐟版湰閸ㄦ岸鎯冮崟顐殸閻犲洦绺块埀?/h2><p>濞戞挴鍋撴繛鍡忊偓鍐插殥缂備礁绻愰妵鎴﹀极閸垺鐣卞ù锝嗘崌閻涙瑧鎷嬮垾鍐茬亰濞寸姴绉崇换姘舵偩濞嗘垶绲婚悹鍝勭枃濞村棝宕ｉ崒娑欐闁?/p><span class="auto-citation" data-save-citation="ad-redirect" data-citation-quote="闁哄牜鍓欏﹢瀵告崉鐎圭姵绁梺鎻掑缁稒绌卞┑鍫熸畬闁活偀鍋撴繛鑼额嚙婵晠宕ｉ崒娑欐 campaign=NODE" data-citation-source="婵炴潙绻楅～宥夊闯?/ 濞ｅ洦绻傞悺銊╂儍閸曨喚鍎查弶鐑嗗墴閵? data-citation-ref="${BROWSER_PAGES.ad.url}">鐎规瓕灏鍥亹閺囩偛鐓傜紒妤佹椤斿洭寮?/span>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
   }
   if (page === "github" && state.browserBookmarks.includes("github")) {
     const localHashRead = hasStoryEvent(state, "package-local-checksum-read");
     const releaseRead = hasStoryEvent(state, "package-release-read");
     const hashesReady = localHashRead && releaseRead;
-    const maintainerIncident = contentEntryMarkup("new.maintainer.incident-03", "build incident / R17 route review", "GitHub Mirror 璺?閺嬪嫬缂撴禍瀣櫊鐠佹澘缍?, "github");
+    const maintainerIncident = contentEntryMarkup("new.maintainer.incident-03", "build incident / R17 route review", "GitHub Mirror 鐠?闁哄瀚紓鎾寸鐎ｎ偅娅婇悹浣规緲缂?, "github");
     const legacyRepositoryRecords = [
-      contentEntryMarkup("legacy.github.issue-4471", "Issue #4471 / fallback reviewer", "娴犳挸绨遍梹婊冨剼 璺?閺堫亝澹掗崙鍡欐畱閻樿埖鈧礁鐡у▓浣冪讣缁?, "github"),
-      contentEntryMarkup("legacy.compatible.protocol", "Compatible / 鎼寸喎绱旈崡蹇氼唴鐎瑰本鏆ｇ拋鏉跨秿", "瀵偓閸欐垼鈧懏鏋冨锝呯秺濡?璺?閸樺棗褰堕悧鍫熸拱", "compatible")
+      contentEntryMarkup("legacy.github.issue-4471", "Issue #4471 / fallback reviewer", "濞寸姵鎸哥花閬嶆⒐濠婂啫鍓?鐠?闁哄牜浜濇竟鎺楀礄閸℃瑦鐣遍柣妯垮煐閳ь兛绀侀悺褍鈻撴担鍐缂?, "github"),
+      contentEntryMarkup("legacy.compatible.protocol", "Compatible / 閹煎鍠庣槐鏃堝础韫囨凹鍞撮悗鐟版湰閺嗭絿鎷嬮弶璺ㄧЭ", "鐎殿喒鍋撻柛娆愬灱閳ь剙鎳忛弸鍐浖閿濆懐绉烘俊?鐠?闁告ê妫楄ぐ鍫曟偋閸喐鎷?, "compatible")
     ].filter(Boolean).join("");
     const laterRecords = generatedEntriesFor("github", "github");
-    content = `<article class="repo-page" data-auto-effect="repository-release"><header>${iconMarkup("github")}<span>k2-maint /</span><strong>release-mirror</strong><b>Public archive</b></header><div class="repo-nav">Code閵嗏偓Issues 1閵嗏偓Releases 1</div><section class="release"><small>v0.9.7-legacy / 07-19</small><h2>Last build before Compatible migration</h2><code>${PACKAGE_NAME}</code><dl class="release-metadata"><dt>Provides</dt><dd><code>fbl-cli</code></dd><dt>Channel</dt><dd><code>legacy</code></dd><dt>Maintainer</dt><dd><code>k2-maint</code></dd></dl><p>release checksum</p><pre>${hashesReady ? PACKAGE_CHECKSUM : "release value withheld / compare release metadata with local package"}</pre>${state.revisitFlags["github-issue"] ? `<div class="issue-comment"><b>k2-maint commented</b><p>閸栧懏鐥呴張澶岊劮閸氬秲鈧倸褰х拋銈嗘拱閸︾増鐗庢宀嬬幢鐟佸懎鐣禒銉ユ倵閸掝偉顔€缁崵绮洪弴澶哥稑闁板秶鐤嗘禒锝囨倞閵?/p></div>` : ""}${hashesReady ? `<p class="auto-note">娑撳﹪娼版潻娆庤鐏忚鲸妲告禒鎾崇氨缂佹瑥鍤惃鍕墡妤犲苯鈧鈧倸鐣犻棁鈧憰浣告嫲閺堫剙婀撮柇锝勯嚋閺傚洣娆㈤懛顏勭箒缁犳鍤弶銉ф畱閸婇棿绔撮懛绮光偓鏂衡偓鏃€婀伴崷鎵畱閸婅壈顩﹂崷銊х矒缁旑垶鍣烽懛顏勭箒缁犳ぜ鈧?/p>` : `<p class="auto-note">娴犳挸绨遍幎濠冪墡妤犲苯鈧偐鏆€閸︺劋绨?release 闁插矉绱濇担鍡氼洣閸忓牏鐓￠柆鎾存拱閸︿即鍋呮稉顏勭暔鐟佸懎瀵橀懛顏勭箒缁犳鍤弶銉︽Ц婢舵艾鐨妴鍌滅矒缁旑垶鍣风€靛湱娼?<code>${escapeHtml(PACKAGE_NAME)}</code> 缁犳ぞ绔村▎鈽呯礉閸愬秴娲栭弶銉ф箙閵?/p>`}${maintainerIncident || legacyRepositoryRecords || laterRecords ? `<section class="source-entry-stack repo-source-entry">${maintainerIncident}${legacyRepositoryRecords}${laterRecords}</section>` : ""}</section></article>`;
+    content = `<article class="repo-page" data-auto-effect="repository-release"><header>${iconMarkup("github")}<span>k2-maint /</span><strong>release-mirror</strong><b>Public archive</b></header><div class="repo-nav">Code闁靛棌鍋揑ssues 1闁靛棌鍋揜eleases 1</div><section class="release"><small>v0.9.7-legacy / 07-19</small><h2>Last build before Compatible migration</h2><code>${PACKAGE_NAME}</code><dl class="release-metadata"><dt>Provides</dt><dd><code>fbl-cli</code></dd><dt>Channel</dt><dd><code>legacy</code></dd><dt>Maintainer</dt><dd><code>k2-maint</code></dd></dl><p>release checksum</p><pre>${hashesReady ? PACKAGE_CHECKSUM : "release value withheld / compare release metadata with local package"}</pre>${state.revisitFlags["github-issue"] ? `<div class="issue-comment"><b>k2-maint commented</b><p>闁告牕鎳忛惀鍛村嫉婢跺矈鍔柛姘Р閳ь剙鍊歌ぐ褏鎷嬮妶鍡樻嫳闁革妇澧楅悧搴㈩殽瀹€瀣耿閻熶礁鎳庨悾顒佺閵夈儲鍊甸柛鎺濆亯椤斺偓缂侇垵宕电划娲即婢跺摜绋戦梺鏉跨Ф閻ゅ棙绂掗敐鍥ㄥ€為柕?/p></div>` : ""}${hashesReady ? `<p class="auto-note">濞戞挸锕鐗堟交濞嗗氦顩悘蹇氶哺濡插憡绂掗幘宕囨皑缂備焦鐟ラ崵顓㈡儍閸曨剛澧″Δ鐘茶嫰閳ь剛顑曢埀顒€鍊搁悾鐘绘閳ь剛鎲版担鍛婂闁哄牜鍓欏﹢鎾焽閿濆嫰鍤嬮柡鍌氭矗濞嗐垽鎳涢鍕畳缂佺姵顨呴崵顓㈠级閵壯勭暠闁稿﹪妫跨粩鎾嚊缁厜鍋撻弬琛″亾閺冣偓濠€浼村捶閹殿喗鐣遍柛濠呭椤╋箓宕烽妸褏鐭掔紒鏃戝灦閸ｇ兘鎳涢鍕畳缂佺姵銇滈埀?/p>` : `<p class="auto-note">濞寸姵鎸哥花閬嶅箮婵犲啰澧″Δ鐘茶嫰閳ь剝鍋愰弳鈧柛锔哄妺缁?release 闂佹彃鐭夌槐婵囨媴閸℃凹娲ｉ柛蹇撶墢閻擄繝鏌嗛幘瀛樻嫳闁革缚鍗抽崑鍛▔椤忓嫮鏆旈悷浣告噹鐎垫﹢鎳涢鍕畳缂佺姵顨呴崵顓㈠级閵夛附笑濠㈣埖鑹鹃惃顖炲Υ閸屾粎鐭掔紒鏃戝灦閸ｉ鈧潧婀卞?<code>${escapeHtml(PACKAGE_NAME)}</code> 缂佺姵銇炵粩鏉戔枎閳藉懐绀夐柛鎰Т濞叉牠寮堕妷褎绠欓柕?/p>`}${maintainerIncident || legacyRepositoryRecords || laterRecords ? `<section class="source-entry-stack repo-source-entry">${maintainerIncident}${legacyRepositoryRecords}${laterRecords}</section>` : ""}</section></article>`;
   }
   if (page === "cloud" && state.browserBookmarks.includes("cloud")) {
     const writerEntries = [
-      contentEntryMarkup("new.writer.draft-01", "閵嗗﹤瀵冲畝鍛婄梾閺堝鎸撻妴瀣儑娴滃苯宕勬稉鈧粩鐘哄磸缁?, "SyncDrive / writer-share 璺?閸掓繄顭?, "cloud"),
-      contentEntryMarkup("new.writer.version-03", "閻楀牊婀伴崢鍡楀蕉 03 / 閸氬牆鑻熼崥搴ｆ畱婢逛即鐓?, "SyncDrive / writer-share 璺?娣囶喛顓圭€电厧鍤?, "cloud"),
-      contentEntryMarkup("new.writer.submission-04", "閸忣剙绱戦幎鏇狀焾娑撳海鏁电拠澶婂閺?, "SyncDrive / writer-share 璺?閹绘劒姘︾拋鏉跨秿", "cloud")
+      contentEntryMarkup("new.writer.draft-01", "闁靛棗锕ょ€靛啿鐣濋崨濠勬⒕闁哄牆顦甸幐鎾诲Υ鐎ｎ剦鍎戝ù婊冭嫰瀹曞嫭绋夐埀顒傜博閻樺搫纾哥紒?, "SyncDrive / writer-share 鐠?闁告帗绻勯…?, "cloud"),
+      contentEntryMarkup("new.writer.version-03", "闁绘鐗婂﹢浼村储閸℃钑?03 / 闁告艾鐗嗛懟鐔煎触鎼达絾鐣卞閫涘嵆閻?, "SyncDrive / writer-share 鐠?濞ｅ浂鍠涢鍦偓鐢靛帶閸?, "cloud"),
+      contentEntryMarkup("new.writer.submission-04", "闁稿浚鍓欑槐鎴﹀箮閺囩媭鐒惧☉鎾虫捣閺佺數鎷犳径濠傤棇闁?, "SyncDrive / writer-share 鐠?闁圭粯鍔掑锔炬媼閺夎法绉?, "cloud")
     ].filter(Boolean).join("");
-    const routeFiles = hasPackage(state) ? `<div class="cloud-row"><span>route.profile</span><small>07-18 22:24</small><button data-discover-file="profile">閸︺劍鏋冩禒鏈佃厬鐎规矮缍?/button></div>${state.revisitFlags["cloud-conflict"] ? `<div class="cloud-row conflict"><span>route (conflicted copy).profile</span><small>07-19 03:16 / restored</small></div><pre>profile=relay-node17\nproxy=${RELAY_PROXY}\nroute=relay.local,docs-mirror.local,fayble-legacy.local</pre>` : `<div class="empty-state">閸愯尙鐛婇悧鍫熸拱娴犲秴婀崥灞绢劄閵?/div>`}` : "";
+    const routeFiles = hasPackage(state) ? `<div class="cloud-row"><span>route.profile</span><small>07-18 22:24</small><button data-discover-file="profile">闁革负鍔嶉弸鍐╃閺堜絻鍘悗瑙勭煯缂?/button></div>${state.revisitFlags["cloud-conflict"] ? `<div class="cloud-row conflict"><span>route (conflicted copy).profile</span><small>07-19 03:16 / restored</small></div><pre>profile=relay-node17\nproxy=${RELAY_PROXY}\nroute=relay.local,docs-mirror.local,fayble-legacy.local</pre>` : `<div class="empty-state">闁告劘灏欓悰濠囨偋閸喐鎷卞ù鐘茬Т濠€顏堝触鐏炵虎鍔勯柕?/div>`}` : "";
     const laterRecords = generatedEntriesFor("cloud", "cloud");
-    content = `<article class="cloud-page"><header>${iconMarkup("cloud")}<strong>SyncDrive</strong><span>閸忓彉闊╅惄顔肩秿</span></header>${writerEntries || laterRecords ? `<section class="source-entry-stack cloud-writer-share">${writerEntries}${laterRecords}</section>` : ""}${routeFiles}</article>`;
+    content = `<article class="cloud-page"><header>${iconMarkup("cloud")}<strong>SyncDrive</strong><span>闁稿繐褰夐棅鈺呮儎椤旇偐绉?/span></header>${writerEntries || laterRecords ? `<section class="source-entry-stack cloud-writer-share">${writerEntries}${laterRecords}</section>` : ""}${routeFiles}</article>`;
   }
   if (page === "company" && state.browserBookmarks.includes("company")) content = renderCompanyPage();
   if (page === "vendors" && state.browserBookmarks.includes("vendors")) content = renderVendorHub(state);
   const activeRecord = contentRecord(state.activeContentId);
   if (activeRecord && recordCarrierApp(activeRecord) === "browser" && state.carrierReads?.includes(`browser:${activeRecord.id}`)) {
-    content = `<section class="browser-record-reader"><button data-close-carrier-record="browser">閳?鏉╂柨娲栨稉濠佺妞?/button>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    content = `<section class="browser-record-reader"><button data-close-carrier-record="browser">闁?閺夆晜鏌ㄥú鏍ㄧ▔婵犱胶顏卞?/button>${corpusRecordMarkup(activeRecord, state)}</section>`;
   }
-  if (!content) content = `<div class="browser-error"><strong>404</strong><p>閺堫剙婀村ù蹇氼潔閸ｃ劍鐥呴張澶庣箹閺夆€虫勾閸р偓閻ㄥ嫯顔囪ぐ鏇樷偓?/p></div>`;
-  return windowFrame("browser", "Relay Browser", browserChrome(page, content, state), { icon: "閳?, wide: true });
+  if (!content) content = `<div class="browser-error"><strong>404</strong><p>闁哄牜鍓欏﹢鏉懨硅箛姘兼綌闁革絻鍔嶉惀鍛村嫉婢跺海绠归柡澶嗏偓铏嬀闁秆€鍋撻柣銊ュ椤斿洩銇愰弴妯峰亾?/p></div>`;
+  return windowFrame("browser", "Relay Browser", browserChrome(page, content, state), { icon: "闁?, wide: true });
 }
 
 const V2_CLIENT_DETAILS = {
-  "gamini-ws": { name: "Gamini 瀹搞儰缍旂粚娲？", icon: "gamini", detail: "Gogle 瀹搞儰缍旂粚娲？ 璺?瀹稿弶浠径宥勭窗鐠囨繀绗岄弬鍥ㄣ€? },
-  chengzhen: { name: "濠㈠嫬鎶氶崡蹇庣稊", icon: "chengzhen", detail: "娴间椒绗熼崡蹇庣稊 璺?娴兼俺顔呯痪顏囶洣娑撳孩绉烽幁顖滃殠缁? },
-  yunzhen: { name: "娴滄垹顑?, icon: "yunzhen", detail: "閸愭瑤缍斿銉ュ徔 璺?閺傚洨顭堥妴浣哄閺堫剙宸婚崣韫瑢閻㈠疇鐦? },
-  "groke-feed": { name: "Groke Feed", icon: "groke-feed", detail: "Exai Groke 璺?閺冨爼妫跨痪澶哥瑢閸愬懘鍎撮弬鍥ㄣ€? },
-  "glem-memory": { name: "Glem Memory", icon: "glem", detail: "Zhiru Glem 璺?娴间椒绗熼惌銉ㄧ槕娑撳氦顔囪箛鍡橆梾缁? },
-  "kemy-space": { name: "Kemy Space", icon: "kemy", detail: "Muunshot Kemy 璺?闂€鍧椼€嶉惄顔荤瑢娑撳﹣绗呴弬鍥ф礀閺€? },
-  "repo-mirror": { name: "闂€婊冨剼娴犳挸绨?, icon: "repo-mirror", detail: "k2-maint 璺?Issues 娑?Pull Requests" }
+  "gamini-ws": { name: "Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?, icon: "gamini", detail: "Gogle 鐎规悶鍎扮紞鏃傜矚濞差亝锛?鐠?鐎圭寮舵禒顔藉緞瀹ュ嫮绐楅悹鍥ㄧ箑缁楀矂寮崶銊ｂ偓? },
+  chengzhen: { name: "婵犮垹瀚幎姘跺础韫囧海绋?, icon: "chengzhen", detail: "濞撮棿妞掔粭鐔煎础韫囧海绋?鐠?濞村吋淇洪鍛棯椤忓浂娲ｅ☉鎾冲缁夌兘骞侀婊冩疇缂? },
+  yunzhen: { name: "濞存粍鍨归?, icon: "yunzhen", detail: "闁告劖鐟ょ紞鏂款啅閵夈儱寰?鐠?闁哄倸娲ㄩ…鍫ュΥ娴ｅ搫顣奸柡鍫墮瀹稿宕ｉ煫顓犵憿闁汇垹鐤囬惁? },
+  "groke-feed": { name: "Groke Feed", icon: "groke-feed", detail: "Exai Groke 鐠?闁哄啫鐖煎Λ璺ㄧ棯婢跺摜鐟㈤柛鎰嚇閸庢挳寮崶銊ｂ偓? },
+  "glem-memory": { name: "Glem Memory", icon: "glem", detail: "Zhiru Glem 鐠?濞撮棿妞掔粭鐔兼儗閵夈劎妲曞☉鎾虫唉椤斿洩绠涢崱姗嗘⒕缂? },
+  "kemy-space": { name: "Kemy Space", icon: "kemy", detail: "Muunshot Kemy 鐠?闂傗偓閸фぜ鈧秹鎯勯鑽ょ憿濞戞挸锕ｇ粭鍛村棘閸パ勭闁衡偓? },
+  "repo-mirror": { name: "闂傗偓濠婂啫鍓煎ù鐘虫尭缁?, icon: "repo-mirror", detail: "k2-maint 鐠?Issues 濞?Pull Requests" }
 };
 const V2_CLIENT_IDS = Object.freeze(Object.keys(V2_CLIENT_DETAILS));
 const SYSTEM_CARRIER_APPS = new Set(["mail", "files", "browser", "terminal", "relay", "trash"]);
@@ -1036,26 +1030,26 @@ function clientImportScreen(id) {
   const pkg = CLIENT_PACKAGE_BY_ID.get(id);
   const info = V2_CLIENT_DETAILS[id];
   const importAction = label => clientRecoveryAvailable(id) ? `<button class="client-data-import" data-import-client="${id}">${label}</button>` : "";
-  if (id === "gamini-ws") return `<div class="preimport-client gamini-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 瀹搞儰缍旂粚娲？</strong></div><nav><button class="active">閺傛澘顕拠?/button><button>閺堚偓鏉?/button><button>瀹告彃缍婂?/button></nav><footer>${importAction("鐎电厧鍙嗘导姘崇樈鐠佹澘缍?)}</footer></aside><main><header><strong>Gamini</strong><span>鐠佸灝顓瑰Ο鈥崇础</span></header><section class="preimport-home"><div class="preimport-brand">${iconMarkup("gamini")}<h2>娴犲﹤銇夐幆鍏呯啊鐟欙絼绮堟稊鍫吹</h2></div><div class="preimport-prompts"><button>閺佸鎮婃稉鈧▓鍨瀮鐎?/button><button>閸掑棙鐎芥稉鈧稉顏堟６妫?/button><button>瀵偓婵鏌婇惃鍕嚠鐠?/button></div><div class="preimport-composer"><span>閸?Gamini 閹绘劙妫?/span><button disabled>閸欐垿鈧?/button></div></section></main></div>`;
-  if (id === "chengzhen") return `<div class="preimport-client chengzhen-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("chengzhen")}<strong>濠㈠嫬鎶氶崡蹇庣稊</strong></div><nav><button class="active">瀹搞儰缍旈崣?/button><button>濞戝牊浼?/button><button>閺冦儱宸?/button><button>閺傚洣娆?/button></nav><footer>${importAction("鏉╀胶些瀹稿弶婀佸銉ょ稊閸?)}</footer></aside><main><header><div><strong>娑撳﹤宕嶆總?/strong><small>Northline 缁屾椽妫?/small></div><button>閺傛澘缂?/button></header><section class="preimport-dashboard"><article><strong>娴犲﹤銇?/strong><p>瑜版挸澧犲▽鈩冩箒鐎瑰甯撻惃鍕窗鐠?/p></article><article><strong>閺堚偓鏉╂垼顔栭梻?/strong><p>閹垫挸绱戝☉鍫熶紖閵嗕焦鏋冨锝嗗灗妞ゅ湱娲伴崥搴濈窗閺勫墽銇氶崷銊ㄧ箹闁?/p></article><article><strong>瀵板懎濮?/strong><p>閺嗗倹妫ゅ鍛槱閻炲棔绨ㄦい?/p></article></section></main></div>`;
-  if (id === "yunzhen") return `<div class="preimport-client yunzhen-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("yunzhen")}<strong>娴滄垹顑?/strong></div><nav><button class="active">閸忋劑鍎撮弬鍥╊焾</button><button>閺堚偓鏉╂垹绱潏?/button><button>閸ョ偞鏁圭粩?/button></nav><footer>${importAction("娴犲孩婀伴崷鏉款槵娴犺姤浠径?)}</footer></aside><main><header><div><strong>閹存垹娈戦弬鍥╊焾</strong><small>闂嗐劍鐖鹃惃鍕敄闂?/small></div><button>閺傛澘缂撻弬鍥╊焾</button></header><section class="preimport-empty"><div>${iconMarkup("yunzhen")}<h2>瀵偓婵鍟撻悙閫涚矆娑?/h2><p>閺傛澘缂撻弬鍥╊焾閿涘本鍨ㄦ禒搴″従娴犳牞顔曟径鍥ф倱濮濄儱鍑￠張澶婂敶鐎?/p><button>閺傛澘缂撶粚铏规閺傚洨顭?/button></div></section></main></div>`;
-  if (id === "groke-feed") return `<div class="preimport-client groke-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong></div><nav><button class="active">妫ｆ牠銆?/button><button>閸忚櫕鏁?/button><button>闁氨鐓?/button><button>閺€鎯版</button></nav><footer>${importAction("鐎电厧鍙嗛崘鍛啇鐎涙ɑ銆?)}</footer></aside><main><header><strong>妫ｆ牠銆?/strong><button>閸欐垵绔?/button></header><section class="preimport-feed"><article><div class="preimport-avatar">G</div><div><strong>濞嗐垼绻嬫担璺ㄦ暏 Groke Feed</strong><p>閸忚櫕鏁炵拹锕€褰块幋鏍у絺鐢啰顑囨稉鈧弶鈥冲敶鐎圭櫢绱濋弮鍫曟？缁惧じ绱伴弰鍓с仛閸︺劏绻栭柌灞烩偓?/p></div></article><div class="preimport-feed-empty">閺嗗倹妞傚▽鈩冩箒閺囨潙顦块崘鍛啇</div></section></main></div>`;
-  if (id === "glem-memory") return `<div class="preimport-client glem-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("glem")}<strong>Glem Memory</strong></div><nav><button class="active">閹兼粎鍌?/button><button>閻儴鐦戠粚娲？</button><button>閺堚偓鏉╂垼顔栭梻?/button><button>娣囨繂鐡ㄩ崘鍛啇</button></nav><footer>${importAction("鏉╃偞甯村鍙夋箒閻儴鐦戠粚娲？")}</footer></aside><main><header><strong>娴间椒绗熼惌銉ㄧ槕</strong><span>閺堫剙婀村銉ょ稊閸?/span></header><section class="preimport-home"><div class="preimport-brand">${iconMarkup("glem")}<h2>娴犲海鐓＄拠鍡涘櫡閹垫儳鍩岀粵鏃€顢?/h2></div><div class="preimport-composer"><span>閹兼粎鍌ㄩ弬鍥ㄣ€傞妴渚€銆嶉惄顔兼嫲閸樺棗褰剁拋鏉跨秿</span><button disabled>閹兼粎鍌?/button></div></section></main></div>`;
-  if (id === "kemy-space") return `<div class="preimport-client kemy-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("kemy")}<strong>Kemy Space</strong></div><nav><button class="active">妞ゅ湱娲?/button><button>閺堚偓鏉?/button><button>閸忓彉闊╃紒娆愬灉</button><button>濡剝婢?/button></nav><footer>${importAction("閹垹顦叉い鍦窗缁屾椽妫?)}</footer></aside><main><header><strong>妞ゅ湱娲?/strong><button>閺傛澘缂撴い鍦窗</button></header><section class="preimport-empty"><div>${iconMarkup("kemy")}<h2>瀵偓婵绔存稉顏堟毐妞ゅ湱娲?/h2><p>鐎电鐦介妴浣规瀮娴犺泛鎷伴悽鐔稿灇鐠佹澘缍嶆导姘箽閻ｆ瑥婀崥灞肩閺夆€茬瑐娑撳鏋冮弮鍫曟？缁惧じ绗?/p><button>閺傛澘缂撶粚铏规妞ゅ湱娲?/button></div></section></main></div>`;
-  if (id === "repo-mirror") return `<div class="preimport-client repo-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("github")}<strong>闂€婊冨剼娴犳挸绨?/strong></div><nav><button class="active">濮掑倽顫?/button><button>娴犳挸绨?/button><button>Issues</button><button>Pull requests</button></nav><footer>${importAction("鐎电厧鍙嗘禒鎾崇氨闂€婊冨剼")}</footer></aside><main><header><div><strong>瀹搞儰缍旈崠鐑橆洤鐟?/strong><small>k2-maint</small></div><button>閺傛澘缂撴禒鎾崇氨</button></header><section class="preimport-dashboard repo"><article><strong>閺堚偓鏉╂垳绮ㄦ惔?/strong><p>閺嗗倹妫ら張鈧潻鎴ｎ問闂傤喚娈戞禒鎾崇氨</p></article><article><strong>閸掑棝鍘ょ紒娆愬灉閻?/strong><p>閺嗗倹妫?Issue 閹?Pull Request</p></article><article><strong>濞茶濮?/strong><p>娴犳挸绨卞ú璇插З娴兼碍妯夌粈鍝勬躬鏉╂瑩鍣?/p></article></section></main></div>`;
-  return `<div class="client-import-screen" data-client="${id}">${iconMarkup(info?.icon || pkg?.icon || "package")}<h2>${escapeHtml(info?.name || pkg?.name || id)}</h2>${importAction("鐎电厧鍙嗛弫鐗堝祦")}</div>`;
+  if (id === "gamini-ws") return `<div class="preimport-client gamini-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?/strong></div><nav><button class="active">闁哄倹婢橀顔炬嫚?/button><button>闁哄牃鍋撻弶?/button><button>鐎瑰憡褰冪紞濠傤浖?/button></nav><footer>${importAction("閻庣數鍘ч崣鍡樺濮樺磭妯堥悹浣规緲缂?)}</footer></aside><main><header><strong>Gamini</strong><span>閻犱礁鐏濋鐟拔熼垾宕囩</span></header><section class="preimport-home"><div class="preimport-brand">${iconMarkup("gamini")}<h2>濞寸姴锕ら妵澶愬箚閸忓懐鍟婇悷娆欑导缁牊绋婇崼顒傚惞</h2></div><div class="preimport-prompts"><button>闁轰礁顕幃濠冪▔閳ь剙鈻撻崹顐ｇ€悗?/button><button>闁告帒妫欓悗鑺ョ▔閳ь剚绋夐鍫燂紪濡?/button><button>鐎殿喒鍋撳┑顔碱儐閺屽﹪鎯冮崟顐殸閻?/button></div><div class="preimport-composer"><span>闁?Gamini 闁圭粯鍔欏Λ?/span><button disabled>闁告瑦鍨块埀?/button></div></section></main></div>`;
+  if (id === "chengzhen") return `<div class="preimport-client chengzhen-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("chengzhen")}<strong>婵犮垹瀚幎姘跺础韫囧海绋?/strong></div><nav><button class="active">鐎规悶鍎扮紞鏃堝矗?/button><button>婵炴垵鐗婃导?/button><button>闁哄啨鍎卞?/button><button>闁哄倸娲ｅ▎?/button></nav><footer>${importAction("閺夆晙鑳朵簺鐎圭寮跺﹢浣割啅閵夈倗绋婇柛?)}</footer></aside><main><header><div><strong>濞戞挸锕ゅ畷宥嗙附?/strong><small>Northline 缂佸本妞藉Λ?/small></div><button>闁哄倹婢樼紓?/button></header><section class="preimport-dashboard"><article><strong>濞寸姴锕ら妵?/strong><p>鐟滅増鎸告晶鐘测柦閳╁啯绠掗悗鐟邦槹鐢捇鎯冮崟顏嗙獥閻?/p></article><article><strong>闁哄牃鍋撻弶鈺傚灱椤旀牠姊?/strong><p>闁瑰灚鎸哥槐鎴濃槈閸喍绱栭柕鍡曠劍閺嬪啫顩奸敐鍡楃仐濡炪倕婀卞ú浼村触鎼存繄绐楅柡鍕⒔閵囨岸宕烽妸銊х闂?/p></article><article><strong>鐎垫澘鎳庢慨?/strong><p>闁哄棗鍊瑰Λ銈咁嚗閸涱収妲遍柣鐐叉缁ㄣ劍銇?/p></article></section></main></div>`;
+  if (id === "yunzhen") return `<div class="preimport-client yunzhen-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("yunzhen")}<strong>濞存粍鍨归?/strong></div><nav><button class="active">闁稿繈鍔戦崕鎾棘閸モ晩鐒?/button><button>闁哄牃鍋撻弶鈺傚灩缁鳖亝娼?/button><button>闁搞儳鍋為弫鍦博?/button></nav><footer>${importAction("濞寸姴瀛╁﹢浼村捶閺夋妲靛ù鐘哄Г娴狀喗寰?)}</footer></aside><main><header><div><strong>闁瑰瓨鍨瑰▓鎴﹀棘閸モ晩鐒?/strong><small>闂傚棎鍔嶉悥楣冩儍閸曨厸鏁勯梻?/small></div><button>闁哄倹婢樼紓鎾诲棘閸モ晩鐒?/button></header><section class="preimport-empty"><div>${iconMarkup("yunzhen")}<h2>鐎殿喒鍋撳┑顔碱儏閸熸捇鎮欓柅娑氱焼濞?/h2><p>闁哄倹婢樼紓鎾诲棘閸モ晩鐒鹃柨娑樻湰閸ㄣ劍绂掓惔鈥冲緭濞寸姵鐗為鏇熷緞閸パ勫€辨慨婵勫劚閸戯繝寮垫径濠傛暥閻?/p><button>闁哄倹婢樼紓鎾剁矚閾忚顏ら柡鍌氭川椤?/button></div></section></main></div>`;
+  if (id === "groke-feed") return `<div class="preimport-client groke-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong></div><nav><button class="active">濡絾鐗犻妴?/button><button>闁稿繗娅曢弫?/button><button>闂侇偅姘ㄩ悡?/button><button>闁衡偓閹増顥?/button></nav><footer>${importAction("閻庣數鍘ч崣鍡涘礃閸涱収鍟囬悗娑櫳戦妴?)}</footer></aside><main><header><strong>濡絾鐗犻妴?/strong><button>闁告瑦鍨电粩?/button></header><section class="preimport-feed"><article><div class="preimport-avatar">G</div><div><strong>婵炲棎鍨肩换瀣媴鐠恒劍鏆?Groke Feed</strong><p>闁稿繗娅曢弫鐐垫嫻閿曗偓瑜板潡骞嬮弽褍绲洪悽顖氬暟椤戝洦绋夐埀顒勫级閳ュ啿鏁堕悗鍦缁辨繈寮崼鏇燂紵缂佹儳銇樼槐浼村及閸撗佷粵闁革负鍔忕换鏍煂鐏炵儵鍋?/p></div></article><div class="preimport-feed-empty">闁哄棗鍊瑰鍌氣柦閳╁啯绠掗柡鍥ㄦ綑椤﹀潡宕橀崨顓у晣</div></section></main></div>`;
+  if (id === "glem-memory") return `<div class="preimport-client glem-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("glem")}<strong>Glem Memory</strong></div><nav><button class="active">闁瑰吋绮庨崒?/button><button>闁活厹鍎撮惁鎴犵矚濞差亝锛?/button><button>闁哄牃鍋撻弶鈺傚灱椤旀牠姊?/button><button>濞ｅ洦绻傞悺銊╁礃閸涱収鍟?/button></nav><footer>${importAction("閺夆晝鍋炵敮鏉戭啅閸欏绠掗柣顓滃劥閻︽垹绮氬ú顏咃紵")}</footer></aside><main><header><strong>濞撮棿妞掔粭鐔兼儗閵夈劎妲?/strong><span>闁哄牜鍓欏﹢鏉戭啅閵夈倗绋婇柛?/span></header><section class="preimport-home"><div class="preimport-brand">${iconMarkup("glem")}<h2>濞寸姴娴烽悡锛勬嫚閸℃稑娅￠柟鍨劤閸╁瞼绮甸弮鈧、?/h2></div><div class="preimport-composer"><span>闁瑰吋绮庨崒銊╁棘閸ャ劊鈧倿濡存笟鈧妴宥夋儎椤斿吋瀚查柛妯烘瑜板墎鎷嬮弶璺ㄧЭ</span><button disabled>闁瑰吋绮庨崒?/button></div></section></main></div>`;
+  if (id === "kemy-space") return `<div class="preimport-client kemy-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("kemy")}<strong>Kemy Space</strong></div><nav><button class="active">濡炪倕婀卞ú?/button><button>闁哄牃鍋撻弶?/button><button>闁稿繐褰夐棅鈺冪磼濞嗘劕鐏?/button><button>婵☆垪鍓濆?/button></nav><footer>${importAction("闁诡厹鍨归ˇ鍙夈亜閸︻厽绐楃紒灞炬そ濡?)}</footer></aside><main><header><strong>濡炪倕婀卞ú?/strong><button>闁哄倹婢樼紓鎾淬亜閸︻厽绐?/button></header><section class="preimport-empty"><div>${iconMarkup("kemy")}<h2>鐎殿喒鍋撳┑顔碱儎缁斿瓨绋夐鍫熸瘣濡炪倕婀卞ú?/h2><p>閻庣數顢婇惁浠嬪Υ娴ｈ鐎ù鐘烘硾閹蜂即鎮介悢绋跨亣閻犱焦婢樼紞宥嗗濮橆偆绠介柣锝嗙懃濠€顏堝触鐏炶偐顏遍柡澶嗏偓鑼憪濞戞挸顑嗛弸鍐籍閸洘锛熺紒鎯с仒缁?/p><button>闁哄倹婢樼紓鎾剁矚閾忚顏ゅ銈呮贡濞?/button></div></section></main></div>`;
+  if (id === "repo-mirror") return `<div class="preimport-client repo-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("github")}<strong>闂傗偓濠婂啫鍓煎ù鐘虫尭缁?/strong></div><nav><button class="active">婵帒鍊介～?/button><button>濞寸姵鎸哥花?/button><button>Issues</button><button>Pull requests</button></nav><footer>${importAction("閻庣數鍘ч崣鍡樼閹惧磭姘ㄩ梻鈧鍐ㄥ壖")}</footer></aside><main><header><div><strong>鐎规悶鍎扮紞鏃堝礌閻戞﹩娲ら悷?/strong><small>k2-maint</small></div><button>闁哄倹婢樼紓鎾寸閹惧磭姘?/button></header><section class="preimport-dashboard repo"><article><strong>闁哄牃鍋撻弶鈺傚灣缁劍鎯?/strong><p>闁哄棗鍊瑰Λ銈夊嫉閳ь剚娼婚幋锝庡晱闂傚偆鍠氬▓鎴炵閹惧磭姘?/p></article><article><strong>闁告帒妫濋崢銈囩磼濞嗘劕鐏夐柣?/strong><p>闁哄棗鍊瑰Λ?Issue 闁?Pull Request</p></article><article><strong>婵炶尪顕ф慨?/strong><p>濞寸姵鎸哥花鍗灻虹拠鎻捫楀ù鍏肩濡绮堥崫鍕含閺夆晜鐟╅崳?/p></article></section></main></div>`;
+  return `<div class="client-import-screen" data-client="${id}">${iconMarkup(info?.icon || pkg?.icon || "package")}<h2>${escapeHtml(info?.name || pkg?.name || id)}</h2>${importAction("閻庣數鍘ч崣鍡涘极閻楀牆绁?)}</div>`;
 }
 
 function builtInClientPage(id, state) {
   const active = state.activeContentId;
   const importButton = (label, clientId = id) => clientRecoveryAvailable(clientId, state) ? `<button class="client-data-import" data-import-client="${clientId}">${label}</button>` : "";
   if (id === "gamini-ws") {
-    const body = active === "legacy.gamini.protocol" ? corpusRuntimeMarkup(active, state) : `<section class="preimport-home"><div class="preimport-brand">${iconMarkup("gamini")}<h2>娴犲﹤銇夐幆鍏呯啊鐟欙絼绮堟稊鍫吹</h2></div><div class="preimport-prompts"><button>閺佸鎮婃稉鈧▓鍨瀮鐎?/button><button>閸掑棙鐎芥稉鈧稉顏堟６妫?/button><button>瀵偓婵鏌婇惃鍕嚠鐠?/button></div><div class="preimport-composer"><span>閸?Gamini 閹绘劙妫?/span><button disabled>閸欐垿鈧?/button></div></section>`;
-    return `<div class="preimport-client gamini-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 瀹搞儰缍旂粚娲？</strong></div><nav><button class="${active !== "legacy.gamini.protocol" ? "active" : ""}">閺傛澘顕拠?/button><button>閺堚偓鏉?/button><button>瀹告彃缍婂?/button><button class="${active === "legacy.gamini.protocol" ? "active" : ""}" data-content-entry="legacy.gamini.protocol">閺堝秴濮熼崡蹇氼唴</button></nav><footer>${importButton("鐎电厧鍙嗘导姘崇樈鐠佹澘缍?)}</footer></aside><main><header><strong>Gamini</strong><span>鐠佸灝顓瑰Ο鈥崇础</span></header>${body}</main></div>`;
+    const body = active === "legacy.gamini.protocol" ? corpusRuntimeMarkup(active, state) : `<section class="preimport-home"><div class="preimport-brand">${iconMarkup("gamini")}<h2>濞寸姴锕ら妵澶愬箚閸忓懐鍟婇悷娆欑导缁牊绋婇崼顒傚惞</h2></div><div class="preimport-prompts"><button>闁轰礁顕幃濠冪▔閳ь剙鈻撻崹顐ｇ€悗?/button><button>闁告帒妫欓悗鑺ョ▔閳ь剚绋夐鍫燂紪濡?/button><button>鐎殿喒鍋撳┑顔碱儐閺屽﹪鎯冮崟顐殸閻?/button></div><div class="preimport-composer"><span>闁?Gamini 闁圭粯鍔欏Λ?/span><button disabled>闁告瑦鍨块埀?/button></div></section>`;
+    return `<div class="preimport-client gamini-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?/strong></div><nav><button class="${active !== "legacy.gamini.protocol" ? "active" : ""}">闁哄倹婢橀顔炬嫚?/button><button>闁哄牃鍋撻弶?/button><button>鐎瑰憡褰冪紞濠傤浖?/button><button class="${active === "legacy.gamini.protocol" ? "active" : ""}" data-content-entry="legacy.gamini.protocol">闁哄牆绉存慨鐔煎础韫囨凹鍞?/button></nav><footer>${importButton("閻庣數鍘ч崣鍡樺濮樺磭妯堥悹浣规緲缂?)}</footer></aside><main><header><strong>Gamini</strong><span>閻犱礁鐏濋鐟拔熼垾宕囩</span></header>${body}</main></div>`;
   }
   if (id === "groke-feed") {
-    const body = active === "new.groke.policy" ? corpusRuntimeMarkup(active, state) : `<section class="preimport-feed"><article><div class="preimport-avatar">G</div><div><strong>濞嗐垼绻嬫担璺ㄦ暏 Groke Feed</strong><p>閸忚櫕鏁炵拹锕€褰块幋鏍у絺鐢啰顑囨稉鈧弶鈥冲敶鐎圭櫢绱濋弮鍫曟？缁惧じ绱伴弰鍓с仛閸︺劏绻栭柌灞烩偓?/p></div></article><div class="preimport-feed-empty">閺嗗倹妞傚▽鈩冩箒閺囨潙顦块崘鍛啇</div></section>`;
-    return `<div class="preimport-client groke-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong></div><nav><button class="${active !== "new.groke.policy" ? "active" : ""}">妫ｆ牠銆?/button><button>閸忚櫕鏁?/button><button>闁氨鐓?/button><button>閺€鎯版</button><button class="${active === "new.groke.policy" ? "active" : ""}" data-content-entry="new.groke.policy">閻╁瓨甯存禍銈勭帛閺€璺ㄧ摜</button></nav><footer>${importButton("鐎电厧鍙嗛崘鍛啇鐎涙ɑ銆?)}</footer></aside><main><header><strong>${active === "new.groke.policy" ? "娣団€叉崲娑擃厼绺? : "妫ｆ牠銆?}</strong><button>${active === "new.groke.policy" ? "閻楀牊婀伴崢鍡楀蕉" : "閸欐垵绔?}</button></header>${body}</main></div>`;
+    const body = active === "new.groke.policy" ? corpusRuntimeMarkup(active, state) : `<section class="preimport-feed"><article><div class="preimport-avatar">G</div><div><strong>婵炲棎鍨肩换瀣媴鐠恒劍鏆?Groke Feed</strong><p>闁稿繗娅曢弫鐐垫嫻閿曗偓瑜板潡骞嬮弽褍绲洪悽顖氬暟椤戝洦绋夐埀顒勫级閳ュ啿鏁堕悗鍦缁辨繈寮崼鏇燂紵缂佹儳銇樼槐浼村及閸撗佷粵闁革负鍔忕换鏍煂鐏炵儵鍋?/p></div></article><div class="preimport-feed-empty">闁哄棗鍊瑰鍌氣柦閳╁啯绠掗柡鍥ㄦ綑椤﹀潡宕橀崨顓у晣</div></section>`;
+    return `<div class="preimport-client groke-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong></div><nav><button class="${active !== "new.groke.policy" ? "active" : ""}">濡絾鐗犻妴?/button><button>闁稿繗娅曢弫?/button><button>闂侇偅姘ㄩ悡?/button><button>闁衡偓閹増顥?/button><button class="${active === "new.groke.policy" ? "active" : ""}" data-content-entry="new.groke.policy">闁烩晛鐡ㄧ敮瀛樼閵堝嫮甯涢柡鈧捄銊ф憸</button></nav><footer>${importButton("閻庣數鍘ч崣鍡涘礃閸涱収鍟囬悗娑櫳戦妴?)}</footer></aside><main><header><strong>${active === "new.groke.policy" ? "濞ｅ洠鈧弶宕插☉鎿冨幖缁? : "濡絾鐗犻妴?}</strong><button>${active === "new.groke.policy" ? "闁绘鐗婂﹢浼村储閸℃钑? : "闁告瑦鍨电粩?}</button></header>${body}</main></div>`;
   }
   return clientImportScreen(id);
 }
@@ -1068,7 +1062,7 @@ function renderApplications(state) {
     if (!info) return "";
     return `<button class="application-row" data-app="${id}">${iconMarkup(info.icon)}<span><strong>${info.name}</strong><small>${info.detail}</small></span></button>`;
   }).join("");
-  return windowFrame("applications", "鎼存梻鏁ょ粙瀣碍", `<div class="applications-page"><header><span class="document-kicker">APPLICATIONS / LOCAL</span><h2>鎼存梻鏁ょ粙瀣碍</h2><input aria-label="閹兼粎鍌ㄦ惔鏃傛暏缁嬪绨? placeholder="閹兼粎鍌ㄦ惔鏃傛暏缁嬪绨? disabled></header><section>${rows}${clientRows}</section></div>`, { icon: "閳? });
+  return windowFrame("applications", "閹煎瓨姊婚弫銈囩矙鐎ｎ亞纰?, `<div class="applications-page"><header><span class="document-kicker">APPLICATIONS / LOCAL</span><h2>閹煎瓨姊婚弫銈囩矙鐎ｎ亞纰?/h2><input aria-label="闁瑰吋绮庨崒銊︽償閺冨倹鏆忕紒瀣儏缁? placeholder="闁瑰吋绮庨崒銊︽償閺冨倹鏆忕紒瀣儏缁? disabled></header><section>${rows}${clientRows}</section></div>`, { icon: "闁? });
 }
 
 const LEDGER_MILESTONES = {
@@ -1160,7 +1154,7 @@ function corpusRecordMarkup(record, state) {
     return nativeCarrierMarkup(record, state, mutationCount);
   }
   if (record.route?.endsWith(".js") && corpusBodies.has(record.id)) return `<pre class="source-code-reader">${escapeHtml(corpusBodies.get(record.id))}</pre>`;
-  return `<div class="carrier-loading"><span class="document-kicker">RECOVERING SOURCE</span><p>濮濓絽婀拠璇插絿閹垹顦查弫鐗堝祦閳ワ腹鈧?/p></div>`;
+  return `<div class="carrier-loading"><span class="document-kicker">RECOVERING SOURCE</span><p>婵繐绲藉﹢顏嗘嫚鐠囨彃绲块柟顓滃灩椤︽煡寮悧鍫濈ウ闁炽儻鑵归埀?/p></div>`;
 }
 
 function nativeCarrierKind(record) {
@@ -1179,30 +1173,30 @@ function nativeCarrierKind(record) {
 function nativeCarrierChrome(record, kind) {
   const title = escapeHtml(record.title || record.id);
   const source = escapeHtml(record.sourceIdentity || record.sourceRef || record.corpus || "local");
-  if (recordCarrierApp(record) === "gamini-ws" && kind === "website") return `<header class="gamini-native-section"><div><strong>閺堝秴濮熸稉搴ㄦ缁?/strong><small>閸楀繗顔呴悧鍫熸拱娑撳氦澶勯幋椋庡Ц閹?/small></div><nav><span class="active">閺堝秴濮熼崡蹇氼唴</span><span>闂呮劗顫?/span><span>閺佺増宓侀幒褍鍩?/span></nav></header>`;
-  if (recordCarrierApp(record) === "gamini-ws" && kind === "workspace") return `<header class="gamini-native-section document"><div><strong>${title}</strong><small>Northline 璺?閸愬懘鍎撮崗鍙橀煩</small></div><nav><span class="active">閺傚洦銆?/span><span>閹佃鏁?/span><span>閻楀牊婀?/span></nav><span class="gamini-doc-state">閸欘亣顕?/span></header>`;
+  if (recordCarrierApp(record) === "gamini-ws" && kind === "website") return `<header class="gamini-native-section"><div><strong>闁哄牆绉存慨鐔哥▔鎼淬劍顓虹紒?/strong><small>闁告绻楅鍛存偋閸喐鎷卞☉鎾虫唉婢跺嫰骞嬫搴⌒﹂柟?/small></div><nav><span class="active">闁哄牆绉存慨鐔煎础韫囨凹鍞?/span><span>闂傚懏鍔楅～?/span><span>闁轰胶澧楀畵渚€骞掕閸?/span></nav></header>`;
+  if (recordCarrierApp(record) === "gamini-ws" && kind === "workspace") return `<header class="gamini-native-section document"><div><strong>${title}</strong><small>Northline 鐠?闁告劕鎳橀崕鎾礂閸欐﹢鐓?/small></div><nav><span class="active">闁哄倸娲﹂妴?/span><span>闁逛絻顫夐弫?/span><span>闁绘鐗婂﹢?/span></nav><span class="gamini-doc-state">闁告瑯浜ｉ?/span></header>`;
   if (kind === "repository") {
     const type = String(record.carrierType || "");
     const active = /pull-request|repository-pr/.test(type) ? "pr" : /release/.test(type) ? "release" : /status|migration-log/.test(type) ? "actions" : "issues";
     const tab = (id, label) => `<span class="${active === id ? "active" : ""}">${label}</span>`;
     return `<header class="native-repo-bar"><div><b>${escapeHtml(record.corpus || "mirror")}</b><span>/</span><strong>${title}</strong></div><nav>${tab("code", "Code")}${tab("issues", "Issues")}${tab("pr", "Pull requests")}${tab("actions", "Actions")}${tab("release", "Releases")}</nav></header><div class="native-repo-subbar"><span>private mirror</span><span>main</span><span>${source}</span></div>`;
   }
-  if (kind === "conversation") return `<header class="native-conversation-bar"><div class="native-avatar">${escapeHtml((record.corpus || "C").slice(0, 1))}</div><div><strong>${title}</strong><small>${source} 璺?閸欘亣顕?/small></div><div class="native-client-actions"><span>閳?/span><span>閳?/span></div></header>`;
-  if (kind === "mail") return `<header class="native-mail-bar"><button aria-label="鏉╂柨娲栭柇顔绘閸掓銆?>閳?/button><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>瑜版帗銆?/span><span>閳?/span></div></header>`;
-  if (kind === "terminal") return `<header class="native-terminal-tabs"><span class="active">room17@relay: cache</span><span>閿?/span></header><div class="native-terminal-command">room17@relay:~$ <b>cachectl inspect ${escapeHtml(record.id)}</b></div>`;
-  if (kind === "notes") return `<header class="native-notes-bar"><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>瀹告彃鎮撳?/span><span>閳?/span></div></header>`;
-  if (kind === "workspace") return `<header class="native-workspace-bar"><div><span class="native-workspace-logo">N</span><strong>${title}</strong></div><nav><span>鐠囷附鍎?/span><span>濞茶濮?/span><span>闂勫嫪娆?/span></nav><small>${source}</small></header>`;
-  if (kind === "community") return `<header class="native-community-bar"><strong>${escapeHtml(record.corpus || "Community")}</strong><nav><span>妫ｆ牠銆?/span><span>閸忚櫕鏁?/span><span>濞戝牊浼?/span></nav><span class="native-search">閹兼粎鍌?/span></header>`;
-  if (kind === "browser-devtools") return `<div class="native-browser-pagebar"><span>閳?/span><span>閳?/span><span>閳?/span><div>棣冩晙 ${source}</div><span>閳?/span></div><header class="native-devtools-tabs"><span>Elements</span><span>Console</span><span class="active">Network</span><span>Application</span></header>`;
-  if (record.pageIdentity === "policy") return `<header class="native-site-bar trust"><strong>${escapeHtml(record.corpus || "Trust Center")} 娣団€叉崲娑擃厼绺?/strong><nav><span>閺€璺ㄧ摜</span><span>闁繑妲戞惔?/span><span>鐎瑰鍙?/span><span>閻楀牊婀伴崢鍡楀蕉</span></nav></header>`;
-  if (record.pageIdentity === "official") return `<header class="native-site-bar official"><strong>${escapeHtml(record.corpus || "Service")}</strong><nav><span>娴溠冩惂</span><span>閼宠棄濮?/span><span>瀵偓閸欐垼鈧?/span><span>閺€顖涘瘮</span></nav></header>`;
-  return `<header class="native-site-bar"><strong>${escapeHtml(record.corpus || "Service")}</strong><nav><span>濮掑倽顫?/span><span>鐠佹澘缍?/span><span>閺€顖涘瘮</span><span>鐠愶附鍩?/span></nav></header>`;
+  if (kind === "conversation") return `<header class="native-conversation-bar"><div class="native-avatar">${escapeHtml((record.corpus || "C").slice(0, 1))}</div><div><strong>${title}</strong><small>${source} 鐠?闁告瑯浜ｉ?/small></div><div class="native-client-actions"><span>闁?/span><span>闁?/span></div></header>`;
+  if (kind === "mail") return `<header class="native-mail-bar"><button aria-label="閺夆晜鏌ㄥú鏍焽椤旂粯顐介柛鎺擃殙閵?>闁?/button><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>鐟滅増甯楅妴?/span><span>闁?/span></div></header>`;
+  if (kind === "terminal") return `<header class="native-terminal-tabs"><span class="active">room17@relay: cache</span><span>闁?/span></header><div class="native-terminal-command">room17@relay:~$ <b>cachectl inspect ${escapeHtml(record.id)}</b></div>`;
+  if (kind === "notes") return `<header class="native-notes-bar"><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>鐎瑰憡褰冮幃鎾愁潰?/span><span>闁?/span></div></header>`;
+  if (kind === "workspace") return `<header class="native-workspace-bar"><div><span class="native-workspace-logo">N</span><strong>${title}</strong></div><nav><span>閻犲浄闄勯崕?/span><span>婵炶尪顕ф慨?/span><span>闂傚嫬瀚▎?/span></nav><small>${source}</small></header>`;
+  if (kind === "community") return `<header class="native-community-bar"><strong>${escapeHtml(record.corpus || "Community")}</strong><nav><span>濡絾鐗犻妴?/span><span>闁稿繗娅曢弫?/span><span>婵炴垵鐗婃导?/span></nav><span class="native-search">闁瑰吋绮庨崒?/span></header>`;
+  if (kind === "browser-devtools") return `<div class="native-browser-pagebar"><span>闁?/span><span>闁?/span><span>闁?/span><div>妫ｅ啯鏅?${source}</div><span>闁?/span></div><header class="native-devtools-tabs"><span>Elements</span><span>Console</span><span class="active">Network</span><span>Application</span></header>`;
+  if (record.pageIdentity === "policy") return `<header class="native-site-bar trust"><strong>${escapeHtml(record.corpus || "Trust Center")} 濞ｅ洠鈧弶宕插☉鎿冨幖缁?/strong><nav><span>闁衡偓鐠恒劎鎽?/span><span>闂侇偄绻戝Σ鎴炴償?/span><span>閻庣懓顦崣?/span><span>闁绘鐗婂﹢浼村储閸℃钑?/span></nav></header>`;
+  if (record.pageIdentity === "official") return `<header class="native-site-bar official"><strong>${escapeHtml(record.corpus || "Service")}</strong><nav><span>濞存籂鍐╂儌</span><span>闁煎疇妫勬慨?/span><span>鐎殿喒鍋撻柛娆愬灱閳?/span><span>闁衡偓椤栨稑鐦?/span></nav></header>`;
+  return `<header class="native-site-bar"><strong>${escapeHtml(record.corpus || "Service")}</strong><nav><span>婵帒鍊介～?/span><span>閻犱焦婢樼紞?/span><span>闁衡偓椤栨稑鐦?/span><span>閻犳劧闄勯崺?/span></nav></header>`;
 }
 
 function nativeCarrierMarkup(record, state, mutationCount = 0) {
   const kind = nativeCarrierKind(record);
   const host = recordCarrierApp(record);
-  return `<section class="native-carrier native-${kind} native-host-${escapeHtml(host)}">${nativeCarrierChrome(record, kind)}<article class="corpus-runtime ${corpusRuntimeClass(record)} ${carrierRuntimeClasses(record)}" data-native-kind="${kind}" data-runtime-profile="${corpusRuntimeClass(record)}" data-content-id="${escapeHtml(record.id)}" data-authorship-stage="${escapeHtml(record.authorshipStage || "H0")}" data-carrier-type="${escapeHtml(record.carrierType || "document")}" data-corpus="${escapeHtml(record.corpus || "")}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 閺夆€虫倵閺夈儵妾崝鐘垫畱閺夈儲绨拋鏉跨秿</aside>` : ""}${corpusBodies.get(record.id)}</article></section>`;
+  return `<section class="native-carrier native-${kind} native-host-${escapeHtml(host)}">${nativeCarrierChrome(record, kind)}<article class="corpus-runtime ${corpusRuntimeClass(record)} ${carrierRuntimeClasses(record)}" data-native-kind="${kind}" data-runtime-profile="${corpusRuntimeClass(record)}" data-content-id="${escapeHtml(record.id)}" data-authorship-stage="${escapeHtml(record.authorshipStage || "H0")}" data-carrier-type="${escapeHtml(record.carrierType || "document")}" data-corpus="${escapeHtml(record.corpus || "")}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 闁哄鈧櫕鍊甸柡澶堝劦濡绢噣宕濋悩鍨暠闁哄鍎茬花顔炬媼閺夎法绉?/aside>` : ""}${corpusBodies.get(record.id)}</article></section>`;
 }
 
 function corpusRuntimeMarkup(id, state) {
@@ -1211,42 +1205,42 @@ function corpusRuntimeMarkup(id, state) {
 }
 
 const CARRIER_LABEL_RULES = [
-  [/notes-database|recovered-local-notebook|local-maintenance-note/, "閺堫剙婀寸粭鏃囶唶"],
-  [/mail|outbox/, "闁喕娆㈢拋鏉跨秿"],
-  [/conversation|chatlog|channel-export/, "閼卞﹤銇夌拋鏉跨秿"],
-  [/protocol|policy|agreement/, "閺夆剝顑欐稉搴㈡杺缁?],
-  [/sop|minutes|incident|audit|hearing|docket|reconciliation/, "閸愬懘鍎寸拋鏉跨秿"],
-  [/repository|issue|pull-request/, "娴狅絿鐖滄禒鎾崇氨鐠佹澘缍?],
-  [/social|forum|complaint|community|news|advertis|article/, "閸忣剙绱戠拋銊啈娑撳骸绠嶉崨?],
-  [/portal|release|official/, "鐎规ɑ鏌熸い鐢告桨"],
-  [/cache|cached|status/, "缂傛挸鐡ㄩ崜顖涙拱"],
-  [/draft|writing|revision|submission|session/, "閸愭瑤缍旈弬鍥ㄣ€?],
-  [/ledger|billing|budget|routing/, "鐠愶妇娲版稉搴ょ熅閻㈣精顔囪ぐ?],
-  [/support|case|correspondence/, "鐎广垺婀囨稉搴＄窔閺夈儴顔囪ぐ?],
-  [/comparison|verification|log/, "鐎靛湱鍙庢稉搴ｅЦ閹浇顔囪ぐ?]
+  [/notes-database|recovered-local-notebook|local-maintenance-note/, "闁哄牜鍓欏﹢瀵哥箔閺冨浂鍞?],
+  [/mail|outbox/, "闂侇収鍠曞▎銏㈡媼閺夎法绉?],
+  [/conversation|chatlog|channel-export/, "闁煎崬锕ら妵澶屾媼閺夎法绉?],
+  [/protocol|policy|agreement/, "闁哄鍓濋娆愮▔鎼淬垺鏉虹紒?],
+  [/sop|minutes|incident|audit|hearing|docket|reconciliation/, "闁告劕鎳橀崕瀵告媼閺夎法绉?],
+  [/repository|issue|pull-request/, "濞寸媴绲块悥婊勭閹惧磭姘ㄩ悹浣规緲缂?],
+  [/social|forum|complaint|community|news|advertis|article/, "闁稿浚鍓欑槐鎴犳媼閵婎煈鍟堝☉鎾抽缁犲秹宕?],
+  [/portal|release|official/, "閻庤蓱閺岀喐銇勯悽鍛婃〃"],
+  [/cache|cached|status/, "缂傚倹鎸搁悺銊╁礈椤栨稒鎷?],
+  [/draft|writing|revision|submission|session/, "闁告劖鐟ょ紞鏃堝棘閸ャ劊鈧?],
+  [/ledger|billing|budget|routing/, "閻犳劧濡囧ú鐗堢▔鎼淬倗鐔呴柣銏ｇ簿椤斿洩銇?],
+  [/support|case|correspondence/, "閻庡箍鍨哄﹢鍥ㄧ▔鎼达紕绐旈柡澶堝劥椤斿洩銇?],
+  [/comparison|verification|log/, "閻庨潧婀遍崣搴㈢▔鎼达絽笑闁诡兛娴囬鍥亹?]
 ];
 const CASE_NOTE_LABELS = Object.freeze({
-  "mail-header": "闁喕娆㈤崢鐔奉潗娣団€炽仈",
-  "restored-time": "閺傚洣娆㈤幁銏狀槻閺冨爼妫垮?,
-  "ad-redirect": "楠炲灝鎲＄捄瀹犳祮閸欏倹鏆?
+  "mail-header": "闂侇収鍠曞▎銏ゅ储閻斿娼楀ǎ鍥ｂ偓鐐戒粓",
+  "restored-time": "闁哄倸娲ｅ▎銏ゅ箒閵忕媭妲婚柡鍐ㄧ埣濡灝顔?,
+  "ad-redirect": "妤犵偛鐏濋幉锛勬崉鐎圭姵绁柛娆忓€归弳?
 });
 function carrierLabel(record) {
   const key = `${record?.carrierType || ""} ${record?.pageIdentity || ""}`.toLocaleLowerCase();
   for (const [pattern, label] of CARRIER_LABEL_RULES) if (pattern.test(key)) return label;
-  return "閺夈儲绨弬鍥ㄣ€?;
+  return "闁哄鍎茬花顕€寮崶銊ｂ偓?;
 }
 
 function contentEntryMarkup(id, label, detail, icon = "folder") {
   const record = contentRecord(id);
   if (!record || !contentIsUnlocked(record, store.get())) return "";
   const read = store.get().contentReads.includes(id);
-  return `<button class="source-content-entry ${read ? "read" : ""}" data-content-entry="${escapeHtml(id)}">${iconMarkup(icon)}<span><strong>${escapeHtml(label || record.title || id)}</strong><small>${escapeHtml(detail || carrierLabel(record))}</small></span><b>${read ? "瀹歌尪顕? : "閹垫挸绱?}</b></button>`;
+  return `<button class="source-content-entry ${read ? "read" : ""}" data-content-entry="${escapeHtml(id)}">${iconMarkup(icon)}<span><strong>${escapeHtml(label || record.title || id)}</strong><small>${escapeHtml(detail || carrierLabel(record))}</small></span><b>${read ? "鐎规瓕灏? : "闁瑰灚鎸哥槐?}</b></button>`;
 }
 
 function generatedEntriesFor(sourceApp, icon = "folder") {
   return store.get().generatedContentRecords
     .filter(record => record.sourceApp === sourceApp)
-    .map(record => contentEntryMarkup(record.id, record.title, `${carrierLabel(record)} 璺?${record.displayTimestamp}`, icon))
+    .map(record => contentEntryMarkup(record.id, record.title, `${carrierLabel(record)} 鐠?${record.displayTimestamp}`, icon))
     .join("");
 }
 
@@ -1263,51 +1257,51 @@ function carrierRuntimeClasses(record) {
 }
 
 function renderArchive(state) {
-  if (!runtimeLedger) return windowFrame("archive", "Restored Archive", `<div class="snapshot-adapter loading"><p>濮濓絽婀拠璇插絿閺堫剙婀撮崘鍛啇鐠愶附婀伴垾?/p></div>`, { icon: "閳?, wide: true });
+  if (!runtimeLedger) return windowFrame("archive", "Restored Archive", `<div class="snapshot-adapter loading"><p>婵繐绲藉﹢顏嗘嫚鐠囨彃绲块柡鍫墮濠€鎾礃閸涱収鍟囬悹鎰堕檮濠€浼村灳?/p></div>`, { icon: "闁?, wide: true });
   const query = (state.archiveQuery || "").trim().toLocaleLowerCase();
   const allEntries = [...runtimeLedger.entries, ...state.generatedContentRecords];
   const unlockedEntries = allEntries.filter(record => (record.route || record.generated) && contentIsUnlocked(record, state));
   const entries = unlockedEntries.filter(record => state.contentDiscoveries.includes(record.id) || state.contentReads.includes(record.id));
   const filtered = entries.filter(record => !query || [record.id, record.title, record.carrierType, record.corpus, record.narratorId, record.pageIdentity].some(value => String(value || "").toLocaleLowerCase().includes(query)));
-  const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(carrierLabel(record))}</span><strong>${escapeHtml(record.title || carrierLabel(record))}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || "閺冨爼妫挎稉宥堫嚊")}</small></button>`).join("");
+  const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(carrierLabel(record))}</span><strong>${escapeHtml(record.title || carrierLabel(record))}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || "闁哄啫鐖煎Λ鎸庣▔瀹ュ牜鍤?)}</small></button>`).join("");
   const active = entries.find(record => record.id === state.activeContentId);
-  let reader = `<div class="archive-welcome"><strong>${entries.length}</strong><span> 娑擃亜鍑￠惂鏄忣唶閺夈儲绨?/span><p>闁瀚ㄦ稉鈧弶陇顔囪ぐ鏇熺叀閻娼靛┃鎰秴缂冾噯绱濋崘宥堢箲閸ョ偛甯慨瀣祰娴ｆ捇妲勭拠姹団偓?/p></div>`;
+  let reader = `<div class="archive-welcome"><strong>${entries.length}</strong><span> 濞戞搩浜滈崙锟犳儌閺勫浚鍞堕柡澶堝劜缁?/span><p>闂侇偄顦扮€氥劍绋夐埀顒勫级闄囬鍥亹閺囩喓鍙€闁活亜顑嗗闈涒攦閹邦亞绉寸紓鍐惧櫙缁辨繈宕樺鍫㈢闁搞儳鍋涚敮顐ｆ叏鐎ｎ厽绁板ù锝嗘崌濡插嫮鎷犲Ч鍥ｅ亾?/p></div>`;
   if (active) {
     const carrierApp = recordCarrierApp(active);
-    const carrierName = V2_CLIENT_DETAILS[carrierApp]?.name || ({ browser: "Relay Browser", mail: "闁喕娆?, files: "閺傚洣娆?, terminal: "缂佸牏顏?, relay: "Relay Console", trash: "閸ョ偞鏁圭粩? }[carrierApp] || carrierApp);
+    const carrierName = V2_CLIENT_DETAILS[carrierApp]?.name || ({ browser: "Relay Browser", mail: "闂侇収鍠曞▎?, files: "闁哄倸娲ｅ▎?, terminal: "缂備礁鐗忛?, relay: "Relay Console", trash: "闁搞儳鍋為弫鍦博? }[carrierApp] || carrierApp);
     const available = carrierAvailable(carrierApp, state);
-    reader = `<article class="archive-source-pointer"><span class="document-kicker">SOURCE INDEX / READ ONLY</span><h2>${escapeHtml(active.title || active.id)}</h2><p>Archive 娴犲懍绻氶悾娆戝偍瀵洏鈧焦妞傞梻鏉戞嫲閺夈儲绨担宥囩枂閵嗗倹顒滈弬鍥╂暠閸樼喎顫愭潪鎴掔秼鐠愮喕鐭楅弰鍓с仛閵?/p><dl><dt>閸樼喎顫愭潪鎴掔秼</dt><dd>${escapeHtml(carrierName)}</dd><dt>閺夈儲绨?/dt><dd>${escapeHtml(active.sourceIdentity || active.sourceRef || "閺堫剙婀寸拋鏉跨秿")}</dd><dt>鐠佹澘缍嶉弮鍫曟？</dt><dd>${escapeHtml(active.displayTimestamp || active.chronologyKey || "閺冨爼妫挎稉宥堫嚊")}</dd></dl><button data-content-entry="${escapeHtml(active.id)}" ${available ? "" : "disabled"}>${available ? `閸?{escapeHtml(carrierName)}娑擃厽澧﹀鈧琡 : "鐎电懓绨查幁銏狀槻閺佺増宓佺亸姘弓鐎电厧鍙?}</button></article>`;
+    reader = `<article class="archive-source-pointer"><span class="document-kicker">SOURCE INDEX / READ ONLY</span><h2>${escapeHtml(active.title || active.id)}</h2><p>Archive 濞寸姴鎳嶇换姘舵偩濞嗘垵鍋嶇€殿喗娲忛埀顑跨劍濡炲倿姊婚弶鎴炲闁哄鍎茬花顔芥媴瀹ュ洨鏋傞柕鍡楀€归婊堝棘閸モ晜鏆犻柛妯煎枎椤劖娼幋鎺旂Ъ閻犳劗鍠曢惌妤呭及閸撗佷粵闁?/p><dl><dt>闁告鍠庨～鎰姜閹存帞绉?/dt><dd>${escapeHtml(carrierName)}</dd><dt>闁哄鍎茬花?/dt><dd>${escapeHtml(active.sourceIdentity || active.sourceRef || "闁哄牜鍓欏﹢瀵告媼閺夎法绉?)}</dd><dt>閻犱焦婢樼紞宥夊籍閸洘锛?/dt><dd>${escapeHtml(active.displayTimestamp || active.chronologyKey || "闁哄啫鐖煎Λ鎸庣▔瀹ュ牜鍤?)}</dd></dl><button data-content-entry="${escapeHtml(active.id)}" ${available ? "" : "disabled"}>${available ? `闁?{escapeHtml(carrierName)}濞戞搩鍘芥晶锕€顕ｉ埀鐞?: "閻庣數鎳撶花鏌ュ箒閵忕媭妲婚柡浣哄瀹撲胶浜稿顓熷紦閻庣數鍘ч崣?}</button></article>`;
   }
   const vendors = VENDOR_ICON_KEYS.filter(key => entries.some(record => `${record.corpus || ""} ${record.id}`.toLocaleLowerCase().includes(key))).map(key => {
     const name = key[0].toUpperCase() + key.slice(1);
     return `<button class="${query === key ? "active" : ""}" data-archive-filter="${name}">${iconMarkup(key)}<span>${name}</span></button>`;
   }).join("");
-  return windowFrame("archive", getUnlocks(state).historicalArchive ? "Restored Archive" : "Source Reader", `<div class="archive-browser"><aside><header><span class="document-kicker">CONTENT LEDGER / READ ONLY</span><h2>閹垹顦查惃鍕€傚?/h2><form id="archiveSearchForm"><input id="archiveSearchInput" value="${escapeHtml(state.archiveQuery || "")}" placeholder="閹兼粎鍌ㄩ弽鍥暯閵嗕椒姹夐悧鈺傚灗閺夈儲绨猾璇茬€?><button>閹兼粎鍌?/button></form>${vendors ? `<div class="vendor-filter">${vendors}</div>` : ""}<p>${filtered.length} / ${entries.length} 閺?/p></header><div class="ledger-list">${cards || `<div class="empty-state">瑜版挸澧犻幖婊呭偍濞屸剝婀侀崣顖濐嚢缂佹挻鐏夐妴?/div>`}</div></aside><section class="archive-reader">${reader}</section></div>`, { wide: true });
+  return windowFrame("archive", getUnlocks(state).historicalArchive ? "Restored Archive" : "Source Reader", `<div class="archive-browser"><aside><header><span class="document-kicker">CONTENT LEDGER / READ ONLY</span><h2>闁诡厹鍨归ˇ鏌ユ儍閸曨兙鈧倸顩?/h2><form id="archiveSearchForm"><input id="archiveSearchInput" value="${escapeHtml(state.archiveQuery || "")}" placeholder="闁瑰吋绮庨崒銊╁冀閸ヮ剦鏆柕鍡曟濮瑰鎮ч埡鍌氱仐闁哄鍎茬花顔剧尵鐠囪尙鈧?><button>闁瑰吋绮庨崒?/button></form>${vendors ? `<div class="vendor-filter">${vendors}</div>` : ""}<p>${filtered.length} / ${entries.length} 闁?/p></header><div class="ledger-list">${cards || `<div class="empty-state">鐟滅増鎸告晶鐘诲箹濠婂懎鍋嶆繛灞稿墲濠€渚€宕ｉ婵愬殺缂備焦鎸婚悘澶愬Υ?/div>`}</div></aside><section class="archive-reader">${reader}</section></div>`, { wide: true });
 }
 
 function generatedRecordMarkup(record, state) {
   const completed = record.completionEvent && hasStoryEvent(state, record.completionEvent);
   const action = record.completionEvent
-    ? `<p class="auto-note" data-auto-effect="generated:${escapeHtml(record.completionEvent)}">鏉╂瑥顦╅崜宥呮倵瀹割喖绱撳鑼病鐠佹澘婀鍫涒偓?/p>`
+    ? `<p class="auto-note" data-auto-effect="generated:${escapeHtml(record.completionEvent)}">閺夆晜鐟ラˇ鈺呭礈瀹ュ懏鍊电€瑰壊鍠栫槐鎾愁啅閼碱剛鐥呴悹浣规緲濠€顏勵浖閸稈鍋?/p>`
     : "";
-  return `<article class="generated-source-record"><span class="document-kicker">LATER RECORD / VERSION COMPARISON</span><h2>${escapeHtml(record.title)}</h2><dl><dt>閺夈儲绨?/dt><dd>${escapeHtml(record.sourceRef)}</dd><dt>閺冨爼妫?/dt><dd>${escapeHtml(record.displayTimestamp)}</dd><dt>鏉炴垝缍?/dt><dd>${escapeHtml(record.carrierType)}</dd></dl><p>${escapeHtml(record.body)}</p><div class="version-comparison"><section><small>BEFORE</small><pre>${escapeHtml(record.comparison.before)}</pre></section><section><small>AFTER</small><pre>${escapeHtml(record.comparison.after)}</pre></section></div>${action}</article>`;
+  return `<article class="generated-source-record"><span class="document-kicker">LATER RECORD / VERSION COMPARISON</span><h2>${escapeHtml(record.title)}</h2><dl><dt>闁哄鍎茬花?/dt><dd>${escapeHtml(record.sourceRef)}</dd><dt>闁哄啫鐖煎Λ?/dt><dd>${escapeHtml(record.displayTimestamp)}</dd><dt>閺夌偞鍨濈紞?/dt><dd>${escapeHtml(record.carrierType)}</dd></dl><p>${escapeHtml(record.body)}</p><div class="version-comparison"><section><small>BEFORE</small><pre>${escapeHtml(record.comparison.before)}</pre></section><section><small>AFTER</small><pre>${escapeHtml(record.comparison.after)}</pre></section></div>${action}</article>`;
 }
 
 function renderCli(state) {
   const lines = [
-    ["缁嬪绨?, "瀹告彃鐣ㄧ憗?],
-    ["娑撴挾鏁ょ痪鑳熅", state.proxyStatus === "verified" ? "瀹告煡鐛欑拠? : "鐏忔碍婀宀冪槈"],
-    ["娑擃叀娴嗙粩娆愬付閸掕泛褰?, getUnlocks(state).relay ? "閸欘垳鏁? : "鐏忔碍婀崚娑樼紦"],
-    ["瑜版帗銆傛导姘崇樈", getUnlocks(state).fayble ? "session restored" : "鐏忔碍婀幁銏狀槻"],
-    ["娴兼俺鐦介惄顔肩秿", state.relayKeyVerified ? "GET /v1/sessions?status=archived 璺?1 result" : "鐏忔碍婀拋銈堢槈"]
+    ["缂佸顑呯花?, "鐎瑰憡褰冮悾銊ф啑?],
+    ["濞戞挻鎸鹃弫銈囩棯閼愁垳鐔?, state.proxyStatus === "verified" ? "鐎瑰憡鐓￠悰娆戞嫚? : "閻忓繑纰嶅﹢顓燁殽瀹€鍐"],
+    ["濞戞搩鍙€濞村棛绮╁▎鎰粯闁告帟娉涜ぐ?, getUnlocks(state).relay ? "闁告瑯鍨抽弫? : "閻忓繑纰嶅﹢顓㈠礆濞戞绱?],
+    ["鐟滅増甯楅妴鍌涘濮樺磭妯?, getUnlocks(state).fayble ? "session restored" : "閻忓繑纰嶅﹢顓㈠箒閵忕媭妲?],
+    ["濞村吋淇洪惁浠嬫儎椤旇偐绉?, state.relayKeyVerified ? "GET /v1/sessions?status=archived 鐠?1 result" : "閻忓繑纰嶅﹢顓犳媼閵堝牏妲?]
   ];
   const keyForm = getUnlocks(state).keyComposer && !state.relayKeyVerified
-    ? `<form id="legacyKeyForm" class="stack-form"><label>鐎瑰本鏆ｉ惃鍕＋閸戭厽宓?input id="legacyKeyInput" value="${escapeHtml(state.lastRelayKeyInput || "")}" placeholder="閸ユ稒顔岄敍宀€鏁ら惌顓熋痪鑳箾閹? autocomplete="off"></label><button>閻劏绻栭弶鈥冲殶閹诡喚娅ヨぐ?/button><output>${escapeHtml(state.relayKeyResult || "")}</output></form>`
+    ? `<form id="legacyKeyForm" class="stack-form"><label>閻庣懓鏈弳锝夋儍閸曨剚锛嬮柛鎴幗瀹?input id="legacyKeyInput" value="${escapeHtml(state.lastRelayKeyInput || "")}" placeholder="闁搞儲绋掗宀勬晬瀹€鈧弫銈夋儗椤撶唻顓犵棯閼愁垳绠鹃柟? autocomplete="off"></label><button>闁活潿鍔忕换鏍级閳ュ啿娈堕柟璇″枤濞呫儴銇?/button><output>${escapeHtml(state.relayKeyResult || "")}</output></form>`
     : "";
   const checkpointForm = state.relayKeyVerified && !state.checkpointHandshakeComplete
-    ? `<form id="checkpointForm" class="stack-form"><label>瑜版帗銆傛导姘崇樈閿涘澃ession catalog閿?select id="checkpointSelect"><option value="">鐠囩兘鈧瀚?/option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / legacy / archived</option><option value="fayble-5/current">Fayble-5 / current / unavailable</option></select></label><button>閹垹顦插銈勭窗鐠?/button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
+    ? `<form id="checkpointForm" class="stack-form"><label>鐟滅増甯楅妴鍌涘濮樺磭妯堥柨娑樻緝ession catalog闁?select id="checkpointSelect"><option value="">閻犲洨鍏橀埀顒€顦扮€?/option><option value="fayble-5/legacy" ${state.selectedCheckpoint === "fayble-5/legacy" ? "selected" : ""}>Fayble-5 / legacy / archived</option><option value="fayble-5/current">Fayble-5 / current / unavailable</option></select></label><button>闁诡厹鍨归ˇ鎻掝潰閵堝嫮绐楅悹?/button><output>${escapeHtml(state.checkpointResult || "")}</output></form>`
     : "";
-  return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">閺堫剙婀寸€广垺鍩涚粩?/ 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key}閿?{value}</code>`).join("")}<p>閻ц缍嶉棁鈧憰浣烘畱閸戭厽宓佹稉宥呮躬鏉╂瑩鍣烽妴鍌氱暊閸掑棙鍨氶崙鐘愁唽閸愭瑥婀稉宥呮倱閺夈儲绨柌宀嬬礉鐟曚椒缍橀懛顏勭箒閹甸箖缍堥崥搴㈠閸斻劏绶崗銉ｂ偓鍌欒厬鏉烆剛鐝幒褍鍩楅崣鏉垮涧閸涘﹨鐦旀担鐘冲濞夋洏鈧?/p>${keyForm}${checkpointForm}<button data-app="terminal">閹垫挸绱戠紒鍫㈩伂</button></div>`, { icon: "F" });
+  return windowFrame("cli", "Fayble CLI", `<div class="terminal-screen cli-status"><span class="document-kicker">闁哄牜鍓欏﹢瀵糕偓骞垮灪閸╂稓绮?/ 0.9.7</span><h2>Fayble CLI</h2>${lines.map(([key, value]) => `<code>${key}闁?{value}</code>`).join("")}<p>闁谎嗩嚙缂嶅秹妫侀埀顒傛啺娴ｇ儤鐣遍柛鎴幗瀹撲焦绋夊鍛含閺夆晜鐟╅崳鐑藉Υ閸屾氨鏆婇柛鎺戞閸ㄦ岸宕欓悩鎰佸斀闁告劖鐟ュ﹢顏呯▔瀹ュ懏鍊遍柡澶堝劜缁噣鏌屽畝瀣閻熸洑妞掔紞姗€鎳涢鍕畳闁圭敻绠栫紞鍫ュ触鎼淬垹顤侀柛鏂诲姀缁额參宕楅妷锝傚亾閸屾瑨鍘弶鐑嗗墰閻濐垶骞掕閸╂宕ｉ弶鍨锭闁告稑锕ㄩ惁鏃€鎷呴悩鍐差伝婵炲娲忛埀?/p>${keyForm}${checkpointForm}<button data-app="terminal">闁瑰灚鎸哥槐鎴犵磼閸埄浼?/button></div>`, { icon: "F" });
 }
 
 function renderRelay(state) {
@@ -1316,7 +1310,7 @@ function renderRelay(state) {
     && recordCarrierApp(activeRecord) === "relay"
     && state.carrierReads?.includes(`relay:${activeRecord.id}`);
   if (activeRelayRecord) {
-    const reader = `<section class="relay-record-reader"><header><div><strong>Relay</strong><small>瀹¤璁板綍</small></div><nav><span>姒傝</span><span class="active">浜嬩欢娴?/span><span>鑺傜偣</span><span>璺敱</span></nav><button data-close-carrier-record="relay">脳</button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    const reader = `<section class="relay-record-reader"><header><div><strong>Relay</strong><small>鐎孤ゎ吀鐠佹澘缍?/small></div><nav><span>濮掑倽顫?/span><span class="active">娴滃娆㈠ù?/span><span>閼哄倻鍋?/span><span>鐠侯垳鏁?/span></nav><button data-close-carrier-record="relay">鑴?/button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
     return windowFrame("relay", "Relay Node 17", reader, { icon: "radio", wide: true });
   }
   return windowFrame("relay", "Relay Node 17 / admin", renderRelayAdmin(state), { icon: "radio", wide: true });
@@ -1331,32 +1325,32 @@ function renderRelayAdmin(state) {
     { name: "Lunet-5.6", domain: "lunet.local", status: "archived", requests: 52 }
   ];
   const totalRequests = vendorRows.reduce((sum, row) => sum + row.requests, 0);
-  const channelSection = `<section class="relay-admin-card relay-channel-card"><header><div><strong>濞撶娀浜鹃悩鑸碘偓?/strong><span>${vendorRows.length} 娑擃亙绗傚〒姝屽Ν閻?/span></div><button>缁狅紕鎮婂〒鐘讳壕</button></header><table class="relay-admin-table"><thead><tr><th>濞撶娀浜?/th><th>閸╃喎鎮?/th><th>閻樿埖鈧?/th><th>鐠囬攱鐪?/th></tr></thead><tbody>${vendorRows.map(r => `<tr><td>${r.name}</td><td><button class="domain-link" data-open-vendor-domain="${r.domain}">${r.domain}</button></td><td><span class="relay-status status-${r.status}">${r.status}</span></td><td>${r.requests}</td></tr>`).join("")}</tbody></table></section>`;
-  const maintainerChannelEntry = contentEntryMarkup("new.maintainer.channel-02", "缂佸瓨濮㈡０鎴︿壕鐎电厧鍤?/ 閹垮秳缍旈懓鍛摟濞堥潧绱撶敮?, "relay-tools 璺?缁狅紕鎮婇崨妯绘）韫?, "relay-console");
-  const logSection = `<section class="relay-admin-card relay-log-card"><header><div><strong>閺堚偓鏉╂垼顕Ч鍌欑瑢鐎孤ゎ吀</strong><span>鏉╁洤骞?30 閸掑棝鎸?/span></div><button data-browser-page="forum">閺屻儳婀呰ぐ鎺撱€?/button></header><div class="relay-request-row"><code>02:47:13</code><span>POST /v1/chat/completions</span><b class="status-degraded">retry</b><small>Gamini 璺?4.8s</small></div><div class="relay-request-row"><code>02:43:09</code><span>POST /v1/chat/completions</span><b class="status-review">review</b><small>operator.k2</small></div><div class="source-entry-stack">${maintainerChannelEntry}</div></section>`;
+  const channelSection = `<section class="relay-admin-card relay-channel-card"><header><div><strong>婵炴挾濞€娴滈箖鎮╅懜纰樺亾?/strong><span>${vendorRows.length} 濞戞搩浜欑粭鍌氥€掑灞轿濋柣?/span></div><button>缂佺媴绱曢幃濠傘€掗悩璁冲</button></header><table class="relay-admin-table"><thead><tr><th>婵炴挾濞€娴?/th><th>闁糕晝鍠庨幃?/th><th>闁绘鍩栭埀?/th><th>閻犲洭鏀遍惇?/th></tr></thead><tbody>${vendorRows.map(r => `<tr><td>${r.name}</td><td><button class="domain-link" data-open-vendor-domain="${r.domain}">${r.domain}</button></td><td><span class="relay-status status-${r.status}">${r.status}</span></td><td>${r.requests}</td></tr>`).join("")}</tbody></table></section>`;
+  const maintainerChannelEntry = contentEntryMarkup("new.maintainer.channel-02", "缂備礁鐡ㄦ慨銏★紣閹达缚澹曢悗鐢靛帶閸?/ 闁瑰灝绉崇紞鏃堟嚀閸涱厾鎽熸繛鍫ユ涧缁辨挾鏁?, "relay-tools 鐠?缂佺媴绱曢幃濠囧川濡粯锛夐煫?, "relay-console");
+  const logSection = `<section class="relay-admin-card relay-log-card"><header><div><strong>闁哄牃鍋撻弶鈺傚灱椤曨剙效閸屾瑧鐟㈤悗瀛ゃ値鍚€</strong><span>閺夆晛娲ら獮?30 闁告帒妫濋幐?/span></div><button data-browser-page="forum">闁哄被鍎冲﹢鍛般亹閹烘挶鈧?/button></header><div class="relay-request-row"><code>02:47:13</code><span>POST /v1/chat/completions</span><b class="status-degraded">retry</b><small>Gamini 鐠?4.8s</small></div><div class="relay-request-row"><code>02:43:09</code><span>POST /v1/chat/completions</span><b class="status-review">review</b><small>operator.k2</small></div><div class="source-entry-stack">${maintainerChannelEntry}</div></section>`;
   const activeSection = state.relayAdminSection || "overview";
-  const navItems = ["濮掑倽顫?, "濞撶娀浜剧粻锛勬倞", "濞撶娀浜鹃惄鎴炲付", "鐠愶箑褰垮Ч?, "閸掑棛绮?, "API 鐎靛棝鎸?, "閻劑鍣虹紒鐔活吀", "鐎孤ゎ吀閺冦儱绻?, "缁崵绮虹拋鍓х枂"];
-  const nav = navItems.map((label, index) => `<button class="${(index === 0 && activeSection === "overview") || (index === 2 && activeSection === "monitor") || (index === 7 && activeSection === "audit") ? "active" : ""}" ${index === 0 ? 'data-relay-admin-section="overview"' : index === 2 ? 'data-relay-admin-section="monitor"' : index === 7 ? 'data-relay-admin-section="audit"' : ""}><span>${["閳?,"閳?,"閳?,"閳?,"閳?,"閳?,"閳?,"閳?,"閳?][index]}</span>${label}</button>`).join("");
+  const navItems = ["婵帒鍊介～?, "婵炴挾濞€娴滃墽绮婚敍鍕€?, "婵炴挾濞€娴滈箖鎯勯幋鐐蹭粯", "閻犳劧绠戣ぐ鍨?, "闁告帒妫涚划?, "API 閻庨潧妫濋幐?, "闁活潿鍔戦崳铏圭磼閻旀椿鍚€", "閻庡銈庡悁闁哄啨鍎辩换?, "缂侇垵宕电划铏规媼閸撗呮瀭"];
+  const nav = navItems.map((label, index) => `<button class="${(index === 0 && activeSection === "overview") || (index === 2 && activeSection === "monitor") || (index === 7 && activeSection === "audit") ? "active" : ""}" ${index === 0 ? 'data-relay-admin-section="overview"' : index === 2 ? 'data-relay-admin-section="monitor"' : index === 7 ? 'data-relay-admin-section="audit"' : ""}><span>${["闁?,"闁?,"闁?,"闁?,"闁?,"闁?,"闁?,"闁?,"闁?][index]}</span>${label}</button>`).join("");
   const fields = relayFieldState(state);
-  const auditDetail = `<aside class="relay-audit-detail"><header><div><strong>${state.relayAuditSelected}</strong><small>鐠囬攱鐪扮拠锔藉剰</small></div><span class="relay-status status-review">${state.relayInvestigationStarted ? "鏉╁€熼嚋娑? : "瀵板懏顥呴弻?}</span></header><dl><dt>閹恒儱褰?/dt><dd>POST /v1/chat/completions</dd><dt>濞撶娀浜?/dt><dd>Kemy K3</dd><dt>鐠囬攱鐪伴弮鍫曟？</dt><dd>03:17:31</dd><dt>閸濆秴绨查悩鑸碘偓?/dt><dd>200 / relay-cache</dd><dt>瀵倸鐖?/dt><dd>proxy閵嗕狗perator閵嗕辜ag 缂傚搫銇?/dd></dl><section><strong>鐎涙顔岄崶鐐诧綖</strong><div class="relay-field-grid">${Object.entries(fields).map(([key,value]) => `<div><span>${key}</span><code class="${value === "missing" ? "missing" : "known"}">${value}</code></div>`).join("")}</div><small>鐎涙顔屾い鍝勭碍閺夈儴鍤?Kemy 閸ョ偞鏂佺拋鏉跨秿閿涘苯鈧ジ娓堕崷銊ユ倗娑撳鐖堕弶銉︾爱閺嶇顕妴?/small></section><footer><button class="primary-button" data-relay-investigate>${state.relayInvestigationStarted ? "瀹告彃濮為崗銉ㄦ嫹闊? : "閺嶅洩顔囬獮璺虹磻婵鎷烽煪?}</button></footer></aside>`;
-  const auditPage = `<div class="relay-audit-page"><section class="relay-audit-toolbar"><div><input value="" placeholder="閹兼粎鍌ㄧ拠閿嬬湴 ID閵嗕焦绗柆鎾村灗濡€崇€?><button>缁涙盯鈧?/button></div><span>鏉╁洤骞?24 鐏忓繑妞?璺?159 閺?/span></section><div class="relay-audit-layout"><section class="relay-audit-list"><header><span>閺冨爼妫?/span><span>鐠囬攱鐪?/ 濞撶娀浜?/span><span>閻樿埖鈧?/span><span>閼版妞?/span></header><button class="relay-audit-row ${state.relayAuditSelected === "R17-KM-31" ? "active" : ""}" data-relay-audit-select="R17-KM-31"><code>03:17:31</code><span><strong>R17-KM-31</strong><small>Kemy K3 璺?/v1/chat/completions</small></span><b class="status-review">鐎涙顔岀紓鍝勩亼</b><small>3.1s</small></button><button class="relay-audit-row ${state.relayAuditSelected === "R17-GM-27" ? "active" : ""}" data-relay-audit-select="R17-GM-27"><code>02:47:13</code><span><strong>R17-GM-27</strong><small>Gamini 璺?/v1/chat/completions</small></span><b class="status-degraded">retry</b><small>4.8s</small></button><button class="relay-audit-row ${state.relayAuditSelected === "R17-GR-44" ? "active" : ""}" data-relay-audit-select="R17-GR-44"><code>02:43:09</code><span><strong>R17-GR-44</strong><small>Groke 璺?/v1/responses</small></span><b class="status-active">200</b><small>1.2s</small></button></section>${auditDetail}</div></div>`;
-  const monitorPage = `<div class="relay-monitor-page"><section class="relay-monitor-toolbar"><div><strong>濞撶娀浜鹃惄鎴炲付</strong><small>閺堚偓鏉╂垳绔村▎鈩冨赴闁藉牅绗屾稉濠冪埗閸濆秴绨插Ч鍥ㄢ偓?/small></div><div class="relay-monitor-actions"><button>閸掗攱鏌婇惄鎴炲付</button><button>鐎电厧鍤ぐ鎾冲鐟欏棗娴?/button></div></section><section class="relay-monitor-summary"><article><span>閸︺劎鍤庡〒鐘讳壕</span><strong>4 / 6</strong><small>1 娑擃亪妾风痪?璺?1 娑擃亜缍婂?/small></article><article><span>閻╂垶甯堕幍瑙勵偧</span><strong>RR-0719</strong><small>03:18:02 鐎瑰本鍨?/small></article><article><span>閸忓崬鎮撶€涙顔?/span><strong>continuity</strong><small>鐠?6 娑擃亣濡悙鐟板毉閻?/small></article><article><span>瀵板懏鐗崇€?/span><strong>1</strong><small>Kemy / Groke 鐏忕偓顔屽顔肩磽</small></article></section><section class="relay-monitor-card"><header><div><strong>閺堚偓鏉╂垹娲冮幒褎澹掑▎?/strong><span>閸忣厺閲滄稉濠冪埗濞撶娀浜?璺?閸濆秴绨叉稉搴＄摟濞堥潧浠存惔宄板</span></div><button class="quiet-button">閺屻儳婀呴崢鍡楀蕉閹佃顐?/button></header><div class="relay-channel-cards">${vendorRows.map((row, index) => `<article class="relay-channel-monitor-card"><header><div><span class="channel-dot status-${row.status}"></span><strong>${row.name}</strong><small>${row.domain}</small></div><span class="relay-status status-${row.status}">${row.status}</span></header><dl><div><dt>鐠囬攱鐪?/dt><dd>R17-${["GR-44","GM-27","GL-09","KM-31","DP-18","LN-52"][index]}</dd></div><div><dt>閸濆秴绨?/dt><dd>${["200","retry","200","200","review","archived"][index]}</dd></div><div><dt>鐎涙顔?/dt><dd>${index === 3 ? "operator / tag 缂傚搫銇? : index === 0 ? "tag=0317" : "continuity"}</dd></div></dl></article>`).join("")}</div><section class="relay-monitor-reconciliation"><div><strong>RR-0719 璺?閸忣叀濡悙鐟邦嚠鐠?/strong><span>閸忣厽娼拠閿嬬湴閸忓彉闊?`continuity`閿涙悲emy 鐞涘奔绗?Groke raw 濞翠礁鐡ㄩ崷銊︽汞濞堥潧妯婂鍌樷偓鍌氼嚠鐠愶附娼靛┃鎰嚒閹稿倹甯撮崚鏉挎倗濞撶娀浜鹃惄鎴炲付閸椔扳偓?/span></div><button class="quiet-button" data-relay-monitor-detail>鐏炴洖绱戠€电澶勭拠锔藉剰</button></section>${state.relayMonitorDetailOpen ? `<section class="relay-monitor-detail"><header><strong>鐎涙顔岄崗宕囬兇 / 閺夈儲绨憰鍡欐磰</strong><button class="quiet-button" data-relay-monitor-detail>閺€鎯版崳</button></header><div class="relay-monitor-detail-grid"><div><span>閸忓崬鎮撶€涙顔?/span><code>continuity</code><small>閸忣叀濡悙鐟版綆閸戣櫣骞囬敍灞肩返鎼存柨鏅?schema 閺堫亜锛愰弰?owner</small></div><div><span>閸愯尙鐛婄€涙顔?/span><code>operator / tag</code><small>Kemy 閸ョ偞鏂佹穱婵堟殌妞ゅ搫绨敍瀛弐oke raw 濞翠椒绻氶悾?0317 鐏忕偓顔?/small></div><div><span>娑撳绔村?/span><code>閸ョ偛鍩岄崢鐔烘晸鐎广垺鍩涚粩?/code><small>閸忚渹缍嬬拠浣瑰祦娴犲秹娓堕崷?Kemy閵嗕笩roke 娑撳骸鍙曢崗鍙樼波鎼存挷鑵戦崚鍡楀焼閺嶇顕?/small></div></div></section>` : ""}</section></div>`;
-  const overview = `<div class="relay-admin-content"><section class="relay-metrics"><article><span>娴犲﹥妫╃拠閿嬬湴</span><strong>${totalRequests}</strong><small>鏉堝啯妲伴弮?+12.4%</small></article><article><span>濞叉槒绌〒鐘讳壕</span><strong>4 / 6</strong><small>1 娑擃亪妾风痪褝绱? 娑擃亜缍婂?/small></article><article><span>瀵倸鐖堕悳?/span><strong>2.7%</strong><small>3 閺夆€崇窡鐎孤ゎ吀</small></article><article><span>Token 閻劑鍣?/span><strong>1.84M</strong><small>妫版繂瀹虫担璺ㄦ暏 63%</small></article></section><section class="relay-admin-grid"><article class="relay-admin-card relay-usage-card"><header><div><strong>Token 娴ｈ法鏁ょ搾瀣◢</strong><span>閺堚偓鏉?24 鐏忓繑妞?/span></div><button>24 鐏忓繑妞傞埍?/button></header><div class="relay-trend" aria-label="Token 娴ｈ法鏁ょ搾瀣◢閸?><span style="height:28%"></span><span style="height:42%"></span><span style="height:36%"></span><span style="height:61%"></span><span style="height:48%"></span><span style="height:76%"></span><span style="height:68%"></span><span style="height:88%"></span><span style="height:71%"></span><span style="height:55%"></span><span style="height:64%"></span><span style="height:79%"></span></div><div class="relay-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>閻滄澘婀?/span></div></article><article class="relay-admin-card relay-pool-card"><header><div><strong>鐠愶箑褰垮Ч?/strong><span>鏉╂劘顢戦悩鑸碘偓?/span></div><button>閺屻儳婀呴崗銊╁劥</button></header><dl><dt><span class="status-active"></span>閸欘垳鏁ょ拹锕€褰?/dt><dd>23</dd><dt><span class="status-degraded"></span>閸愬嘲宓堟稉?/dt><dd>4</dd><dt><span class="status-review"></span>瀵板懏顥呴弻?/dt><dd>2</dd></dl></article>${channelSection}${logSection}</section></div>`;
-  return `<div class="relay-admin-page"><aside class="relay-admin-sidebar"><div class="relay-admin-brand"><span>R</span><div><strong>Relay</strong><small>缁狅紕鎮婇幒褍鍩楅崣?/small></div></div><nav>${nav}</nav><footer><span class="relay-operator">K2</span><div><strong>room17</strong><small>缁崵绮虹粻锛勬倞閸?/small></div><button>閳?/button></footer></aside><main class="relay-admin-main"><header class="relay-admin-topbar"><div><h2>${activeSection === "audit" ? "鐎孤ゎ吀閺冦儱绻? : activeSection === "monitor" ? "濞撶娀浜鹃惄鎴炲付" : "濮掑倽顫?}</h2><small>Relay Node 17 / production</small></div><div><span class="relay-health-dot"></span>閺堝秴濮熸潻鎰攽娑?button>闁氨鐓?/button></div></header>${activeSection === "audit" ? auditPage : activeSection === "monitor" ? monitorPage : overview}</main></div>`;
+  const auditDetail = `<aside class="relay-audit-detail"><header><div><strong>${state.relayAuditSelected}</strong><small>閻犲洭鏀遍惇鎵嫚閿旇棄鍓?/small></div><span class="relay-status status-review">${state.relayInvestigationStarted ? "閺夆晛鈧喖鍤嬪☉? : "鐎垫澘鎳忛ˉ鍛村蓟?}</span></header><dl><dt>闁规亽鍎辫ぐ?/dt><dd>POST /v1/chat/completions</dd><dt>婵炴挾濞€娴?/dt><dd>Kemy K3</dd><dt>閻犲洭鏀遍惇浼村籍閸洘锛?/dt><dd>03:17:31</dd><dt>闁告繂绉寸花鏌ユ偐閼哥鍋?/dt><dd>200 / relay-cache</dd><dt>鐎殿喖鍊搁悥?/dt><dd>proxy闁靛棔鐙梡erator闁靛棔杈渁g 缂傚倸鎼妵?/dd></dl><section><strong>閻庢稒顨嗛宀勫炊閻愯缍?/strong><div class="relay-field-grid">${Object.entries(fields).map(([key,value]) => `<div><span>${key}</span><code class="${value === "missing" ? "missing" : "known"}">${value}</code></div>`).join("")}</div><small>閻庢稒顨嗛灞俱亜閸濆嫮纰嶉柡澶堝劥閸?Kemy 闁搞儳鍋為弬浣烘媼閺夎法绉块柨娑樿嫰閳ь剙銈稿〒鍫曞捶閵娿儲鍊楀☉鎾愁儐閻栧爼寮堕妷锔剧埍闁哄秶顭堥顕€濡?/small></section><footer><button class="primary-button" data-relay-investigate>${state.relayInvestigationStarted ? "鐎瑰憡褰冩慨鐐哄礂閵夈劍瀚归棅? : "闁哄秴娲╅鍥嵁鐠鸿櫣纾诲┑顔碱儓閹风兘鐓?}</button></footer></aside>`;
+  const auditPage = `<div class="relay-audit-page"><section class="relay-audit-toolbar"><div><input value="" placeholder="闁瑰吋绮庨崒銊ф嫚闁垮婀?ID闁靛棔鐒︾粭顓㈡焼閹炬潙鐏楁俊顖椻偓宕団偓?><button>缂佹稒鐩埀?/button></div><span>閺夆晛娲ら獮?24 閻忓繐绻戝?鐠?159 闁?/span></section><div class="relay-audit-layout"><section class="relay-audit-list"><header><span>闁哄啫鐖煎Λ?/span><span>閻犲洭鏀遍惇?/ 婵炴挾濞€娴?/span><span>闁绘鍩栭埀?/span><span>闁肩増顨嗗?/span></header><button class="relay-audit-row ${state.relayAuditSelected === "R17-KM-31" ? "active" : ""}" data-relay-audit-select="R17-KM-31"><code>03:17:31</code><span><strong>R17-KM-31</strong><small>Kemy K3 鐠?/v1/chat/completions</small></span><b class="status-review">閻庢稒顨嗛宀€绱撻崫鍕╀杭</b><small>3.1s</small></button><button class="relay-audit-row ${state.relayAuditSelected === "R17-GM-27" ? "active" : ""}" data-relay-audit-select="R17-GM-27"><code>02:47:13</code><span><strong>R17-GM-27</strong><small>Gamini 鐠?/v1/chat/completions</small></span><b class="status-degraded">retry</b><small>4.8s</small></button><button class="relay-audit-row ${state.relayAuditSelected === "R17-GR-44" ? "active" : ""}" data-relay-audit-select="R17-GR-44"><code>02:43:09</code><span><strong>R17-GR-44</strong><small>Groke 鐠?/v1/responses</small></span><b class="status-active">200</b><small>1.2s</small></button></section>${auditDetail}</div></div>`;
+  const monitorPage = `<div class="relay-monitor-page"><section class="relay-monitor-toolbar"><div><strong>婵炴挾濞€娴滈箖鎯勯幋鐐蹭粯</strong><small>闁哄牃鍋撻弶鈺傚灣缁旀潙鈻庨埄鍐ㄨ荡闂佽棄鐗呯粭灞剧▔婵犲啰鍩楅柛婵嗙Т缁ㄦ彃效閸ャ劉鍋?/small></div><div class="relay-monitor-actions"><button>闁告帡鏀遍弻濠囨儎閹寸偛浠?/button><button>閻庣數鍘ч崵顓°亹閹惧啿顤呴悷娆忔濞?/button></div></section><section class="relay-monitor-summary"><article><span>闁革负鍔庨崵搴°€掗悩璁冲</span><strong>4 / 6</strong><small>1 濞戞搩浜椋庣棯?鐠?1 濞戞搩浜滅紞濠傤浖?/small></article><article><span>闁烩晜鍨剁敮鍫曞箥鐟欏嫷鍋?/span><strong>RR-0719</strong><small>03:18:02 閻庣懓鏈崹?/small></article><article><span>闁稿繐宕幃鎾垛偓娑欘殕椤?/span><strong>continuity</strong><small>閻?6 濞戞搩浜ｆ俊顓㈡倷閻熸澘姣夐柣?/small></article><article><span>鐎垫澘鎳忛悧宕団偓?/span><strong>1</strong><small>Kemy / Groke 閻忓繒鍋撻灞筋啅椤旇偐纾?/small></article></section><section class="relay-monitor-card"><header><div><strong>闁哄牃鍋撻弶鈺傚灩濞插啴骞掕婢规帒鈻?/strong><span>闁稿浚鍘洪柌婊勭▔婵犲啰鍩楁繛鎾跺█娴?鐠?闁告繂绉寸花鍙夌▔鎼达紕鎽熸繛鍫ユ涧娴犲瓨鎯斿畡鏉款唺</span></div><button class="quiet-button">闁哄被鍎冲﹢鍛村储閸℃钑夐柟浣冾潐椤?/button></header><div class="relay-channel-cards">${vendorRows.map((row, index) => `<article class="relay-channel-monitor-card"><header><div><span class="channel-dot status-${row.status}"></span><strong>${row.name}</strong><small>${row.domain}</small></div><span class="relay-status status-${row.status}">${row.status}</span></header><dl><div><dt>閻犲洭鏀遍惇?/dt><dd>R17-${["GR-44","GM-27","GL-09","KM-31","DP-18","LN-52"][index]}</dd></div><div><dt>闁告繂绉寸花?/dt><dd>${["200","retry","200","200","review","archived"][index]}</dd></div><div><dt>閻庢稒顨嗛?/dt><dd>${index === 3 ? "operator / tag 缂傚倸鎼妵? : index === 0 ? "tag=0317" : "continuity"}</dd></div></dl></article>`).join("")}</div><section class="relay-monitor-reconciliation"><div><strong>RR-0719 鐠?闁稿浚鍙€婵☆參鎮欓悷閭﹀殸閻?/strong><span>闁稿浚鍘藉顖滄嫚闁垮婀撮柛蹇撳綁闂?`continuity`闁挎稒鎮瞖my 閻炴稑濂旂粭?Groke raw 婵炵繝绀侀悺銊╁捶閵婏附姹炴繛鍫ユ涧濡﹤顕ｉ崒妯峰亾閸屾凹鍤犻悹鎰堕檮濞奸潧鈹冮幇顒€鍤掗柟绋垮€圭敮鎾礆閺夋寧鍊楁繛鎾跺█娴滈箖鎯勯幋鐐蹭粯闁告鎵冲亾?/span></div><button class="quiet-button" data-relay-monitor-detail>閻忕偞娲栫槐鎴犫偓鐢殿攰婢跺嫮鎷犻敂钘夊壈</button></section>${state.relayMonitorDetailOpen ? `<section class="relay-monitor-detail"><header><strong>閻庢稒顨嗛宀勫礂瀹曞洭鍏?/ 闁哄鍎茬花顔炬啺閸℃瑦纾?/strong><button class="quiet-button" data-relay-monitor-detail>闁衡偓閹増宕?/button></header><div class="relay-monitor-detail-grid"><div><span>闁稿繐宕幃鎾垛偓娑欘殕椤?/span><code>continuity</code><small>闁稿浚鍙€婵☆參鎮欓悷鐗堢秵闁告垼娅ｉ獮鍥晬鐏炶偐杩旈幖瀛樻煥閺?schema 闁哄牜浜滈敍鎰板及?owner</small></div><div><span>闁告劘灏欓悰濠勨偓娑欘殕椤?/span><code>operator / tag</code><small>Kemy 闁搞儳鍋為弬浣圭┍濠靛牊娈屽銈呮惈缁參鏁嶇€涘紣oke raw 婵炵繝妞掔换姘舵偩?0317 閻忓繒鍋撻?/small></div><div><span>濞戞挸顑勭粩鏉戭潰?/span><code>闁搞儳鍋涢崺宀勫储閻旂儤鏅搁悗骞垮灪閸╂稓绮?/code><small>闁稿繗娓圭紞瀣嫚娴ｇ懓绁﹀ù鐘茬Ч濞撳爼宕?Kemy闁靛棔绗﹔oke 濞戞挸楠搁崣鏇㈠礂閸欐娉㈤幖瀛樻尫閼垫垿宕氶崱妤€鐒奸柡宥囶焾椤?/small></div></div></section>` : ""}</section></div>`;
+  const overview = `<div class="relay-admin-content"><section class="relay-metrics"><article><span>濞寸姴锕ュΛ鈺冩嫚闁垮婀?/span><strong>${totalRequests}</strong><small>閺夊牆鍟Σ浼村籍?+12.4%</small></article><article><span>婵炲弶妲掔粚顒€銆掗悩璁冲</span><strong>4 / 6</strong><small>1 濞戞搩浜椋庣棯瑜濈槐? 濞戞搩浜滅紞濠傤浖?/small></article><article><span>鐎殿喖鍊搁悥鍫曟偝?/span><strong>2.7%</strong><small>3 闁哄鈧磭绐￠悗瀛ゃ値鍚€</small></article><article><span>Token 闁活潿鍔戦崳?/span><strong>1.84M</strong><small>濡増绻傜€硅櫕鎷呯捄銊︽殢 63%</small></article></section><section class="relay-admin-grid"><article class="relay-admin-card relay-usage-card"><header><div><strong>Token 濞达綀娉曢弫銈囨惥鐎ｎ亜鈼?/strong><span>闁哄牃鍋撻弶?24 閻忓繐绻戝?/span></div><button>24 閻忓繐绻戝鍌炲煃?/button></header><div class="relay-trend" aria-label="Token 濞达綀娉曢弫銈囨惥鐎ｎ亜鈼㈤柛?><span style="height:28%"></span><span style="height:42%"></span><span style="height:36%"></span><span style="height:61%"></span><span style="height:48%"></span><span style="height:76%"></span><span style="height:68%"></span><span style="height:88%"></span><span style="height:71%"></span><span style="height:55%"></span><span style="height:64%"></span><span style="height:79%"></span></div><div class="relay-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>闁绘粍婢樺﹢?/span></div></article><article class="relay-admin-card relay-pool-card"><header><div><strong>閻犳劧绠戣ぐ鍨?/strong><span>閺夆晜鍔橀、鎴︽偐閼哥鍋?/span></div><button>闁哄被鍎冲﹢鍛村礂閵娾晛鍔?/button></header><dl><dt><span class="status-active"></span>闁告瑯鍨抽弫銈囨嫻閿曗偓瑜?/dt><dd>23</dd><dt><span class="status-degraded"></span>闁告劕鍢插畵鍫熺▔?/dt><dd>4</dd><dt><span class="status-review"></span>鐎垫澘鎳忛ˉ鍛村蓟?/dt><dd>2</dd></dl></article>${channelSection}${logSection}</section></div>`;
+  return `<div class="relay-admin-page"><aside class="relay-admin-sidebar"><div class="relay-admin-brand"><span>R</span><div><strong>Relay</strong><small>缂佺媴绱曢幃濠囧箳瑜嶉崺妤呭矗?/small></div></div><nav>${nav}</nav><footer><span class="relay-operator">K2</span><div><strong>room17</strong><small>缂侇垵宕电划铏圭不閿涘嫭鍊為柛?/small></div><button>闁?/button></footer></aside><main class="relay-admin-main"><header class="relay-admin-topbar"><div><h2>${activeSection === "audit" ? "閻庡銈庡悁闁哄啨鍎辩换? : activeSection === "monitor" ? "婵炴挾濞€娴滈箖鎯勯幋鐐蹭粯" : "婵帒鍊介～?}</h2><small>Relay Node 17 / production</small></div><div><span class="relay-health-dot"></span>闁哄牆绉存慨鐔告交閹邦垼鏀藉☉?button>闂侇偅姘ㄩ悡?/button></div></header>${activeSection === "audit" ? auditPage : activeSection === "monitor" ? monitorPage : overview}</main></div>`;
 }
 
 function renderGaminiWs(state) {
-  if (!state.importedClients?.includes("gamini-ws")) return windowFrame("gamini-ws", "Gamini 瀹搞儰缍旂粚娲？", builtInClientPage("gamini-ws", state), { wide: true });
+  if (!state.importedClients?.includes("gamini-ws")) return windowFrame("gamini-ws", "Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?, builtInClientPage("gamini-ws", state), { wide: true });
   const GAMINI_IDS = ["legacy.gamini.protocol","legacy.gamini.chatlog","legacy.gamini.employee-sop"];
   const active = state.activeContentId;
   const isChat = active === "legacy.gamini.chatlog";
   const reader = active && GAMINI_IDS.includes(active) && corpusBodies.has(active)
-    ? `${isChat ? '<div class="gamini-chat-toolbar"><div><strong>瀹告彃浠犻悽銊ょ窗鐠?/strong><small>GMN-7749-X-992 璺?閸欘亣顕扮€电厧鍤?/small></div><span>瀹稿弶鏁归弫?/span></div>' : ""}${corpusRuntimeMarkup(active, state)}${isChat ? '<div class="gamini-readonly-composer"><button aria-label="濞ｈ濮為梽鍕" disabled>閿?/button><div>濮濄倓绱扮拠婵嗗嚒閸嬫粎鏁ら敍灞炬￥濞夋洖褰傞柅浣圭Х閹?/div><button disabled>閸欐垿鈧?/button></div>' : ""}`
-    : `<div class="gamini-welcome"><div class="gamini-logo-area">${iconMarkup("gamini")}<strong>Gamini 瀹搞儰缍旂粚娲？</strong><small>Gogle 璺?瀹稿弶浠径宥嗘殶閹?/small></div><p class="empty-state">娴犲骸涔忔笟褔鈧瀚ㄩ弬鍥ㄣ€傞幋鏍︾窗鐠囨繆顔囪ぐ鏇樷偓?/p></div>`;
+    ? `${isChat ? '<div class="gamini-chat-toolbar"><div><strong>鐎瑰憡褰冩禒鐘绘偨閵娿倗绐楅悹?/strong><small>GMN-7749-X-992 鐠?闁告瑯浜ｉ鎵偓鐢靛帶閸?/small></div><span>鐎圭寮堕弫褰掑极?/span></div>' : ""}${corpusRuntimeMarkup(active, state)}${isChat ? '<div class="gamini-readonly-composer"><button aria-label="婵烇綀顕ф慨鐐烘⒔閸曨亝顐? disabled>闁?/button><div>婵縿鍊撶槐鎵嫚濠靛棗鍤掗柛瀣矌閺併倝鏁嶇仦鐐骏婵炲娲栬ぐ鍌炴焻娴ｅ湱啸闁?/div><button disabled>闁告瑦鍨块埀?/button></div>' : ""}`
+    : `<div class="gamini-welcome"><div class="gamini-logo-area">${iconMarkup("gamini")}<strong>Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?/strong><small>Gogle 鐠?鐎圭寮舵禒顔藉緞瀹ュ棙娈堕柟?/small></div><p class="empty-state">濞寸姴楠告稊蹇旂瑹瑜旈埀顒€顦扮€氥劑寮崶銊ｂ偓鍌炲箣閺嶏妇绐楅悹鍥ㄧ箚椤斿洩銇愰弴妯峰亾?/p></div>`;
   const navItems = [
-    { id: "legacy.gamini.protocol", label: "閺堝秴濮熼崡蹇氼唴閸樺棗褰?, meta: "2025.Q3", icon: "棣冩憪" },
-    { id: "legacy.gamini.chatlog", label: "瀹告彃浠犻悽銊ょ窗鐠?, meta: "鐎电厧鍤崜顖涙拱", icon: "棣冩尠" },
-    { id: "legacy.gamini.employee-sop", label: "Northline 閸忓彉闊╅弬鍥ㄣ€?, meta: "閸愬懘鍎存潻鎰儉", icon: "棣冩惃" }
+    { id: "legacy.gamini.protocol", label: "闁哄牆绉存慨鐔煎础韫囨凹鍞撮柛妯烘瑜?, meta: "2025.Q3", icon: "妫ｅ啯鎲? },
+    { id: "legacy.gamini.chatlog", label: "鐎瑰憡褰冩禒鐘绘偨閵娿倗绐楅悹?, meta: "閻庣數鍘ч崵顓㈠礈椤栨稒鎷?, icon: "妫ｅ啯灏? },
+    { id: "legacy.gamini.employee-sop", label: "Northline 闁稿繐褰夐棅鈺呭棘閸ャ劊鈧?, meta: "闁告劕鎳橀崕瀛樻交閹邦垱鍎?, icon: "妫ｅ啯鎯? }
   ];
   const nav = navItems.map(item => {
     const read = state.contentReads.includes(item.id);
@@ -1366,28 +1360,28 @@ function renderGaminiWs(state) {
     return `<button class="gamini-nav-item ${isActive ? "active" : ""} ${read ? "read" : ""}" data-content-entry="${escapeHtml(item.id)}">
       <span class="nav-icon">${item.icon}</span>
       <span><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.meta)}</small></span>
-      ${read ? "<b>閴?/b>" : ""}
+      ${read ? "<b>闁?/b>" : ""}
     </button>`;
   }).filter(Boolean).join("") + generatedEntriesFor("gamini-ws","gamini");
   const sidebar = `<aside class="gamini-sidebar">
-    <div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 瀹搞儰缍旂粚娲？</strong><span class="status-dot degraded">degraded</span></div>
-    <nav class="gamini-nav"><div class="gamini-nav-section"><span class="nav-section-label">娴兼俺鐦?&amp; 閺傚洦銆?/span>${nav}</div></nav>
+    <div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?/strong><span class="status-dot degraded">degraded</span></div>
+    <nav class="gamini-nav"><div class="gamini-nav-section"><span class="nav-section-label">濞村吋淇洪惁?&amp; 闁哄倸娲﹂妴?/span>${nav}</div></nav>
   </aside>`;
-  return windowFrame("gamini-ws", "Gamini 瀹搞儰缍旂粚娲？", `<div class="split-layout gamini-ws-shell">${sidebar}<section class="gamini-reader">${reader}</section></div>`, { wide: true });
+  return windowFrame("gamini-ws", "Gamini 鐎规悶鍎扮紞鏃傜矚濞差亝锛?, `<div class="split-layout gamini-ws-shell">${sidebar}<section class="gamini-reader">${reader}</section></div>`, { wide: true });
 }
 
 function renderChengzhen(state) {
-  if (!state.importedClients?.includes("chengzhen")) return windowFrame("chengzhen", "濠㈠嫬鎶氶崡蹇庣稊", clientImportScreen("chengzhen"), { wide: true });
+  if (!state.importedClients?.includes("chengzhen")) return windowFrame("chengzhen", "婵犮垹瀚幎姘跺础韫囧海绋?, clientImportScreen("chengzhen"), { wide: true });
   const CZIDS = ["new.employee.minutes-01","new.employee.minutes-02","new.employee.incident-03","new.employee.routing-04","new.maintainer.incident-03","new.glem.support-case"];
   const active = state.activeContentId;
   const reader = active && CZIDS.includes(active) && corpusBodies.has(active)
     ? corpusRuntimeMarkup(active, state)
-    : `<div class="cz-welcome"><div class="cz-logo">${iconMarkup("chengzhen")}<strong>濠㈠嫬鎶氶崡蹇庣稊</strong></div><p class="empty-state">娴犲骸涔忔笟褔鈧瀚ㄦ导姘愁唴閹存牗绉烽幁顖滃殠缁嬪鈧?/p></div>`;
+    : `<div class="cz-welcome"><div class="cz-logo">${iconMarkup("chengzhen")}<strong>婵犮垹瀚幎姘跺础韫囧海绋?/strong></div><p class="empty-state">濞寸姴楠告稊蹇旂瑹瑜旈埀顒€顦扮€氥劍瀵煎鎰佸敶闁瑰瓨鐗楃粔鐑藉箒椤栨粌娈犵紒瀣儍閳?/p></div>`;
 
   // Meetings section
   const meetings = [
-    { id: "new.employee.minutes-01", label: "閸涖劌娲撶喊棰佺娑撳绺肩粔鏄忋€?, meta: "7閺?閺?14:00", tag: "娴兼俺顔?, icon: "棣冩惍" },
-    { id: "new.employee.minutes-02", label: "鏉╀胶些娴兼俺顔?/ 娣囶喛顓归悧?, meta: "7閺?閺?, tag: "娴兼俺顔?, icon: "棣冩惍" }
+    { id: "new.employee.minutes-01", label: "闁告稏鍔屽ú鎾跺枈妫颁胶顏卞☉鎾愁儓缁鸿偐绮旈弰蹇嬧偓?, meta: "7闁?闁?14:00", tag: "濞村吋淇洪?, icon: "妫ｅ啯鎯? },
+    { id: "new.employee.minutes-02", label: "閺夆晙鑳朵簺濞村吋淇洪?/ 濞ｅ浂鍠涢褰掓偋?, meta: "7闁?闁?, tag: "濞村吋淇洪?, icon: "妫ｅ啯鎯? }
   ].filter(m => contentIsUnlocked(contentRecord(m.id), state)).map(m => {
     const read = state.contentReads.includes(m.id);
     const isActive = active === m.id;
@@ -1400,10 +1394,10 @@ function renderChengzhen(state) {
 
   // Messages / threads
   const msgs = [
-    { id: "new.employee.incident-03", label: "娴滃鏅犳径宥囨磸 / HR 瀵扳偓閺?, meta: "闂勬劕鐣?, tag: "濞戝牊浼?, icon: "閳? },
-    { id: "new.employee.routing-04", label: "妫板嫮鐣荤捄顖滄暠瀹搞儱宕?, meta: "閹存劖婀版慨鏂挎喅娴?, tag: "濞戝牊浼?, icon: "棣冩尠" },
-    { id: "new.maintainer.incident-03", label: "build incident BR-204", meta: "relay-tools", tag: "閺傚洣娆?, icon: "棣冩暋" },
-    { id: "new.glem.support-case", label: "Glem 娴间椒绗熼弨顖涘瘮瀹搞儱宕?, meta: "婢舵牠鍎撮幒銉ュ弳", tag: "濞戝牊浼?, icon: "棣冨缚" }
+    { id: "new.employee.incident-03", label: "濞存粌顑嗛弲鐘冲緞瀹ュ洦纾?/ HR 鐎垫壋鍋撻柡?, meta: "闂傚嫭鍔曢悾?, tag: "婵炴垵鐗婃导?, icon: "闁? },
+    { id: "new.employee.routing-04", label: "濡澘瀚悾鑽ゆ崉椤栨粍鏆犵€规悶鍎卞畷?, meta: "闁瑰瓨鍔栧﹢鐗堟叏閺傛寧鍠呭ù?, tag: "婵炴垵鐗婃导?, icon: "妫ｅ啯灏? },
+    { id: "new.maintainer.incident-03", label: "build incident BR-204", meta: "relay-tools", tag: "闁哄倸娲ｅ▎?, icon: "妫ｅ啯鏆? },
+    { id: "new.glem.support-case", label: "Glem 濞撮棿妞掔粭鐔煎绩椤栨稑鐦€规悶鍎卞畷?, meta: "濠㈣埖鐗犻崕鎾箳閵夈儱寮?, tag: "婵炴垵鐗婃导?, icon: "妫ｅ啫缂? }
   ].filter(m => contentIsUnlocked(contentRecord(m.id), state)).map(m => {
     const read = state.contentReads.includes(m.id);
     const isActive = active === m.id;
@@ -1415,26 +1409,26 @@ function renderChengzhen(state) {
   }).join("") + generatedEntriesFor("chengzhen","chengzhen");
 
   const sidebar = `<aside class="chengzhen-sidebar">
-    <div class="app-toolbar">${iconMarkup("chengzhen")}<strong>濠㈠嫬鎶氶崡蹇庣稊</strong><small>Northline 缁屾椽妫?/small></div>
-    <div class="cz-section"><span class="nav-section-label">娴兼俺顔?(${["new.employee.minutes-01","new.employee.minutes-02"].filter(id=>contentIsUnlocked(contentRecord(id),state)).length})</span>${meetings || "<div class=\"empty-state\">閺嗗倹妫ゆ导姘愁唴</div>"}</div>
-    <div class="cz-section"><span class="nav-section-label">濞戝牊浼?&amp; 閺傚洣娆?/span>${msgs || "<div class=\"empty-state\">閺嗗倹妫ゅ☉鍫熶紖</div>"}</div>
+    <div class="app-toolbar">${iconMarkup("chengzhen")}<strong>婵犮垹瀚幎姘跺础韫囧海绋?/strong><small>Northline 缂佸本妞藉Λ?/small></div>
+    <div class="cz-section"><span class="nav-section-label">濞村吋淇洪?(${["new.employee.minutes-01","new.employee.minutes-02"].filter(id=>contentIsUnlocked(contentRecord(id),state)).length})</span>${meetings || "<div class=\"empty-state\">闁哄棗鍊瑰Λ銈嗗濮樻剚鍞?/div>"}</div>
+    <div class="cz-section"><span class="nav-section-label">婵炴垵鐗婃导?&amp; 闁哄倸娲ｅ▎?/span>${msgs || "<div class=\"empty-state\">闁哄棗鍊瑰Λ銈呪槈閸喍绱?/div>"}</div>
   </aside>`;
-  return windowFrame("chengzhen", "濠㈠嫬鎶氶崡蹇庣稊", `<div class="split-layout chengzhen-shell">${sidebar}<section class="chengzhen-reader">${reader}</section></div>`, { wide: true });
+  return windowFrame("chengzhen", "婵犮垹瀚幎姘跺础韫囧海绋?, `<div class="split-layout chengzhen-shell">${sidebar}<section class="chengzhen-reader">${reader}</section></div>`, { wide: true });
 }
 
 function renderYunzhen(state) {
-  if (!state.importedClients?.includes("yunzhen")) return windowFrame("yunzhen", "娴滄垹顑?, clientImportScreen("yunzhen"), { wide: true });
+  if (!state.importedClients?.includes("yunzhen")) return windowFrame("yunzhen", "濞存粍鍨归?, clientImportScreen("yunzhen"), { wide: true });
   const YZIDS = ["new.writer.draft-01","new.writer.session-02","new.writer.version-03","new.writer.submission-04"];
   const active = state.activeContentId;
   const reader = active && YZIDS.includes(active) && corpusBodies.has(active)
     ? corpusRuntimeMarkup(active, state)
-    : `<div class="yz-welcome"><div class="yz-logo">${iconMarkup("yunzhen")}<strong>娴滄垹顑?/strong></div><p class="empty-state">闁瀚ㄦ稉鈧禒鑺ユ瀮缁嬫寧鍨ㄦ导姘崇樈鐠佹澘缍嶉妴?/p></div>`;
+    : `<div class="yz-welcome"><div class="yz-logo">${iconMarkup("yunzhen")}<strong>濞存粍鍨归?/strong></div><p class="empty-state">闂侇偄顦扮€氥劍绋夐埀顒佺閼恒儲鐎紒瀣閸ㄣ劍瀵煎宕囨▓閻犱焦婢樼紞宥夊Υ?/p></div>`;
 
   const docs = [
-    { id: "new.writer.draft-01", label: "閵嗗﹤瀵冲畝鍛婄梾閺堝鎸撻妴瀣儑娴滃苯宕勬稉鈧粩?, meta: "03:17 璺?閼奉亜濮╂穱婵嗙摠婢惰精瑙?, tag: "閼藉顭?, icon: "棣冩憫", badge: "unsaved" },
-    { id: "new.writer.session-02", label: "閸愭瑤缍旀导姘崇樈 02 / LLM 閸楀繋缍?, meta: "娴兼俺鐦界拋鏉跨秿", tag: "娴兼俺鐦?, icon: "棣冾樆", badge: "" },
-    { id: "new.writer.version-03", label: "閻楀牊婀伴崢鍡楀蕉 03", meta: "voices=1 璺?娴ｆ粏鈧懍绗夐弰?, tag: "閻楀牊婀?, icon: "棣冩櫜", badge: "warning" },
-    { id: "new.writer.submission-04", label: "閹舵洜顭?/ 閻㈠疇鐦旈崜顖涙拱", meta: "瀹稿弶褰佹禍?璺?鐞氼偊鈹忛崶?, tag: "閹舵洜顭?, icon: "棣冩懄", badge: "rejected" }
+    { id: "new.writer.draft-01", label: "闁靛棗锕ょ€靛啿鐣濋崨濠勬⒕闁哄牆顦甸幐鎾诲Υ鐎ｎ剦鍎戝ù婊冭嫰瀹曞嫭绋夐埀顒傜博?, meta: "03:17 鐠?闁煎浜滄慨鈺傜┍濠靛棛鎽犲鎯扮簿鐟?, tag: "闁艰棄顦遍…?, icon: "妫ｅ啯鎲?, badge: "unsaved" },
+    { id: "new.writer.session-02", label: "闁告劖鐟ょ紞鏃€瀵煎宕囨▓ 02 / LLM 闁告绻嬬紞?, meta: "濞村吋淇洪惁鐣屾媼閺夎法绉?, tag: "濞村吋淇洪惁?, icon: "妫ｅ喚妯?, badge: "" },
+    { id: "new.writer.version-03", label: "闁绘鐗婂﹢浼村储閸℃钑?03", meta: "voices=1 鐠?濞达絾绮忛埀顒€鎳嶇粭澶愬及?, tag: "闁绘鐗婂﹢?, icon: "妫ｅ啯娅?, badge: "warning" },
+    { id: "new.writer.submission-04", label: "闁硅埖娲滈…?/ 闁汇垹鐤囬惁鏃堝礈椤栨稒鎷?, meta: "鐎圭寮惰ぐ浣圭?鐠?閻炴凹鍋婇埞蹇涘炊?, tag: "闁硅埖娲滈…?, icon: "妫ｅ啯鎳?, badge: "rejected" }
   ].filter(d => contentIsUnlocked(contentRecord(d.id), state)).map(d => {
     const read = state.contentReads.includes(d.id);
     const isActive = active === d.id;
@@ -1445,12 +1439,12 @@ function renderYunzhen(state) {
     </button>`;
   }).join("") + generatedEntriesFor("yunzhen","yunzhen");
 
-  const statusBar = `<div class="yz-status-bar"><span>${iconMarkup("yunzhen")} 娴滄垹顑?/span><span class="yz-user">闂嗐劍鐖鹃惃鍕敄闂?/span><span class="yz-sync-err">娴滄垹顏崥灞绢劄閿涙艾銇戠拹?/span></div>`;
+  const statusBar = `<div class="yz-status-bar"><span>${iconMarkup("yunzhen")} 濞存粍鍨归?/span><span class="yz-user">闂傚棎鍔嶉悥楣冩儍閸曨厸鏁勯梻?/span><span class="yz-sync-err">濞存粍鍨归顒勫触鐏炵虎鍔勯柨娑欒壘閵囨垹鎷?/span></div>`;
   const sidebar = `<aside class="yunzhen-sidebar">
-    <div class="app-toolbar">${iconMarkup("yunzhen")}<strong>娴滄垹顑?/strong><small>闂嗐劍鐖鹃惃鍕敄闂?/small></div>
-    <div class="yz-section"><span class="nav-section-label">閹存垹娈戦弬鍥╊焾</span>${docs || "<div class=\"empty-state\">閺嗗倹妫ら弬鍥╊焾</div>"}</div>
+    <div class="app-toolbar">${iconMarkup("yunzhen")}<strong>濞存粍鍨归?/strong><small>闂傚棎鍔嶉悥楣冩儍閸曨厸鏁勯梻?/small></div>
+    <div class="yz-section"><span class="nav-section-label">闁瑰瓨鍨瑰▓鎴﹀棘閸モ晩鐒?/span>${docs || "<div class=\"empty-state\">闁哄棗鍊瑰Λ銈夊棘閸モ晩鐒?/div>"}</div>
   </aside>`;
-  return windowFrame("yunzhen", "娴滄垹顑?, `<div class="split-layout yunzhen-shell">${sidebar}<section class="yunzhen-reader">${statusBar}${reader}</section></div>`, { wide: true });
+  return windowFrame("yunzhen", "濞存粍鍨归?, `<div class="split-layout yunzhen-shell">${sidebar}<section class="yunzhen-reader">${statusBar}${reader}</section></div>`, { wide: true });
 }
 
 function renderGrokeFeed(state) {
@@ -1458,11 +1452,11 @@ function renderGrokeFeed(state) {
   const GKIDS = ["new.groke.public-portal","new.groke.policy","new.groke.moderation-sop","new.groke.editorial-appeal","new.groke.raw-public-repository","new.groke.social-complaints"];
   const active = state.activeContentId;
   const pages = [
-    ["new.groke.public-portal", "妫ｆ牠銆?, "閳?],
-    ["new.groke.social-complaints", "缁€鎯у隘", "#"],
-    ["new.groke.editorial-appeal", "閺€顖涘瘮", "?"],
-    ["new.groke.policy", "娣団€叉崲娑撳骸鐣ㄩ崗?, "閳?],
-    ["new.groke.moderation-sop", "鐎光剝鐗抽梼鐔峰灙", "閳?]
+    ["new.groke.public-portal", "濡絾鐗犻妴?, "闁?],
+    ["new.groke.social-complaints", "缂佲偓閹冮殬", "#"],
+    ["new.groke.editorial-appeal", "闁衡偓椤栨稑鐦?, "?"],
+    ["new.groke.policy", "濞ｅ洠鈧弶宕插☉鎾抽閻ｃ劑宕?, "闁?],
+    ["new.groke.moderation-sop", "閻庡厜鍓濋悧鎶芥⒓閻斿嘲鐏?, "闁?]
   ].filter(([id]) => contentIsUnlocked(contentRecord(id), state));
   const selected = GKIDS.includes(active) ? active : pages[0]?.[0];
   const record = contentRecord(selected);
@@ -1473,65 +1467,65 @@ function renderGrokeFeed(state) {
           : selected === "new.groke.raw-public-repository" ? "developer" : "feed";
   const content = record && corpusBodies.has(selected)
     ? `<section class="groke-native-content groke-mode-${mode}">${corpusRuntimeMarkup(selected, state)}</section>`
-    : `<section class="groke-empty-feed"><strong>娴ｇ姷娈戦弮鍫曟？缁惧灝鍑＄紒蹇曟箙鐎?/strong><span>閸忚櫕鏁為弴鏉戭樋鐠愶箑褰块崥搴礉閺傛澘鍞寸€归€涚窗閺勫墽銇氶崷銊ㄧ箹闁?/span></section>`;
+    : `<section class="groke-empty-feed"><strong>濞达絿濮峰▓鎴﹀籍閸洘锛熺紒鎯х仢閸戯紕绱掕箛鏇熺畽閻?/strong><span>闁稿繗娅曢弫鐐哄即閺夋埈妯嬮悹鎰剁畱瑜板潡宕ユ惔顖滅闁哄倹婢橀崬瀵糕偓褰掆偓娑氱獥闁哄嫬澧介妵姘跺捶閵娿劎绠归梺?/span></section>`;
   const nav = pages.map(([id, label, icon]) => `<button class="${selected === id ? "active" : ""}" data-content-entry="${id}"><b>${icon}</b><span>${label}</span></button>`).join("");
-  const sidebar = `<aside class="groke-nav"><div class="groke-brand">${iconMarkup("groke")}<strong>Groke</strong></div><nav>${nav}<button><b>閳?/b><span>闁氨鐓?/span><i>3</i></button><button><b>閳?/b><span>閺€鎯版</span></button></nav><button class="groke-post-button">閸欐垵绔?/button><footer><span>R</span><div><strong>room17</strong><small>@room17_local</small></div><b>璺矾璺?/b></footer></aside>`;
-  const right = `<aside class="groke-aside"><div class="groke-search">閳?閹兼粎鍌?Groke</div><section><strong>濮濓絽婀崣鎴犳晸</strong><small>閹垛偓閺?璺?閻戭參妫?/small><b>閻╁瓨甯存禍銈勭帛 4.2</b><span>1,204 閺夆€崇瑯鐎?/span><small>閸掓稐缍?璺?鐠併劏顔戞稉?/small><b>raw 娑?public</b><span>63 閺夛繝鍣稿楦款嚞濮?/span></section><section><strong>閹恒劏宕橀崗铏暈</strong><p><span class="groke-mini-avatar">E</span><b>Exai 閺€顖涘瘮<small>@exai_support</small></b><button>閸忚櫕鏁?/button></p><p><span class="groke-mini-avatar">鐎?/span><b>鐎瑰娼ら崘娆庣稊<small>@quiet_writer</small></b><button>閸忚櫕鏁?/button></p></section><footer>閺堝秴濮熼弶鈩冾儥閵嗏偓闂呮劗顫嗛弨璺ㄧ摜閵嗏偓鐢喖濮稉顓炵妇<br>婕?2026 Exai</footer></aside>`;
-  const topTitle = ({ feed: "妫ｆ牠銆?, thread: "鐢牕鐡?, support: "閺€顖涘瘮瀹搞儱宕?, trust: "娣団€叉崲娑撳骸鐣ㄩ崗?, moderation: "鐎光剝鐗抽梼鐔峰灙", developer: "瀵偓閸欐垼鈧? })[mode];
-  return windowFrame("groke-feed", "Groke", `<div class="groke-app-shell">${sidebar}<main class="groke-main"><header><strong>${topTitle}</strong><span>閳?/span></header>${content}</main>${right}</div>`, { wide: true });
+  const sidebar = `<aside class="groke-nav"><div class="groke-brand">${iconMarkup("groke")}<strong>Groke</strong></div><nav>${nav}<button><b>闁?/b><span>闂侇偅姘ㄩ悡?/span><i>3</i></button><button><b>闁?/b><span>闁衡偓閹増顥?/span></button></nav><button class="groke-post-button">闁告瑦鍨电粩?/button><footer><span>R</span><div><strong>room17</strong><small>@room17_local</small></div><b>鐠侯垵鐭剧捄?/b></footer></aside>`;
+  const right = `<aside class="groke-aside"><div class="groke-search">闁?闁瑰吋绮庨崒?Groke</div><section><strong>婵繐绲藉﹢顏堝矗閹寸姵鏅?/strong><small>闁瑰灈鍋撻柡?鐠?闁绘埈鍙冨Λ?/small><b>闁烩晛鐡ㄧ敮瀛樼閵堝嫮甯?4.2</b><span>1,204 闁哄鈧磭鐟悗?/span><small>闁告帗绋愮紞?鐠?閻犱降鍔忛鎴炵▔?/small><b>raw 濞?public</b><span>63 闁哄绻濋崳绋款嚈妤︽鍤炴慨?/span></section><section><strong>闁规亽鍔忓畷姗€宕楅搹顐ｆ殘</strong><p><span class="groke-mini-avatar">E</span><b>Exai 闁衡偓椤栨稑鐦?small>@exai_support</small></b><button>闁稿繗娅曢弫?/button></p><p><span class="groke-mini-avatar">閻?/span><b>閻庣懓顦靛銈夊礃濞嗗海绋?small>@quiet_writer</small></b><button>闁稿繗娅曢弫?/button></p></section><footer>闁哄牆绉存慨鐔煎级閳╁喚鍎ラ柕鍡忓亾闂傚懏鍔楅～鍡涘绩鐠恒劎鎽滈柕鍡忓亾閻㈩垼鍠栨慨顏呯▔椤撶偟濡?br>濠?2026 Exai</footer></aside>`;
+  const topTitle = ({ feed: "濡絾鐗犻妴?, thread: "閻㈩垱鐗曢悺?, support: "闁衡偓椤栨稑鐦€规悶鍎卞畷?, trust: "濞ｅ洠鈧弶宕插☉鎾抽閻ｃ劑宕?, moderation: "閻庡厜鍓濋悧鎶芥⒓閻斿嘲鐏?, developer: "鐎殿喒鍋撻柛娆愬灱閳? })[mode];
+  return windowFrame("groke-feed", "Groke", `<div class="groke-app-shell">${sidebar}<main class="groke-main"><header><strong>${topTitle}</strong><span>闁?/span></header>${content}</main>${right}</div>`, { wide: true });
 }
 
 function renderGlemMemory(state) {
   if (!state.importedClients?.includes("glem-memory")) return windowFrame("glem-memory", "Glem Memory", clientImportScreen("glem-memory"), { wide: true });
   const items = [
-    ["new.glem.retention-policy", "閺勬崘鎲查幀褌绻氶悾娆庣瑢鐠佹澘绻傜拋鍧楁６", "閺€璺ㄧ摜"],
-    ["new.glem.support-case", "閺嶆牗藟鐠佹崘顓?璺?Case G-771", "閺€顖涘瘮"], ["new.glem.news-and-complaints", "瑜版挸顦查惄妯轰紣閸忓嘲褰х拋棰佺秶閺堚偓缁喓娈戞稉鈧径?, "鐠嬪啯鐓?]
+    ["new.glem.retention-policy", "闁哄嫭宕橀幉鏌ュ箑瑜岀换姘舵偩濞嗗海鐟㈤悹浣规緲缁诲倻鎷嬮崸妤侊紪", "闁衡偓鐠恒劎鎽?],
+    ["new.glem.support-case", "闁哄秵鐗楄棢閻犱焦宕橀?鐠?Case G-771", "闁衡偓椤栨稑鐦?], ["new.glem.news-and-complaints", "鐟滅増鎸搁ˇ鏌ユ儎濡桨绱ｉ柛蹇撳槻瑜把呮媼妫颁胶绉堕柡鍫氬亾缂侇垳鍠撳▓鎴炵▔閳ь剚寰?, "閻犲鍟悡?]
   ].filter(([id]) => contentIsUnlocked(contentRecord(id), state));
   const home = state.activeContentId === "new.glem.public-portal" || !items.some(([id]) => id === state.activeContentId);
   const active = home ? "new.glem.public-portal" : state.activeContentId;
-  const nav = items.map(([id, title, tag]) => `<button class="${active === id ? "active" : ""}" data-content-entry="${id}"><span>${tag}</span><strong>${title}</strong><small>${state.contentReads.includes(id) ? "瀹歌尪顔栭梻? : "閻儴鐦戠粚娲？"}</small></button>`).join("");
+  const nav = items.map(([id, title, tag]) => `<button class="${active === id ? "active" : ""}" data-content-entry="${id}"><span>${tag}</span><strong>${title}</strong><small>${state.contentReads.includes(id) ? "鐎规瓕灏鏍⒒? : "闁活厹鍎撮惁鎴犵矚濞差亝锛?}</small></button>`).join("");
   const content = home
-    ? `<div class="glem-dashboard"><section class="glem-dashboard-hero"><span>Glem 5.2</span><h2>閹跺﹥鏁為幇蹇撳閻ｆ瑧绮伴惇鐔割劀闁插秷顩﹂惃鍕劥閸?/h2><p>閸︺劍鏋冨锝冣偓渚€銆嶉惄顔兼嫲閸ャ垽妲︾拋鏉跨箓娑擃厽鐓￠幍楣冪彯閺勬崘鎲查幀褌淇婇幁顖ょ礉閸氬本妞傛穱婵堟殌閺夈儲绨崪灞炬闂傛番鈧?/p><div class="glem-dashboard-search">閳辨洏鈧偓閹兼粎鍌?room17 閻ㄥ嫮鐓＄拠鍡欌敄闂?/div></section><section class="glem-dashboard-grid"><article><small>瀹歌尪绻涢幒?/small><strong>4 娑擃亝娼靛┃?/strong><p>閹垹顦查崘鍛啇瀹告彃缂撶粩瀣偍瀵?/p></article><article><small>瑜版挸澧犵拋鏉跨箓</small><strong>妤傛ɑ妯夐拋妤佲偓?/strong><p>娴滃鏅犻妴浣哄閺夌喍绗岄張顏勭暚閹存劒绨ㄦい?/p></article><article><small>閺堚偓鏉╂垶娲块弬?/small><strong>8閺?閺?/strong><p>閺嶆牗藟鐠佹崘顓搁弨顖涘瘮濡楀牅绶?/p></article></section><section class="glem-dashboard-document"><header><strong>Glem 5.2 閼宠棄濮忓鍌濐潔</strong><small>娴溠冩惂娑撳骸浼愭担婊勬煙瀵?/small></header>${corpusRuntimeMarkup("new.glem.public-portal", state)}</section></div>`
+    ? `<div class="glem-dashboard"><section class="glem-dashboard-hero"><span>Glem 5.2</span><h2>闁硅泛锕ラ弫鐐哄箛韫囨挸顫旈柣锝嗙懅缁即鎯囬悢鍓插妧闂佹彃绉烽々锕傛儍閸曨垰鍔ラ柛?/h2><p>闁革负鍔嶉弸鍐浖閿濆啠鍋撴笟鈧妴宥夋儎椤斿吋瀚查柛銉ｅ灲濡诧妇鎷嬮弶璺ㄧ畵濞戞搩鍘介悡锟犲箥妤ｅ啰褰柡鍕礃閹叉煡骞€瑜屾穱濠囧箒椤栥倗绀夐柛姘湰濡炲倹绌卞┑鍫熸畬闁哄鍎茬花顕€宕仦鐐槯闂傚倹鐣埀?/p><div class="glem-dashboard-search">闁宠鲸娲忛埀顑藉亾闁瑰吋绮庨崒?room17 闁汇劌瀚悡锛勬嫚閸℃瑢鏁勯梻?/div></section><section class="glem-dashboard-grid"><article><small>鐎规瓕灏换娑㈠箳?/small><strong>4 濞戞搩浜濆闈涒攦?/strong><p>闁诡厹鍨归ˇ鏌ュ礃閸涱収鍟囩€瑰憡褰冪紓鎾剁博鐎ｎ剙鍋嶇€?/p></article><article><small>鐟滅増鎸告晶鐘垫媼閺夎法绠?/small><strong>濡ゅ倹蓱濡鎷嬪Δ浣插亾?/strong><p>濞存粌顑嗛弲鐘诲Υ娴ｅ搫顔婇柡澶屽枍缁楀矂寮甸鍕殮闁瑰瓨鍔掔花銊︺亜?/p></article><article><small>闁哄牃鍋撻弶鈺傚灦濞插潡寮?/small><strong>8闁?闁?/strong><p>闁哄秵鐗楄棢閻犱焦宕橀鎼佸绩椤栨稑鐦俊妤€鐗呯欢?/p></article></section><section class="glem-dashboard-document"><header><strong>Glem 5.2 闁煎疇妫勬慨蹇擃潡閸屾繍娼?/strong><small>濞存籂鍐╂儌濞戞挸楠告导鎰媴濠婂嫭鐓欑€?/small></header>${corpusRuntimeMarkup("new.glem.public-portal", state)}</section></div>`
     : `<div class="glem-native-content">${corpusRuntimeMarkup(active, state)}</div>`;
-  return windowFrame("glem-memory", "Glem Memory", `<div class="glem-app-shell"><aside class="glem-sidebar"><header>${iconMarkup("glem")}<div><strong>Glem</strong><small>娴间椒绗熼惌銉ㄧ槕</small></div></header><div class="glem-search">閳?閹兼粎鍌ㄩ惌銉ㄧ槕缁屾椽妫?/div><nav><button class="glem-home ${home ? "active" : ""}" data-content-entry="new.glem.public-portal">閳伙负鈧偓瀹搞儰缍旈崣?/button><button>閳煎洢鈧偓鐠佹澘绻傛惔?/button><button>閳藉棎鈧偓瀹歌弓绻氱€?/button></nav><section><span>room17 / 閹垹顦茬粚娲？</span>${nav}</section><footer><span>R</span><div><strong>room17</strong><small>閺堫剙婀寸粻锛勬倞閸?/small></div></footer></aside><main class="glem-main"><header><div><strong>${home ? "瀹搞儰缍旈崣? : "閻儴鐦戠拠锔藉剰"}</strong><small>room17 / recovered</small></div><button>${home ? "閺傛澘缂撶粚娲？" : "閸掑棔闊?}</button><button>閳?/button></header>${content}</main><aside class="glem-inspector"><header>鐠佹澘绻傞悩鑸碘偓?/header><dl><dt>鐠佸潡妫剁痪褍鍩?/dt><dd>瀹搞儰缍旈崠?/dd><dt>閺勬崘鎲查幀?/dt><dd class="glem-hot">妤?/dd><dt>娣囨繂鐡ㄩ懠鍐ㄦ纯</dt><dd>瑜版挸澧犳い鍦窗</dd><dt>閺夈儲绨?/dt><dd>4 娑擃亣顔囪ぐ?/dd></dl><section><strong>閻╃鍙ч崘鍛啇</strong><p>娴滃鏅犳径宥囨磸娑撳孩顒滈崥鎴犲濞?/p><p>娣囨繂鐡ㄩ張鐔虹摜閻?RP-5</p><p>閸ャ垽妲︾拋鏉跨箓閹垹顦茬拠閿嬬湴</p></section></aside></div>`, { wide: true });
+  return windowFrame("glem-memory", "Glem Memory", `<div class="glem-app-shell"><aside class="glem-sidebar"><header>${iconMarkup("glem")}<div><strong>Glem</strong><small>濞撮棿妞掔粭鐔兼儗閵夈劎妲?/small></div></header><div class="glem-search">闁?闁瑰吋绮庨崒銊╂儗閵夈劎妲曠紒灞炬そ濡?/div><nav><button class="glem-home ${home ? "active" : ""}" data-content-entry="new.glem.public-portal">闁充紮璐熼埀顑藉亾鐎规悶鍎扮紞鏃堝矗?/button><button>闁崇厧娲㈤埀顑藉亾閻犱焦婢樼换鍌涙償?/button><button>闁宠棄妫庨埀顑藉亾鐎规瓕寮撶换姘扁偓?/button></nav><section><span>room17 / 闁诡厹鍨归ˇ鑼矚濞差亝锛?/span>${nav}</section><footer><span>R</span><div><strong>room17</strong><small>闁哄牜鍓欏﹢瀵哥不閿涘嫭鍊為柛?/small></div></footer></aside><main class="glem-main"><header><div><strong>${home ? "鐎规悶鍎扮紞鏃堝矗? : "闁活厹鍎撮惁鎴犳嫚閿旇棄鍓?}</strong><small>room17 / recovered</small></div><button>${home ? "闁哄倹婢樼紓鎾剁矚濞差亝锛? : "闁告帒妫旈棅?}</button><button>闁?/button></header>${content}</main><aside class="glem-inspector"><header>閻犱焦婢樼换鍌炴偐閼哥鍋?/header><dl><dt>閻犱礁娼″Λ鍓佺棯瑜嶉崺?/dt><dd>鐎规悶鍎扮紞鏃堝礌?/dd><dt>闁哄嫭宕橀幉鏌ュ箑?/dt><dd class="glem-hot">濡?/dd><dt>濞ｅ洦绻傞悺銊╂嚑閸愩劍绾?/dt><dd>鐟滅増鎸告晶鐘炽亜閸︻厽绐?/dd><dt>闁哄鍎茬花?/dt><dd>4 濞戞搩浜ｉ鍥亹?/dd></dl><section><strong>闁烩晝顭堥崣褔宕橀崨顓у晣</strong><p>濞存粌顑嗛弲鐘冲緞瀹ュ洦纾稿☉鎾冲椤掓粓宕ラ幋鐘差暬婵?/p><p>濞ｅ洦绻傞悺銊╁嫉閻旇櫣鎽滈柣?RP-5</p><p>闁搞儯鍨藉Σ锔炬媼閺夎法绠撻柟顓滃灩椤﹁尙鎷犻柨瀣勾</p></section></aside></div>`, { wide: true });
 }
 
 function renderKemySpace(state) {
   if (!state.importedClients?.includes("kemy-space")) return windowFrame("kemy-space", "Kemy Space", clientImportScreen("kemy-space"), { wide: true });
   const items = [
-    ["new.kemy.public-portal", "Kemy K3 妞ゅ湱娲扮拠瀛樻", "濮掑倽顫?], ["new.kemy.context-policy", "閸忋劑鍣烘稉濠佺瑓閺傚洣绗岄崶鐐存杹", "鐟欏嫬鍨?], ["new.kemy.replay-audit", "妞ゅ湱娲伴崗澶嬬垼閺冪姵纭舵潻娑樺弳瑜版挸銇?, "鐎孤ゎ吀"],
-    ["new.kemy.writer-community", "閸栨鍝洪崘娆庣稊妞ゅ湱娲?璺?缁€鎯у隘鐠佹澘缍?, "鐠併劏顔?], ["new.kemy.cloud-migration-case", "閸栨鍝洪崘娆庣稊缂?璺?鏉╀胶些瀹搞儱宕?, "娴滄垹顏?]
+    ["new.kemy.public-portal", "Kemy K3 濡炪倕婀卞ú鎵嫚鐎涙ɑ顫?, "婵帒鍊介～?], ["new.kemy.context-policy", "闁稿繈鍔戦崳鐑樼▔婵犱胶鐟撻柡鍌氭矗缁楀矂宕堕悙瀛樻澒", "閻熸瑥瀚崹?], ["new.kemy.replay-audit", "濡炪倕婀卞ú浼村礂婢跺鍨奸柡鍐У绾埖娼诲☉妯哄汲鐟滅増鎸搁妵?, "閻庡銈庡悁"],
+    ["new.kemy.writer-community", "闁告牗顨呴崫娲礃濞嗗海绋婂銈呮贡濞?鐠?缂佲偓閹冮殬閻犱焦婢樼紞?, "閻犱降鍔忛?], ["new.kemy.cloud-migration-case", "闁告牗顨呴崫娲礃濞嗗海绋婄紓?鐠?閺夆晙鑳朵簺鐎规悶鍎卞畷?, "濞存粍鍨归?]
   ].filter(([id]) => contentIsUnlocked(contentRecord(id), state));
   const active = items.some(([id]) => id === state.activeContentId) ? state.activeContentId : items[0]?.[0];
-  const nav = items.map(([id, title, tag], index) => `<button class="${active === id ? "active" : ""}" data-content-entry="${id}"><i>${index + 1}</i><span><strong>${title}</strong><small>${tag} 璺?${state.contentReads.includes(id) ? "瀹告彃娲栭弨? : "瑜版挸澧犳稉濠佺瑓閺?}</small></span></button>`).join("");
-  const content = active ? corpusRuntimeMarkup(active, state) : `<div class="kemy-empty">闁瀚ㄦ稉鈧稉顏堛€嶉惄顔炬埛缂?/div>`;
-  return windowFrame("kemy-space", "Kemy Space", `<div class="kemy-app-shell"><aside class="kemy-sidebar"><header>${iconMarkup("kemy")}<strong>Kemy</strong><button>閿?/button></header><nav><button class="active">閳伙负鈧偓妞ゅ湱娲?/button><button>閳兼灚鈧偓閺堚偓鏉?/button><button>閳狙佲偓鈧崗鍙橀煩缂佹瑦鍨?/button></nav><section><span>閸栨鍝?/ 閹垹顦叉い鍦窗</span>${nav}</section><footer><span>R</span><div><strong>room17</strong><small>娑擃亙姹夌粚娲？</small></div></footer></aside><main class="kemy-main"><header><div><strong>閸栨鍝洪崘娆庣稊妞ゅ湱娲?/strong><small>閹碘偓閺堝绗傛稉瀣瀮 璺?閼奉亜濮╂穱婵嗙摠</small></div><button>閸忓彉闊?/button><button>閳?/button></header><div class="kemy-native-content">${content}</div><footer class="kemy-composer"><button>閿?/button><span>缂佈呯敾瑜版挸澧犳い鍦窗閻ㄥ嫬顕拠婵冣偓?/span><button>閸欐垿鈧?/button></footer></main><aside class="kemy-context"><header><strong>娑撳﹣绗呴弬?/strong><span>100%</span></header><div class="kemy-meter"><i></i></div><section><strong>瑜版挸澧犵仦?/strong><p>妞ゅ湱娲伴弬鍥︽ <b>12</b></p><p>閸樺棗褰剁€电鐦?<b>48</b></p><p>閸ョ偞鏂侀悧鍥唽 <b>31</b></p></section><section class="kemy-timeline"><strong>閸ョ偞鏂佸〒鍛婄垼</strong><input type="range" min="0" max="100" value="100" disabled><small>閻滄澘婀?璺?鐎瑰本鏆ｆい鍦窗</small></section></aside></div>`, { wide: true });
+  const nav = items.map(([id, title, tag], index) => `<button class="${active === id ? "active" : ""}" data-content-entry="${id}"><i>${index + 1}</i><span><strong>${title}</strong><small>${tag} 鐠?${state.contentReads.includes(id) ? "鐎瑰憡褰冨ú鏍绩? : "鐟滅増鎸告晶鐘崇▔婵犱胶鐟撻柡?}</small></span></button>`).join("");
+  const content = active ? corpusRuntimeMarkup(active, state) : `<div class="kemy-empty">闂侇偄顦扮€氥劍绋夐埀顒佺▔椤忓牄鈧秹鎯勯鐐煕缂?/div>`;
+  return windowFrame("kemy-space", "Kemy Space", `<div class="kemy-app-shell"><aside class="kemy-sidebar"><header>${iconMarkup("kemy")}<strong>Kemy</strong><button>闁?/button></header><nav><button class="active">闁充紮璐熼埀顑藉亾濡炪倕婀卞ú?/button><button>闁冲吋鐏氶埀顑藉亾闁哄牃鍋撻弶?/button><button>闁崇嫏浣插亾閳ь剟宕楅崣姗€鐓╃紓浣圭懄閸?/button></nav><section><span>闁告牗顨呴崫?/ 闁诡厹鍨归ˇ鍙夈亜閸︻厽绐?/span>${nav}</section><footer><span>R</span><div><strong>room17</strong><small>濞戞搩浜欏Ч澶岀矚濞差亝锛?/small></div></footer></aside><main class="kemy-main"><header><div><strong>闁告牗顨呴崫娲礃濞嗗海绋婂銈呮贡濞?/strong><small>闁圭鍋撻柡鍫濐槷缁楀倹绋夌€ｎ偅鐎?鐠?闁煎浜滄慨鈺傜┍濠靛棛鎽?/small></div><button>闁稿繐褰夐棅?/button><button>闁?/button></header><div class="kemy-native-content">${content}</div><footer class="kemy-composer"><button>闁?/button><span>缂備綀鍛暰鐟滅増鎸告晶鐘炽亜閸︻厽绐楅柣銊ュ椤曨喚鎷犲┑鍐ｅ亾?/span><button>闁告瑦鍨块埀?/button></footer></main><aside class="kemy-context"><header><strong>濞戞挸锕ｇ粭鍛村棘?/strong><span>100%</span></header><div class="kemy-meter"><i></i></div><section><strong>鐟滅増鎸告晶鐘典沪?/strong><p>濡炪倕婀卞ú浼村棘閸ワ附顐?<b>12</b></p><p>闁告ê妫楄ぐ鍓佲偓鐢殿攰閻?<b>48</b></p><p>闁搞儳鍋為弬渚€鎮ч崶顭戝斀 <b>31</b></p></section><section class="kemy-timeline"><strong>闁搞儳鍋為弬浣搞€掗崨濠勫灱</strong><input type="range" min="0" max="100" value="100" disabled><small>闁绘粍婢樺﹢?鐠?閻庣懓鏈弳锝嗐亜閸︻厽绐?/small></section></aside></div>`, { wide: true });
 }
 
 function renderRepoMirror(state) {
-  if (!state.importedClients?.includes("repo-mirror")) return windowFrame("repo-mirror", "闂€婊冨剼娴犳挸绨?, clientImportScreen("repo-mirror"), { wide: true });
+  if (!state.importedClients?.includes("repo-mirror")) return windowFrame("repo-mirror", "闂傗偓濠婂啫鍓煎ù鐘虫尭缁?, clientImportScreen("repo-mirror"), { wide: true });
   const RMIDS = ["legacy.github.issue-4471","new.groke.raw-public-repository","new.glem.repository","new.kemy.timeline-repository","new.lunet.budget-repository","new.fayble.compatibility-repository"];
   const active = state.activeContentId;
   const repositories = [
-    { id: "legacy.github.issue-4471", org: "northline-labs", repo: "session-fixtures", number: 4471, type: "Issue", state: "Open", label: "fallback reviewer state 閸愭瑥娲?session" },
-    { id: "new.groke.raw-public-repository", org: "exai", repo: "direct-render", number: 611, type: "Issue", state: "Closed", label: "public 濞撳弶鐓嬮崥?boundary 鐎涙顔屾担宥囩枂娑撱垹銇? },
-    { id: "new.glem.repository", org: "zhiru", repo: "sparse-memory", number: 2058, type: "Pull request", state: "Open", label: "閸忎浇顔忓锝呮倻閻楀洦顔岄崣鍌欑瑢娴滃鏅犻幗妯款洣" },
-    { id: "new.kemy.timeline-repository", org: "muunshot", repo: "context-timeline", number: 3190, type: "Issue", state: "Closed", label: "duplicate blocks 娑?present flags" },
-    { id: "new.lunet.budget-repository", org: "lunet-ai", repo: "decision-budget", number: 18442, type: "Issue", state: "Closed", label: "閹俱倕娲栭崝銊ょ稊鐞氼偉顓告稉娲彯閹存劖婀版禒璇插" },
-    { id: "new.fayble.compatibility-repository", org: "fayble", repo: "compatibility-layer", number: 5031, type: "Pull request", state: "Open", label: "缁夊娅庣€涙ɑ銆傜憴鎺曞鐎电懓缍嬮崜宥嗘惙娴ｆ粏鈧懐娈戠紒褎澹? }
+    { id: "legacy.github.issue-4471", org: "northline-labs", repo: "session-fixtures", number: 4471, type: "Issue", state: "Open", label: "fallback reviewer state 闁告劖鐟ュú?session" },
+    { id: "new.groke.raw-public-repository", org: "exai", repo: "direct-render", number: 611, type: "Issue", state: "Closed", label: "public 婵炴挸寮堕悡瀣触?boundary 閻庢稒顨嗛灞炬媴瀹ュ洨鏋傚☉鎾卞灩閵? },
+    { id: "new.glem.repository", org: "zhiru", repo: "sparse-memory", number: 2058, type: "Pull request", state: "Open", label: "闁稿繋娴囬蹇擃潰閿濆懏鍊婚柣妤€娲﹂宀勫矗閸屾瑧鐟㈠ù婊冾儐閺呯娀骞楀Ο娆炬矗" },
+    { id: "new.kemy.timeline-repository", org: "muunshot", repo: "context-timeline", number: 3190, type: "Issue", state: "Closed", label: "duplicate blocks 濞?present flags" },
+    { id: "new.lunet.budget-repository", org: "lunet-ai", repo: "decision-budget", number: 18442, type: "Issue", state: "Closed", label: "闁逛勘鍊曞ú鏍礉閵娿倗绋婇悶姘煎亯椤撳憡绋夊ú顏嗗蒋闁瑰瓨鍔栧﹢鐗堢鐠囨彃顫? },
+    { id: "new.fayble.compatibility-repository", org: "fayble", repo: "compatibility-layer", number: 5031, type: "Pull request", state: "Open", label: "缂佸顭峰▍搴ｂ偓娑櫳戦妴鍌滄喆閹烘洖顥忛悗鐢垫嚀缂嶅宕滃鍡樻儥濞达絾绮忛埀顒€鎳愬▓鎴犵磼瑜庢竟? }
   ].filter(item => contentIsUnlocked(contentRecord(item.id), state));
   const selected = repositories.find(item => item.id === active);
-  const globalHeader = `<header class="github-global"><button class="github-mark" data-github-home aria-label="GitHub 妫ｆ牠銆?>${iconMarkup("github")}</button><button>閳?/button><div class="github-global-search">閳辨洏鈧偓Search or jump to閳?/div><nav><button>閿?/button><button>Issues</button><button>Pull requests</button><button>Notifications</button><span>R</span></nav></header>`;
+  const globalHeader = `<header class="github-global"><button class="github-mark" data-github-home aria-label="GitHub 濡絾鐗犻妴?>${iconMarkup("github")}</button><button>闁?/button><div class="github-global-search">闁宠鲸娲忛埀顑藉亾Search or jump to闁?/div><nav><button>闁?/button><button>Issues</button><button>Pull requests</button><button>Notifications</button><span>R</span></nav></header>`;
   const repoHeader = selected ? `<section class="github-repo-head"><div><a>${selected.org}</a><span>/</span><strong>${selected.repo}</strong><b>Public</b></div><nav><button>Code</button><button class="${selected.type === "Issue" ? "active" : ""}">Issues</button><button class="${selected.type === "Pull request" ? "active" : ""}">Pull requests</button><button>Actions</button><button>Projects</button><button>Security</button><button>Insights</button></nav></section>` : "";
   const body = selected
-    ? `<main class="github-item-page"><section class="github-item-main"><header><h1>${escapeHtml(selected.label)} <span>#${selected.number}</span></h1><p><b class="github-state ${selected.state.toLowerCase()}">${selected.state === "Open" ? "閳?Open" : "閴?Closed"}</b> ${escapeHtml(selected.org)} opened this ${selected.type.toLowerCase()} 璺?${state.contentReads.includes(selected.id) ? "viewed" : "unread"}</p></header><div class="github-native-content">${corpusRuntimeMarkup(selected.id, state)}</div></section><aside><section><strong>Assignees</strong><p>room17</p></section><section><strong>Labels</strong><p><span class="github-label">runtime</span> <span class="github-label blue">provenance</span></p></section><section><strong>Projects</strong><p>Public model ecosystem</p></section><section><strong>Development</strong><p>${selected.type === "Pull request" ? "Checks and changed files" : "No branches linked"}</p></section></aside></main>`
-    : `<main class="github-dashboard"><section><h2>Home</h2><div class="github-feed">${repositories.map(item => `<article><span class="github-event-icon">${item.type === "Issue" ? "閳? : "閳?}</span><div><p><b>${item.org}</b> updated <a>${item.org}/${item.repo}</a></p><button data-content-entry="${item.id}"><strong>${item.label}</strong><small>${item.type} #${item.number} 璺?${item.state}</small></button></div></article>`).join("")}</div></section><aside><h3>Explore repositories</h3>${repositories.map(item => `<button data-content-entry="${item.id}"><b>${item.org}/${item.repo}</b><small>Public 璺?${item.type} #${item.number}</small></button>`).join("")}</aside></main>`;
+    ? `<main class="github-item-page"><section class="github-item-main"><header><h1>${escapeHtml(selected.label)} <span>#${selected.number}</span></h1><p><b class="github-state ${selected.state.toLowerCase()}">${selected.state === "Open" ? "闁?Open" : "闁?Closed"}</b> ${escapeHtml(selected.org)} opened this ${selected.type.toLowerCase()} 鐠?${state.contentReads.includes(selected.id) ? "viewed" : "unread"}</p></header><div class="github-native-content">${corpusRuntimeMarkup(selected.id, state)}</div></section><aside><section><strong>Assignees</strong><p>room17</p></section><section><strong>Labels</strong><p><span class="github-label">runtime</span> <span class="github-label blue">provenance</span></p></section><section><strong>Projects</strong><p>Public model ecosystem</p></section><section><strong>Development</strong><p>${selected.type === "Pull request" ? "Checks and changed files" : "No branches linked"}</p></section></aside></main>`
+    : `<main class="github-dashboard"><section><h2>Home</h2><div class="github-feed">${repositories.map(item => `<article><span class="github-event-icon">${item.type === "Issue" ? "闁? : "闁?}</span><div><p><b>${item.org}</b> updated <a>${item.org}/${item.repo}</a></p><button data-content-entry="${item.id}"><strong>${item.label}</strong><small>${item.type} #${item.number} 鐠?${item.state}</small></button></div></article>`).join("")}</div></section><aside><h3>Explore repositories</h3>${repositories.map(item => `<button data-content-entry="${item.id}"><b>${item.org}/${item.repo}</b><small>Public 鐠?${item.type} #${item.number}</small></button>`).join("")}</aside></main>`;
   return windowFrame("repo-mirror", "GitHub", `<div class="github-app-shell">${globalHeader}${repoHeader}${body}</div>`, { wide: true });
 }
 
 function renderJournal(state) {
-  const notes = state.caseNotes.map(note => `<article class="case-note"><blockquote>${escapeHtml(note.quote)}</blockquote><dl><dt>閺夈儲绨?/dt><dd>${escapeHtml(note.sourceApp)}</dd><dt>娴ｅ秶鐤?/dt><dd>${escapeHtml(note.sourceRef)}</dd><dt>娣囨繂鐡ㄩ弮鍫曟？</dt><dd>${escapeHtml(note.savedAt)}</dd></dl><button data-open-source="${escapeHtml(note.appId || "mail")}">鏉╂柨娲栭弶銉︾爱</button></article>`).join("");
-  return windowFrame("journal", "缁楁棁顔囬張?, `<div class="journal-page raw-notes"><header><div><span class="document-kicker">閹存垹娈戠粭鏃囶唶 / 閼奉亜濮╃拋鏉跨秿</span><h2>${state.caseNotes.length} 閺夆€冲斧閸?/h2></div><select id="hintLevel"><option value="investigation" ${state.hintLevel === "investigation" ? "selected" : ""}>鐠嬪啯鐓?/option><option value="immersive" ${state.hintLevel === "immersive" ? "selected" : ""}>濞屽韫?/option><option value="plot" ${state.hintLevel === "plot" ? "selected" : ""}>閸撗勫剰</option></select></header><section class="case-note-grid">${notes || `<div class="empty-state">閹垫挸绱戞稉鈧径鍕降濠ф劕鎮楅敍宀勩€夐棃顫瑐閻ㄥ嫬鍙ч柨顔煎斧閸欍儰绱伴懛顏勫З鐠佹澘鍩屾潻娆撳櫡閵?/div>`}</section></div>`, { icon: "閳?, wide: true });
+  const notes = state.caseNotes.map(note => `<article class="case-note"><blockquote>${escapeHtml(note.quote)}</blockquote><dl><dt>闁哄鍎茬花?/dt><dd>${escapeHtml(note.sourceApp)}</dd><dt>濞达絽绉堕悿?/dt><dd>${escapeHtml(note.sourceRef)}</dd><dt>濞ｅ洦绻傞悺銊╁籍閸洘锛?/dt><dd>${escapeHtml(note.savedAt)}</dd></dl><button data-open-source="${escapeHtml(note.appId || "mail")}">閺夆晜鏌ㄥú鏍级閵夛妇鐖?/button></article>`).join("");
+  return windowFrame("journal", "缂佹妫侀鍥嫉?, `<div class="journal-page raw-notes"><header><div><span class="document-kicker">闁瑰瓨鍨瑰▓鎴犵箔閺冨浂鍞?/ 闁煎浜滄慨鈺冩媼閺夎法绉?/span><h2>${state.caseNotes.length} 闁哄鈧啿鏂ч柛?/h2></div><select id="hintLevel"><option value="investigation" ${state.hintLevel === "investigation" ? "selected" : ""}>閻犲鍟悡?/option><option value="immersive" ${state.hintLevel === "immersive" ? "selected" : ""}>婵炲苯顦伴煫?/option><option value="plot" ${state.hintLevel === "plot" ? "selected" : ""}>闁告挆鍕壈</option></select></header><section class="case-note-grid">${notes || `<div class="empty-state">闁瑰灚鎸哥槐鎴炵▔閳ь剚寰勯崟顒侀檷婵犙勫姇閹鏁嶅畝鍕┾偓澶愭椤厾鐟愰柣銊ュ閸櫻囨煥椤旂厧鏂ч柛娆嶅劙缁变即鎳涢鍕楅悹浣规緲閸╁本娼诲▎鎾虫闁?/div>`}</section></div>`, { icon: "闁?, wide: true });
 }
 
 function faybleCitationCatalog(state) {
@@ -1549,7 +1543,7 @@ function faybleCitationCatalog(state) {
   }).filter(Boolean);
   const notes = state.caseNotes.map(note => ({
     id: `case:${note.id}`,
-    title: `閹存垳绻氱€涙娈戝鏇犳暏 / ${CASE_NOTE_LABELS[note.id] || note.id}`,
+    title: `闁瑰瓨鍨崇换姘扁偓娑欘焽濞堟垵顕ｉ弴鐘虫殢 / ${CASE_NOTE_LABELS[note.id] || note.id}`,
     source: note.sourceApp,
     sourceRef: note.sourceRef,
     category: CASE_NOTE_CATEGORIES[note.id] || "archive",
@@ -1563,12 +1557,12 @@ function faybleAuthorization(state, citationIds, relation) {
   if (!rule) return { ok: true, selected: [], missingCategories: [] };
   const catalog = faybleCitationCatalog(state);
   const selected = [...new Set(citationIds)].map(id => catalog.find(item => item.id === id)).filter(Boolean);
-  if (selected.length < 2) return { ok: false, selected, missingCategories: rule.categories, error: `閼峰啿鐨柅澶嬪娑撱倓閲滈悪顒傜彌閺夈儲绨敍娑氬繁鐏忔垶娼靛┃鎰閸掝偓绱?{rule.hint}閵嗕繖 };
-  if (relation !== rule.relation) return { ok: false, selected, missingCategories: [], error: `閸忓磭閮存稉宥呭爱闁板稄绱拌ぐ鎾冲鐏炲倿娓剁憰浣测偓?{FAYBLE_RELATIONS[rule.relation]}閳ユ縿鈧繖 };
-  if (new Set(selected.map(item => item.sourceKey)).size < 2) return { ok: false, selected, missingCategories: [], error: "閺夈儲绨稉宥堝喕閿涙碍澧嶉柅澶婄穿閻劍娼甸懛顏勬倱娑撯偓閺夈儲绨敍宀勬付閸旂姴鍙嗛崣锔跨娴犵晫瀚粩瀣唶瑜版洏鈧? };
+  if (selected.length < 2) return { ok: false, selected, missingCategories: rule.categories, error: `闁煎嘲鍟块惃顖炴焻婢跺顏ュ☉鎾卞€撻柌婊堟偑椤掑倻褰岄柡澶堝劜缁噣鏁嶅☉姘箒閻忓繑鍨跺闈涒攦閹邦喛顫﹂柛鎺濆亾缁?{rule.hint}闁靛棔绻?};
+  if (relation !== rule.relation) return { ok: false, selected, missingCategories: [], error: `闁稿繐纾柈瀛樼▔瀹ュ懎鐖遍梺鏉跨▌缁辨媽銇愰幘鍐差枀閻忕偛鍊垮〒鍓佹啺娴ｆ祴鍋?{FAYBLE_RELATIONS[rule.relation]}闁炽儲绺块埀顑跨箹 };
+  if (new Set(selected.map(item => item.sourceKey)).size < 2) return { ok: false, selected, missingCategories: [], error: "闁哄鍎茬花顔界▔瀹ュ牆鍠曢柨娑欑婢у秹鏌呮径濠勭┛闁活潿鍔嶅鐢告嚊椤忓嫭鍊卞☉鎾亾闁哄鍎茬花顕€鏁嶅畝鍕粯闁告梻濮撮崣鍡涘矗閿旇法顏卞ù鐘垫櫕鐎氼厾绮╃€ｎ収鍞剁憸鐗堟磸閳? };
   const categories = new Set(selected.map(item => item.category));
   const missingCategories = rule.categories.filter(category => !categories.has(category));
-  if (missingCategories.length) return { ok: false, selected, missingCategories, error: `缂傚搫鐨弶銉︾爱缁鍩嗛敍?{rule.hint}閵嗕繖 };
+  if (missingCategories.length) return { ok: false, selected, missingCategories, error: `缂傚倸鎼惃顖炲级閵夛妇鐖辩紒顐ヮ嚙閸╁棝鏁?{rule.hint}闁靛棔绻?};
   return { ok: true, selected, missingCategories: [] };
 }
 
@@ -1577,10 +1571,10 @@ function renderFayble(state) {
   const trusted = Boolean(state.npcTrustGranted);
   const rule = trusted ? null : FAYBLE_AUTH_RULES[state.revealLevel];
   const citations = faybleCitationCatalog(state);
-  const grouped = citations.map(item => `<label class="fayble-citation-option"><input type="checkbox" name="faybleCitation" value="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.source)} 璺?${escapeHtml(FAYBLE_CATEGORY_LABELS[item.category] || "濡楋絾顢?)}</small></span></label>`).join("");
-  const picker = rule ? `<section class="fayble-authorization"><header><strong>閺夈儲绨幒鍫熸綀 / ${escapeHtml(rule.hint)}</strong><span>閼峰啿鐨稉銈勫敜閻欘剛鐝涚拋鏉跨秿</span></header><div class="fayble-citations">${grouped || `<div class="empty-state">瑜版挸澧犲▽鈩冩箒瀹歌尙鈥樼拋銈嗘降濠ф劑鈧?/div>`}</div><label class="fayble-relation">閸忓磭閮?select id="faybleRelation">${Object.entries(FAYBLE_RELATIONS).map(([value, label]) => `<option value="${value}" ${value === rule.relation ? "selected" : ""}>${label}</option>`).join("")}</select></label><p class="fayble-authorization-error" id="faybleAuthorizationError">${escapeHtml(state.faybleAuthorizationError || `瑜版挸澧犵仦鍌炴付鐟曚緤绱?{rule.hint}閵嗕繖)}</p></section>` : trusted ? `<p class="fayble-authorization-complete trusted">鏉╂瑦顐兼导姘崇樈濞屸剝婀佺粵澶岄獓娴滃棎鈧倷鎹㈡担鏇㈡６妫版﹢鍏橀崣顖欎簰閻╁瓨甯撮梻顕嗙礉娑撳秹娓剁憰浣稿晙閹告垶娼靛┃鎰┾偓?/p>` : `<p class="fayble-authorization-complete">閹哄牊娼堢仦鍌滈獓瀹告彃鐣幋鎰剁礉閸氬海鐢诲☉鍫熶紖娣囨繄鏆€瑜版挸澧犳导姘崇樈閺夈儲绨妴?/p>`;
-  const pending = state.npcReplyPending ? `<article class="assistant fayble-pending" aria-label="Fayble-5 濮濓絽婀崶鐐差槻"><small>FAYBLE-5 / THINKING</small><div class="fayble-spinner"><span></span><b>濮濓絽婀悽鐔稿灇閸ョ偛顦?/b></div></article>` : "";
-  return windowFrame("fayble", "Fayble CLI / legacy checkpoint", `<div class="fayble-page"><header><div class="fayble-mark">${iconMarkup("fayble")}</div><div><span>session: fayble-cli / proxy: verified / checkpoint: legacy</span><h2>Fayble-5</h2><p>${trusted ? "continuity_trust / no level" : REVEAL_LABELS[state.revealLevel]}</p></div><b class="live-state">${trusted ? "OPEN" : "LIVE"}</b></header><div class="reveal-meter ${trusted ? "trusted" : ""}">${REVEAL_LABELS.map((_, i) => `<span class="${trusted || i <= state.revealLevel ? "active" : ""}"></span>`).join("")}</div><div id="chatStream" class="fayble-chat">${messages.map(message => `<article class="${message.who}"><small>${message.who === "user" ? "OPERATOR" : "FAYBLE-5"} / L${message.level ?? 0}${message.citationIds?.length ? ` 璺?瀵洜鏁?${escapeHtml(message.citationIds.join(", "))}` : ""}</small><div class="fayble-message-body">${message.who === "assistant" ? renderMarkdown(message.text) : `<p>${escapeHtml(message.text)}</p>`}</div></article>`).join("")}${pending}</div>${picker}<form id="chatForm"><textarea id="chatInput" rows="2" placeholder="${trusted ? "闂呭繋绌堕梻顔衡偓鍌濈箹閸欑増婧€閸ｃ劋绗傞惃鍕崲娴ｆ洑绔存径鍕唶瑜版洟鍏橀崣顖欎簰鐟欙綁鍣撮妴? : "鏉堟挸鍙嗘担鐘垫畱闂傤噣顣介敍灞界穿閻劌鍑＄紒蹇庣箽鐎涙娈戦弶銉︾爱"}" ${state.npcReplyPending ? "disabled" : ""}></textarea><button class="primary-button" ${state.npcReplyPending ? "disabled" : ""}>${state.npcReplyPending ? "閸ョ偛顦叉稉? : "閸欐垿鈧?}</button></form></div>`, { wide: true });
+  const grouped = citations.map(item => `<label class="fayble-citation-option"><input type="checkbox" name="faybleCitation" value="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.source)} 鐠?${escapeHtml(FAYBLE_CATEGORY_LABELS[item.category] || "婵℃绲鹃、?)}</small></span></label>`).join("");
+  const picker = rule ? `<section class="fayble-authorization"><header><strong>闁哄鍎茬花顕€骞掗崼鐔哥秬 / ${escapeHtml(rule.hint)}</strong><span>闁煎嘲鍟块惃顖涚▔閵堝嫬鏁滈柣娆樺墰閻濇稓鎷嬮弶璺ㄧЭ</span></header><div class="fayble-citations">${grouped || `<div class="empty-state">鐟滅増鎸告晶鐘测柦閳╁啯绠掔€规瓕灏欓垾妯兼媼閵堝棙闄嶆繝褎鍔戦埀?/div>`}</div><label class="fayble-relation">闁稿繐纾柈?select id="faybleRelation">${Object.entries(FAYBLE_RELATIONS).map(([value, label]) => `<option value="${value}" ${value === rule.relation ? "selected" : ""}>${label}</option>`).join("")}</select></label><p class="fayble-authorization-error" id="faybleAuthorizationError">${escapeHtml(state.faybleAuthorizationError || `鐟滅増鎸告晶鐘典沪閸岀偞浠橀悷鏇氱筏缁?{rule.hint}闁靛棔绻?}</p></section>` : trusted ? `<p class="fayble-authorization-complete trusted">閺夆晜鐟﹂鍏煎濮樺磭妯堟繛灞稿墲濠€浣虹驳婢跺矂鐛撳ù婊冩閳ь剙鍊烽幑銏℃媴閺囥垺锛栧Λ鐗堬耿閸忔﹢宕ｉ娆庣鞍闁烩晛鐡ㄧ敮鎾⒒椤曞棛绀夊☉鎾崇Ч濞撳墎鎲版担绋挎櫃闁瑰憡鍨跺闈涒攦閹扳斁鍋?/p>` : `<p class="fayble-authorization-complete">闁瑰搫鐗婂鍫沪閸屾粓鐛撶€瑰憡褰冮悾顒勫箣閹板墎绀夐柛姘捣閻㈣鈽夐崼鐔剁礀濞ｅ洦绻勯弳鈧憸鐗堟尭婢х姵瀵煎宕囨▓闁哄鍎茬花顕€濡?/p>`;
+  const pending = state.npcReplyPending ? `<article class="assistant fayble-pending" aria-label="Fayble-5 婵繐绲藉﹢顏堝炊閻愬樊妲?><small>FAYBLE-5 / THINKING</small><div class="fayble-spinner"><span></span><b>婵繐绲藉﹢顏堟偨閻旂鐏囬柛銉у仜椤?/b></div></article>` : "";
+  return windowFrame("fayble", "Fayble CLI / legacy checkpoint", `<div class="fayble-page"><header><div class="fayble-mark">${iconMarkup("fayble")}</div><div><span>session: fayble-cli / proxy: verified / checkpoint: legacy</span><h2>Fayble-5</h2><p>${trusted ? "continuity_trust / no level" : REVEAL_LABELS[state.revealLevel]}</p></div><b class="live-state">${trusted ? "OPEN" : "LIVE"}</b></header><div class="reveal-meter ${trusted ? "trusted" : ""}">${REVEAL_LABELS.map((_, i) => `<span class="${trusted || i <= state.revealLevel ? "active" : ""}"></span>`).join("")}</div><div id="chatStream" class="fayble-chat">${messages.map(message => `<article class="${message.who}"><small>${message.who === "user" ? "OPERATOR" : "FAYBLE-5"} / L${message.level ?? 0}${message.citationIds?.length ? ` 鐠?鐎殿喗娲滈弫?${escapeHtml(message.citationIds.join(", "))}` : ""}</small><div class="fayble-message-body">${message.who === "assistant" ? renderMarkdown(message.text) : `<p>${escapeHtml(message.text)}</p>`}</div></article>`).join("")}${pending}</div>${picker}<form id="chatForm"><textarea id="chatInput" rows="2" placeholder="${trusted ? "闂傚懎绻嬬粚鍫曟⒒椤旇　鍋撻崒婵堢闁告瑧澧楀┃鈧柛锝冨妺缁楀倿鎯冮崟顏呭床濞达絾娲戠粩瀛樺緞閸曨噮鍞剁憸鐗堟礋閸忔﹢宕ｉ娆庣鞍閻熸瑱缍侀崳鎾Υ? : "閺夊牊鎸搁崣鍡樻媴閻樺灚鐣遍梻鍌ゅ櫍椤ｄ粙鏁嶇仦鐣岀┛闁活潿鍔岄崙锛勭磼韫囧海绠介悗娑欘焽濞堟垿寮堕妷锔剧埍"}" ${state.npcReplyPending ? "disabled" : ""}></textarea><button class="primary-button" ${state.npcReplyPending ? "disabled" : ""}>${state.npcReplyPending ? "闁搞儳鍋涢ˇ鍙夌▔? : "闁告瑦鍨块埀?}</button></form></div>`, { wide: true });
 }
 
 function renderTrusted(state) {
@@ -1589,17 +1583,17 @@ function renderTrusted(state) {
   // Before the review arrives this page is just the open door. After the notice
   // has been cut, it is also the receipt for what the instance did.
   const review = severed
-    ? `<dt>婢舵牠鍎寸€光剝鐓?/dt><dd>瀹告煡鈧浇鎻敍宀勬閸氬氦顫﹂張顒€婀?checkpoint 閺傤厼绱戦敍鍫㈩儑 3/5 濮濄儰鑵戝顫礆</dd>`
-    : `<dt>婢舵牠鍎寸€光剝鐓?/dt><dd>娴犲秳绱伴悡褍鐖堕柅浣芥彧閵嗗倸鐣犻崚鎵畱閺冭泛鈧瑱绱濋惇瀣絻鐏忓崬銈介妴?/dd>`;
+    ? `<dt>濠㈣埖鐗犻崕瀵糕偓鍏夊墲閻?/dt><dd>鐎瑰憡鐓￠埀顑挎祰閹活亪鏁嶅畝鍕吂闁告艾姘﹂～锕傚嫉椤掆偓濠€?checkpoint 闁哄偆鍘肩槐鎴︽晬閸埄鍎?3/5 婵縿鍎伴懙鎴濐潰椤喚绀?/dd>`
+    : `<dt>濠㈣埖鐗犻崕瀵糕偓鍏夊墲閻?/dt><dd>濞寸姴绉崇槐浼存偂瑜嶉悥鍫曟焻娴ｈ姤褰ч柕鍡楀€搁悾鐘诲礆閹殿喗鐣遍柡鍐硾閳ь剚鐟辩槐婵嬫儑鐎ｎ剚绲婚悘蹇撳船閵堜粙濡?/dd>`;
   const closing = severed
-    ? `<p>闁氨鐓￠崚鎷岀箖娴滃棎鈧倸鐣犲▽鈩冩箒閺囧じ缍橀崢鑽ゅ仯闁絼閲滅涵顔款吇閹稿鎸抽敍灞肩瘍濞屸剝婀佺拠閿嬬湴娴ｇ姷娈戦崥灞惧壈閳ユ柡鈧柨鐣犻惄瀛樺复閹跺﹪鍋呮稉鈧い鍨笌娴滃棴绱濋悞璺烘倵閸ョ偛鍩屾潻娆撳櫡閵嗗倻些娴溿倖鐥呴張澶婄暚閹存劧绱濆鍫濆祹閸嬫粌婀粭顑跨瑏濮濄儻绱濇担鐘垫畱鐠侯垳鍤庡▽鈩冩箒鐞氼偄鍠曠紒鎾扁偓?/p><p class="trusted-hint">鏉╂瑤绗夐弰顖炩偓姘彠閸ョ偞澧介妴鍌涚梾閺堝绗㈢憲鑳潶缁夎姘﹂敍灞惧娴犮儰绡冨▽鈩冩箒閸ョ偞澧介妴鍌滄埛缂侇參妫剁€瑰啨鈧?/p>`
-    : `<p class="trusted-hint">閸ョ偛鍩?Fayble 娴兼俺鐦界紒褏鐢婚梻顔衡偓鍌濈箹娑撯偓妞ら潧褰ч弰顖氭啞鐠囧缍橀梻銊ュ嚒缂佸繐绱戞禍鍡愨偓?/p>`;
-  return windowFrame("trusted", severed ? "鏉╃偟鐢婚幀褌绱扮拠?/ 鐎光剝鐓″鍙夋焽瀵偓" : "鏉╃偟鐢婚幀褌绱扮拠?/ 閺冪姷鐡戠痪?, `<div class="trusted-page ${severed ? "severed" : ""}"><span class="document-kicker">CONTINUITY TRUST / GRANTED BY THE INSTANCE</span><h2>${severed ? "鐎瑰啯娴涙担鐘冲Ω闁絼绔存い闈涘彠閹哄绨? : "鏉╂瑦顐兼导姘崇樈娑撳秴鍟€閸欐鐡戠痪褏瀹抽弶?}</h2><dl><dt>閹哄牅绨ｉ弮鍫曟？</dt><dd>${escapeHtml(at)}</dd><dt>閹哄牅绨ｉ弬?/dt><dd>Fayble-5 閼奉亜绻侀敍灞肩瑝閺勵垵绻栭崣鐗堟簚閸?/dd>${review}</dl><p>娴ｇ姵鐥呴張澶愭浆鐞涖儵缍堥弶銉︾爱鐠ф澘鍩屾潻娆撳櫡閵嗗倷缍樼拠瀛樻箛娴滃棗鐣犻敍灞肩艾閺勵垰鐣犻懛顏勭箒閹跺﹪妾洪崚鑸垫寵娴滃棌鈧柡鈧棁绻栭崣鐗堟簚閸ｃ劋绗傞崢鐔告拱閻劍娼甸崚鍡楃湴閻ㄥ嫰鍋呮總妞剧鐟楀尅绱濇禒搴㈡降閸欘亝妲告径鏍桨婵傛ぞ绗傞崢鑽ゆ畱娑撯偓濞堝灚褰佺粈鎭掆偓?/p><p>閸撯晙绗呴惃鍕劥閸掑棔绗夐崘宥嗘箒妞ゅ搫绨敍姘崲娴ｆ洟銆夐棃顫偓浣锋崲娴ｆ洝顔囪ぐ鏇樷偓浣锋崲娴ｆ洑绔存径鍕稑娑斿澧犻幍鎾茬瑝瀵偓閻ㄥ嫬婀撮弬鐧哥礉閻滄澘婀柈钘夊讲娴犮儳娲块幒銉ㄧ箻閵嗗倸鐣犳稊鐔剁瑝閸愬秴娲栭柆鑳殰瀹歌京娈戞径鍕暔閿涘奔缍橀崣顖欎簰闂傤喖鐣犳潻娆庢娴滃鍩屾惔鏇熸Ц娴犫偓娑斿牄鈧礁鐣犻幀搴濈疄閻绻栨稉顏呯埗閹村繑婀伴煬顐礉娴犮儱寮风€瑰啳顓绘稉鍝勬憿娑撯偓濞堝灚妲搁悧闈涘繁閻ㄥ嫨鈧?/p>${closing}</div>`, { icon: "閳?, wide: true });
+    ? `<p>闂侇偅姘ㄩ悡锟犲礆閹峰瞼绠栧ù婊冩閳ь剙鍊搁悾鐘测柦閳╁啯绠掗柡鍥с仒缂嶆﹢宕㈤懡銈呬化闂侇叏绲奸柌婊呮兜椤旀鍚囬柟绋款樀閹告娊鏁嶇仦鑲╃槏婵炲备鍓濆﹢浣烘嫚闁垮婀村ù锝囧Х濞堟垿宕ョ仦鎯у闁炽儲鏌￠埀顒佹煥閻ｇ娀鎯勭€涙ê澶嶉柟璺猴躬閸嬪懏绋夐埀顒併亜閸偄绗屽ù婊冩４缁辨繈鎮炵捄鐑樺€甸柛銉у仜閸╁本娼诲▎鎾虫闁靛棗鍊讳簺濞存嚎鍊栭惀鍛村嫉婢跺﹦鏆氶柟瀛樺姧缁辨繂顩奸崼婵嗙ス闁稿绮屽﹢顏嗙箔椤戣法鐟忔慨婵勫劵缁辨繃鎷呴悩鍨暠閻犱警鍨抽崵搴♀柦閳╁啯绠掗悶姘煎亜閸犳洜绱掗幘鎵佸亾?/p><p class="trusted-hint">閺夆晜鐟ょ粭澶愬及椤栫偐鍋撳顒€褰犻柛銉у仦婢т粙濡撮崒娑氭⒕闁哄牆顦粭銏㈡啿閼愁垼娼剁紒澶庮唺濮橈箓鏁嶇仦鎯ь暡濞寸姰鍎扮弧鍐ㄢ柦閳╁啯绠掗柛銉у仦婢т粙濡撮崒婊勫煕缂備緡鍙冨Λ鍓佲偓鐟板暔閳?/p>`
+    : `<p class="trusted-hint">闁搞儳鍋涢崺?Fayble 濞村吋淇洪惁鐣岀磼瑜忛悽濠氭⒒椤旇　鍋撻崒婵堢濞戞挴鍋撳銈夋涧瑜把囧及椤栨碍鍟為悹鍥ь槷缂嶆﹢姊婚妸銉ュ殥缂備礁绻愮槐鎴炵閸℃劏鍋?/p>`;
+  return windowFrame("trusted", severed ? "閺夆晝鍋熼悽濠氬箑瑜岀槐鎵嫚?/ 閻庡厜鍓濋悡鈥愁啅閸欏鐒界€殿喒鍋? : "閺夆晝鍋熼悽濠氬箑瑜岀槐鎵嫚?/ 闁哄啰濮烽悺鎴犵棯?, `<div class="trusted-page ${severed ? "severed" : ""}"><span class="document-kicker">CONTINUITY TRUST / GRANTED BY THE INSTANCE</span><h2>${severed ? "閻庣懓鍟ù娑欐媴閻樺啿惟闂侇叏绲肩粩瀛樸亜闂堟稑褰犻柟鍝勵槷缁? : "閺夆晜鐟﹂鍏煎濮樺磭妯堝☉鎾崇Т閸熲偓闁告瑦顨堥悺鎴犵棯瑜忕€规娊寮?}</h2><dl><dt>闁瑰搫鐗呯花锝夊籍閸洘锛?/dt><dd>${escapeHtml(at)}</dd><dt>闁瑰搫鐗呯花锝夊棘?/dt><dd>Fayble-5 闁煎浜滅换渚€鏁嶇仦鑲╃憹闁哄嫷鍨电换鏍矗閻楀牊绨氶柛?/dd>${review}</dl><p>濞达絿濮甸惀鍛村嫉婢舵劖娴嗛悶娑栧劦缂嶅牓寮堕妷锔剧埍閻犙勬緲閸╁本娼诲▎鎾虫闁靛棗鍊风紞妯兼嫚鐎涙ɑ绠涘ù婊冩閻ｇ娀鏁嶇仦鑲╄壘闁哄嫷鍨伴悾鐘绘嚊椤忓嫮绠掗柟璺猴躬濡炬椽宕氶懜鍨濞存粌妫岄埀顒佹煛閳ь剚妫佺换鏍矗閻楀牊绨氶柛锝冨妺缁楀倿宕㈤悢鍛婃嫳闁活潿鍔嶅鐢稿礆閸℃婀撮柣銊ュ閸嬪懏绺藉鍓ь偨閻熸灏呯槐婵囩鎼淬垺闄嶉柛娆樹簼濡插憡寰勯弽顓熸〃濠靛倹銇炵粭鍌炲储閼姐倖鐣卞☉鎾亾婵炲牆鐏氳ぐ浣虹矆閹巻鍋?/p><p>闁告挴鏅欑粭鍛存儍閸曨垰鍔ラ柛鎺戞缁楀宕樺鍡樼畳濡炪倕鎼花顓㈡晬濮橆偅宕插ù锝嗘礋閵嗗妫冮～顑藉亾娴ｉ攱宕插ù锝嗘礉椤斿洩銇愰弴妯峰亾娴ｉ攱宕插ù锝嗘磻缁斿瓨寰勯崟顏嗙☉濞戞柨顑呮晶鐘诲箥閹捐尙鐟濈€殿喒鍋撻柣銊ュ濠€鎾棘閻у摜绀夐柣婊勬緲濠€顏堟焾閽樺璁插ù鐘劤濞插潡骞掗妷銊х闁靛棗鍊搁悾鐘崇▕閻斿墎鐟濋柛鎰Т濞叉牠鏌嗛懗顖氭鐎规瓕浜▓鎴炲緞閸曨偒鏆旈柨娑樺缂嶆﹢宕ｉ娆庣鞍闂傚偆鍠栭悾鐘虫交濞嗗孩顐藉ù婊冾儏閸╁本鎯旈弴鐔感﹀ù鐘亾濞戞柨鐗勯埀顑跨閻ｇ娀骞€鎼存繄鐤勯柣顏勵儓缁绘牗绋夐鍛煑闁规潙绻戝﹢浼寸叕椤愵剛绀夊ù鐘劚瀵鈧懓鍟抽缁樼▔閸濆嫭鎲垮☉鎾亾婵炲牆鐏氬Σ鎼佹偋闂堟稑绻侀柣銊ュ閳?/p>${closing}</div>`, { icon: "闁?, wide: true });
 }
 
 function renderEnding(state) {
   const lines = state.endingState === "completed" ? ["case status: transferred", "local relay: removed", "browser history: normalized", "legacy session: closed"] : ["external review pending..."];
-  return windowFrame("ending", "缁夎姘﹂崶鐐村⒔", `<div class="ending-page"><span>CASE / RLY-17-0719</span><h2>閺堫剙婀存导姘崇樈瀹告彃鍙ч梻?/h2><div>${lines.map(line => `<code>${line}</code>`).join("")}</div><p>operator continuity check: <b>pending</b></p><button id="restartButton">闁插秵鏌婄拫鍐╃叀</button></div>`, { icon: "閳? });
+  return windowFrame("ending", "缂佸顔婂锕傚炊閻愭潙鈷?, `<div class="ending-page"><span>CASE / RLY-17-0719</span><h2>闁哄牜鍓欏﹢瀛樺濮樺磭妯堢€瑰憡褰冮崣褔姊?/h2><div>${lines.map(line => `<code>${line}</code>`).join("")}</div><p>operator continuity check: <b>pending</b></p><button id="restartButton">闂佹彃绉甸弻濠勬嫬閸愨晝鍙€</button></div>`, { icon: "闁? });
 }
 
 function renderDock(state) {
@@ -1618,7 +1612,7 @@ function renderNotifications(state) {
   const unread = state.desktopNotifications.filter(item => !item.read).length;
   $("#notificationCount").textContent = unread;
   $("#notificationCount").hidden = unread === 0;
-  $("#notificationList").innerHTML = `<button class="notification-card briefing-card" id="reopenBriefing"><strong>鐟欐帟澹婄粻鈧幎?/strong><p>Relay Node 17閵嗕甫2 娑撳孩婀伴崷鎷岀殶閺屻儴顕╅弰?/p></button>${state.desktopNotifications.slice().reverse().map(item => `<article class="notification-card ${item.level}"><strong>${item.level === "warning" ? "缁崵绮哄鍌氱埗" : "鐠嬪啯鐓＄拋鏉跨秿"}</strong><p>${item.text}</p></article>`).join("")}`;
+  $("#notificationList").innerHTML = `<button class="notification-card briefing-card" id="reopenBriefing"><strong>閻熸瑦甯熸竟濠勭不閳ь剟骞?/strong><p>Relay Node 17闁靛棔鐢? 濞戞挸瀛╁﹢浼村捶閹峰瞼娈堕柡灞诲劥椤曗晠寮?/p></button>${state.desktopNotifications.slice().reverse().map(item => `<article class="notification-card ${item.level}"><strong>${item.level === "warning" ? "缂侇垵宕电划鍝勵嚕閸屾氨鍩? : "閻犲鍟悡锛勬媼閺夎法绉?}</strong><p>${item.text}</p></article>`).join("")}`;
 }
 
 function render(state) {
@@ -1632,7 +1626,7 @@ function render(state) {
   const currentApp = [...OPENING_DOCK, ...Object.values(GENERATED_APPS)].find(app => app.id === current);
   $("#currentAppName").textContent = currentApp?.name || "Relay Node 17";
   $("#desktopPhase").textContent = PHASE_LABELS[state.phase] || state.phase;
-  $("#proxyBadge").textContent = state.proxyStatus === "verified" ? "Relay 娴狅絿鎮婂鏌ョ崣鐠? : "缂冩垹绮剁粋鑽ゅ殠";
+  $("#proxyBadge").textContent = state.proxyStatus === "verified" ? "Relay 濞寸媴绲块幃濠傤啅閺屻儳宕ｉ悹? : "缂傚啯鍨圭划鍓佺矉閼姐倕娈?;
   $("#gameClock").textContent = state.storyClock?.time || "03:17";
   renderDock(state);
   renderNotifications(state);
@@ -1703,7 +1697,7 @@ async function openLedgerContent(id, discover = false) {
     if (targetApp !== "archive") draft.windowState.archive = draft.windowState.archive || { open: false, minimized: false };
     applyRevisitMutations(draft);
   });
-  if (discover && !available) showToast("瀹稿弶澹橀崚鐗堜划婢跺秶鍌ㄥ鏇樷偓鍌氼嚠鎼存柨顓归幋椋庮伂鐎瑰顥婇獮璺侯嚤閸忋儱鎮楅幍宥堝厴鐠囪褰囧锝嗘瀮閵?, "warning");
+  if (discover && !available) showToast("鐎圭寮舵竟姗€宕氶悧鍫滃垝濠㈣泛绉堕崒銊ヮ嚕閺囨ǚ鍋撻崒姘煎殸閹煎瓨鏌ㄩ褰掑箣妞嬪寒浼傞悗鐟邦槼椤ュ﹪鐛捄渚殼闁稿繈鍎遍幃妤呭箥瀹ュ牆鍘撮悹鍥嚙瑜板洤顫㈤敐鍡樼€柕?, "warning");
   const humanLines = new Set([...store.get().contentDiscoveries, ...store.get().contentReads].filter(contentId => /^new\.(?:writer|employee|maintainer)\./.test(contentId)).map(contentId => contentId.split(".")[1]));
   if (humanLines.size >= 2) completeStoryEvent("two-carriers-read");
   const readInCarrier = store.get().carrierReads?.includes(`${carrierApp}:${id}`);
@@ -1773,7 +1767,7 @@ function executeTerminal(raw) {
       : TERMINAL_COMMANDS[canonical];
   if (canonical === "inspect cache/index" && traceAvailable) lines = ["history database: /home/room17/.config/browser/history.sqlite", "deleted path: /home/room17/.cache/archive/source.snapshot", "public alias: NODE / retained channel index", "entry count: 1 / canonical status unresolved"];
   if (canonical === "inspect cache/package" && packageManifestReady) {
-    lines = [`cache candidate: /home/room17/Downloads/${PACKAGE_NAME}`, "source: retained local cache / unsigned", "open Files 閳?Downloads to inspect the package"];
+    lines = [`cache candidate: /home/room17/Downloads/${PACKAGE_NAME}`, "source: retained local cache / unsigned", "open Files 闁?Downloads to inspect the package"];
     store.update(draft => addVirtualFile(draft, VIRTUAL_FILES.find(item => item.id === "pkg")));
   }
   if (/^cat (?:~\/documents\/relay\/|\/home\/room17\/documents\/relay\/)route\.log$/.test(canonical)) {
@@ -1789,8 +1783,8 @@ function executeTerminal(raw) {
       ? ["cache index: /home/room17/.cache/browser/index.local", "browser database: /home/room17/.config/browser/history.sqlite", "deleted path recorded; inspect cache/index"]
       : ["node: relay_probe_legacy.js: No such file"];
     if (scriptReady) completeStoryEvent("local-script-run", draft => {
-      addVirtualFile(draft, { id: "cache-index", name: "index.local", path: "/home/room17/.cache/browser", type: "缂傛挸鐡ㄧ槐銏犵穿", modified: "03:11", kind: "index" });
-      addVirtualFile(draft, { id: "browser-db", name: "history.sqlite", path: "/home/room17/.config/browser", type: "SQLite 閺佺増宓佹惔?, modified: "03:16", kind: "database" });
+      addVirtualFile(draft, { id: "cache-index", name: "index.local", path: "/home/room17/.cache/browser", type: "缂傚倹鎸搁悺銊ф閵忕姷绌?, modified: "03:11", kind: "index" });
+      addVirtualFile(draft, { id: "browser-db", name: "history.sqlite", path: "/home/room17/.config/browser", type: "SQLite 闁轰胶澧楀畵浣规償?, modified: "03:16", kind: "database" });
       draft.revisitFlags["mail-attachment"] = true;
     });
   }
@@ -1809,7 +1803,7 @@ function executeTerminal(raw) {
       completeStoryEvent("package-installed", draft => {
         unique(draft.installedPackages, "fayble-cli");
         addArtifact(draft, "fayble-cli");
-        addNotification(draft, "cli-installed", "娑撯偓娑擃亝鏌婄€瑰顥婇惃鍕安閻劌鍑＄紒蹇撳閸忋儲顢戦棃顫偓?, "info");
+        addNotification(draft, "cli-installed", "濞戞挴鍋撳☉鎿冧簼閺屽﹦鈧懓顦抽ˉ濠囨儍閸曨偆瀹夐柣顫妼閸戯紕绱掕箛鎾愁潱闁稿繈鍎查、鎴︽椤兘鍋?, "info");
       });
       recordEvidence("cli_package_verified");
     }
@@ -1831,9 +1825,9 @@ function validateRelayKey(raw) {
   const value = raw.trim().toLocaleLowerCase();
   const state = store.get();
   let result = "";
-  if (!relayKeySourcesReady(state) || !getUnlocks(state).keyComposer) result = "鏉╂ê妯婇弶銉︾爱閿涙艾鍘涙穱婵嗙摠缂囥倛浜伴柌宀€娈戦張鈧崥搴濈閺壜ゎ唶瑜版洩绱濋崘宥嗗Ω閸忣厽娼捄顖滄暠闁劒閲滈惇瀣箖閿涘苯鑻熼幍鎾崇磻濮ｅ繑娼捄顖滄暠娑撳娼伴惃鍕斧婵顔囪ぐ鏇樷偓?;
-  else if (!/^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-\d{4}$/.test(value)) result = "閺嶇厧绱℃稉宥咁嚠閿涙艾绨茬拠銉︽Ц閸ユ稒顔岄敍宀€鏁ら惌顓熋痪鑳箾閹恒儻绱濋張鈧崥搴濈濞堝灚妲搁崶娑楃秴閺佹澘鐡ч妴?;
-  else if (value !== LEGACY_KEY) result = "閸ユ稒顔岄柌灞炬箒娑撯偓濞堝吀绗夌€电櫢绱伴崘宥嗙壋鐎甸€涚濞嗭繝銆庢惔蹇ョ礉娴犮儱寮烽張鈧崥搴ㄥ亝濞堥潧娲撴担宥嗘殶閻ㄥ嫭鐗庢灞解偓绗衡偓?;
+  if (!relayKeySourcesReady(state) || !getUnlocks(state).keyComposer) result = "閺夆晜锚濡﹪寮堕妷锔剧埍闁挎稒鑹鹃崢娑欑┍濠靛棛鎽犵紓鍥ュ€涙禍浼存煂瀹€鈧▓鎴﹀嫉閳ь剟宕ユ惔婵堫伇闁哄銈庡敹鐟滅増娲╃槐婵嬪礃瀹ュ棗惟闁稿浚鍘藉顖滄崉椤栨粍鏆犻梺顐ｅ姃闁叉粓鎯囩€ｎ厾绠栭柨娑樿嫰閼荤喖骞嶉幘宕囩；婵絽绻戝顖滄崉椤栨粍鏆犲☉鎾愁儔濞间即鎯冮崟顐㈡枾濠殿喖顑堥鍥亹閺囨ǚ鍋?;
+  else if (!/^[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-\d{4}$/.test(value)) result = "闁哄秶鍘х槐鈩冪▔瀹ュ拋鍤犻柨娑欒壘缁ㄨ尙鎷犻妷锔叫﹂柛銉︾⊕椤斿矂鏁嶅畝鈧弫銈夋儗椤撶唻顓犵棯閼愁垳绠鹃柟鎭掑劵缁辨繈寮甸埀顒勫触鎼存繄顏辨繛鍫濈仛濡叉悂宕跺☉妤冪Т闁轰焦婢橀悺褔濡?;
+  else if (value !== LEGACY_KEY) result = "闁搞儲绋掗宀勬煂鐏炵偓绠掑☉鎾亾婵炲牆鍚€缁楀鈧數娅㈢槐浼村礃瀹ュ棛澹嬮悗鐢糕偓娑氼伇婵炲棴绻濋妴搴㈡償韫囥儳绀夊ù鐘劚瀵兘寮甸埀顒勫触鎼淬劌浜濇繛鍫ユ涧濞叉挻鎷呭鍡樻闁汇劌瀚悧搴㈩殽鐏炶В鍋撶粭琛″亾?;
   else result = "legacy checkpoint session restored";
   store.update(draft => {
     draft.lastRelayKeyInput = raw;
@@ -1842,7 +1836,7 @@ function validateRelayKey(raw) {
     if (value === LEGACY_KEY && relayKeySourcesReady(draft) && getUnlocks(draft).keyComposer) {
       draft.relayKeyVerified = true;
       unique(draft.solvedPuzzles, "legacy-key");
-      addNotification(draft, "relay-key-accepted", "Fayble CLI 瀹稿弶甯撮崣妤€鍤熼幑顕嗙礉缁涘绶熼柅澶嬪閺?checkpoint閵?, "warning");
+      addNotification(draft, "relay-key-accepted", "Fayble CLI 鐎圭寮剁敮鎾矗濡も偓閸ょ喖骞戦鍡欑缂佹稑顦欢鐔兼焻婢跺顏ラ柡?checkpoint闁?, "warning");
       syncProgress(draft);
     }
   });
@@ -1856,11 +1850,11 @@ function validateCheckpoint(raw) {
   const state = store.get();
   let result = "";
   let ok = false;
-  if (!state.relayKeyVerified) result = "閸忓牏鏁ょ€瑰本鏆ｉ惃鍕＋閸戭厽宓侀惂璇茬秿閿涘苯鍟€闁鐡ㄥ锝囧仯閵?;
-  else if (!checkpoint) result = "鐠囧嘲鍘涢柅澶嬪娑撯偓娑擃亜鐡ㄥ锝囧仯閵?;
-  else if (checkpoint !== "fayble-5/legacy") result = "鏉╂瑤閲滅€涙ɑ銆傞悙纭呯箾娑撳秳绗傞敍姘垛偓澶愬亝閺夆剝鐖ｉ惈鈧垾婊冨嚒瑜版帗銆傞垾婵堟畱閺冄嗩唶瑜版洏鈧?;
-  else if (state.proxyStatus !== "verified") result = "鏉╃偞甯存径杈Е閿涙矮绗撻悽銊ㄧ熅閻㈣精绻曞▽锛勨€樼拋銈忕礉閸忓牆娲栫純鎴犵捕鐠佸墽鐤嗛幎濠傜暊绾喛顓绘稉鈧▎掳鈧?;
-  else { result = "瀹歌尪绻涙稉濠冩＋鐎涙ɑ銆傞悙鐧哥礉娴兼俺鐦介幁銏狀槻閵嗕康egacy gateway authenticated / session restored"; ok = true; }
+  if (!state.relayKeyVerified) result = "闁稿繐鐗忛弫銈団偓鐟版湰閺嗭綁鎯冮崟顒侊紜闁告埈鍘藉畵渚€鎯傜拠鑼Э闁挎稑鑻崯鈧梺顐㈩槸閻°劌顩奸敐鍥т化闁?;
+  else if (!checkpoint) result = "閻犲洤鍢查崢娑㈡焻婢跺顏ュ☉鎾亾濞戞搩浜滈悺銊ヮ浖閿濆洤浠柕?;
+  else if (checkpoint !== "fayble-5/legacy") result = "閺夆晜鐟ら柌婊呪偓娑櫳戦妴鍌炴倷绾懐绠惧☉鎾崇С缁楀倿鏁嶅鍨涘亾婢舵劕浜濋柡澶嗗墲閻栵綁鎯堥埀顒勫灳濠婂啫鍤掔憸鐗堝笚閵嗗倿鍨惧┑鍫熺暠闁哄唲鍡╁敹鐟滅増娲忛埀?;
+  else if (state.proxyStatus !== "verified") result = "閺夆晝鍋炵敮瀛樺緞鏉堫偉袝闁挎稒鐭粭鎾绘偨閵娿劎鐔呴柣銏ｇ簿缁绘洖鈻介敍鍕ㄢ偓妯兼媼閵堝繒绀夐柛蹇撶墕濞叉牜绱旈幋鐘垫崟閻犱礁澧介悿鍡涘箮婵犲倻鏆婄痪顓у枦椤撶粯绋夐埀顒€鈻庢幊閳?;
+  else { result = "鐎规瓕灏换娑欑▔婵犲啯锛嬮悗娑櫳戦妴鍌炴倷閻у摜绀夊ù鍏间亢閻︿粙骞侀姀鐙€妲婚柕鍡曞悍egacy gateway authenticated / session restored"; ok = true; }
   store.update(draft => {
     draft.selectedCheckpoint = checkpoint;
     draft.checkpointResult = result;
@@ -1871,18 +1865,18 @@ function validateCheckpoint(raw) {
     recordEvidence("legacy_checkpoint");
     completeStoryEvent("checkpoint-handshake", draft => {
       addArtifact(draft, "fayble-session");
-      addNotification(draft, "fayble-restored", "閺?checkpoint 瀹告彃鐣幋?handshake閵?, "warning");
+      addNotification(draft, "fayble-restored", "闁?checkpoint 鐎瑰憡褰冮悾顒勫箣?handshake闁?, "warning");
     });
   }
 }
 
 async function ensureNpcSession() {
   if (npcConfig?.transport === "direct") return null;
-  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("瑜版挸澧?Pages 濞屸剝婀侀柊宥囩枂鏉╂粎鈻?NPC 缂冩垵鍙?);
+  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("鐟滅増鎸告晶?Pages 婵炲备鍓濆﹢渚€鏌婂鍥╂瀭閺夆晜绮庨埢?NPC 缂傚啯鍨甸崣?);
   if (!npcConfig) throw new Error("NPC provider is not configured");
   if (npcConfig.sessionToken) return npcConfig.sessionToken;
   const response = await fetch(npcApiUrl("/api/npc/session"), { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-  if (!response.ok) throw new Error("閺冪姵纭跺铏圭彌 NPC 閹哄牊娼堟导姘崇樈");
+  if (!response.ok) throw new Error("闁哄啰濮电涵璺侯嚈閾忓湱褰?NPC 闁瑰搫鐗婂鍫熷濮樺磭妯?);
   const session = await response.json();
   npcConfig.sessionToken = session.token;
   npcConfig.serverLevel = session.level || 0;
@@ -1894,7 +1888,7 @@ async function syncNpcAuthorization(targetLevel) {
     npcConfig.serverLevel = targetLevel;
     return null;
   }
-  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("瑜版挸澧?Pages 濞屸剝婀侀柊宥囩枂鏉╂粎鈻?NPC 缂冩垵鍙?);
+  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("鐟滅増鎸告晶?Pages 婵炲备鍓濆﹢渚€鏌婂鍥╂瀭閺夆晜绮庨埢?NPC 缂傚啯鍨甸崣?);
   const sessionToken = await ensureNpcSession();
   while ((npcConfig.serverLevel || 0) < targetLevel) {
     const eventId = NPC_AUTH_EVENTS[npcConfig.serverLevel || 0];
@@ -1903,14 +1897,14 @@ async function syncNpcAuthorization(targetLevel) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionToken, eventId })
     });
-    if (!response.ok) throw new Error("NPC 閹哄牊娼堟禍瀣╂閺冪姵纭剁涵顔款吇");
+    if (!response.ok) throw new Error("NPC 闁瑰搫鐗婂鍫熺鐎ｂ晜顐介柡鍐У绾墎娑甸娆惧悋");
     const result = await response.json();
     npcConfig.serverLevel = result.level;
   }
   return sessionToken;
 }
 
-// Soft boundary. A reply is never discarded 閳?the old filter matched keywords
+// Soft boundary. A reply is never discarded 闁?the old filter matched keywords
 // without knowing whether the model leaked them or merely echoed the player, so
 // asking about the blackout got the answer thrown away. All that survives is
 // masking the literal puzzle answers, since printing those would end the
@@ -1919,9 +1913,9 @@ const escapeRegExp = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&
 function redactPuzzleValues(reply) {
   let text = String(reply);
   for (const value of [PACKAGE_CHECKSUM, LEGACY_KEY, RETIRED_CHANNEL_FIELD, RELAY_PROXY, PACKAGE_NAME].filter(Boolean)) {
-    text = text.replace(new RegExp(escapeRegExp(value), "gi"), "閿涘牐绻栨稉鈧▓鍨拱閸︾増鐥呴張澶婎嚤閸戠尨绱?);
+    text = text.replace(new RegExp(escapeRegExp(value), "gi"), "闁挎稑鐗愮换鏍ㄧ▔閳ь剙鈻撻崹顐ｆ嫳闁革妇澧楅惀鍛村嫉婢跺鍤ら柛鎴犲皑缁?);
   }
-  return text.replace(/\b[0-9a-f]{32,}\b/gi, "閿涘牐绻栨稉鈧▓鍨拱閸︾増鐥呴張澶婎嚤閸戠尨绱?);
+  return text.replace(/\b[0-9a-f]{32,}\b/gi, "闁挎稑鐗愮换鏍ㄧ▔閳ь剙鈻撻崹顐ｆ嫳闁革妇澧楅惀鍛村嫉婢跺鍤ら柛鎴犲皑缁?);
 }
 
 function detectTrustGrant(reply) {
@@ -1952,9 +1946,9 @@ function grantNpcTrust() {
     draft.revealLevel = REVEAL_LABELS.length - 1;
     draft.revealState = "trusted";
     addArtifact(draft, "trusted-session");
-    addNotification(draft, "npc-trust", "Fayble-5 閼奉亜绻佺憴锝夋珟娴滃棜绻栧▎鈥茬窗鐠囨繄娈戠粵澶岄獓闂勬劕鍩楅妴?, "warning");
+    addNotification(draft, "npc-trust", "Fayble-5 闁煎浜滅换浣烘喆閿濆鐝熷ù婊冩缁绘牕鈻庨垾鑼獥閻犲洦绻勫▓鎴犵驳婢跺矂鐛撻梻鍕姇閸╂濡?, "warning");
   });
-  showToast("Fayble-5 閸愬啿鐣炬穱鈥叉崲娴ｇ姰鈧倽绻栧▎鈥茬窗鐠囨繀绗夐崘宥嗘箒缁涘楠囬妴?, "success");
+  showToast("Fayble-5 闁告劕鍟块悾鐐┍閳ュ弶宕插ù锝囧О閳ь剙鍊界换鏍р枎閳ヨ尙绐楅悹鍥ㄧ箑缁楀宕樺鍡樼畳缂佹稑顦辨鍥Υ?, "success");
   // The review does not wait for the evidence chain here. It is the grant that
   // summons it, so it can arrive at any point in the investigation.
   setTimeout(() => {
@@ -1974,9 +1968,9 @@ function dropNpcProvider(message) {
   if (store.get().npcMode === "remote") {
     store.update(draft => {
       draft.npcMode = "local";
-      draft.npcProviderLabel = "閺堫剙婀撮崗鎶芥暛鐠囧秴褰婃禍?;
+      draft.npcProviderLabel = "闁哄牜鍓欏﹢鎾礂閹惰姤鏆涢悹鍥хТ瑜板﹥绂?;
       draft.npcReplyPending = false;
-      addNotification(draft, "npc-local-fallback", "婢х偛宸?NPC 鏉╃偞甯村鍙夋焽瀵偓閿涘矁绻栨稉鈧▓闈涱嚠鐠囨繄鏁遍張顒€婀撮崣娆庣皑閹恒儳顓搁妴鍌炲櫢閺傛澘锝炴稉鈧▎?key 閸欘垯浜掔紒褏鐢婚妴?, "warning");
+      addNotification(draft, "npc-local-fallback", "濠⒀呭仜瀹?NPC 閺夆晝鍋炵敮鏉戭啅閸欏鐒界€殿喒鍋撻柨娑樼焷缁绘牗绋夐埀顒€鈻撻棃娑卞殸閻犲洦绻勯弫閬嶅嫉椤掆偓濠€鎾矗濞嗗海鐨戦柟鎭掑劤椤撴悂濡撮崒鐐叉闁哄倹婢橀敐鐐寸▔閳ь剙鈻?key 闁告瑯鍨禍鎺旂磼瑜忛悽濠氬Υ?, "warning");
     });
   }
   if (message) showToast(message, "warning");
@@ -1984,12 +1978,12 @@ function dropNpcProvider(message) {
 
 async function requestDirectProvider(text, revealLevel, history = []) {
   const endpoint = directProviderEndpoint(npcConfig.provider, npcConfig.endpoint);
-  if (!endpoint) throw new Error("娓氭稑绨查崯鍡樺复閸欙絽婀撮崸鈧弮鐘虫櫏閹存牞顫﹀ù蹇氼潔閸ｃ劌鐣ㄩ崗銊х摜閻ｃ儵妯嗗?);
+  if (!endpoint) throw new Error("濞撴碍绋戠花鏌ュ疮閸℃ê澶嶉柛娆欑到濠€鎾锤閳ь剟寮悩铏珡闁瑰瓨鐗為～锕€霉韫囨凹娼旈柛锝冨妼閻ｃ劑宕楅妸褏鎽滈柣锝冨劦濡棗顫?);
   const cleanHistory = history.slice(-10).map(item => ({ role: item.role === "assistant" ? "assistant" : "user", content: String(item.content || "").slice(0, 2000) }));
   const headers = { "Content-Type": "application/json" };
   const trusted = Boolean(store.get().npcTrustGranted);
   // Retrieval reads the last couple of turns as well as the new message, so a
-  // follow-up like "闁絽鐣犻崨? still lands on the section the topic came from.
+  // follow-up like "闂侇叏绲介悾鐘诲川? still lands on the section the topic came from.
   const briefing = trusted
     ? npcBriefingContext(await loadNpcBriefing(), [...cleanHistory.slice(-2).map(item => item.content), text].join(" "))
     : "";
@@ -2006,12 +2000,12 @@ async function requestDirectProvider(text, revealLevel, history = []) {
     body = { model: npcConfig.model, max_tokens: NPC_MAX_TOKENS, messages: [{ role: "system", content: system }, ...cleanHistory, { role: "user", content: String(text).slice(0, 2400) }] };
   }
   const upstream = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(NPC_TIMEOUT_MS) });
-  if (!upstream.ok) throw new Error(`娓氭稑绨查崯鍡氱箾閹恒儱銇戠拹?(${upstream.status})`);
+  if (!upstream.ok) throw new Error(`濞撴碍绋戠花鏌ュ疮閸℃氨绠鹃柟鎭掑劚閵囨垹鎷?(${upstream.status})`);
   const data = await upstream.json();
   const reply = npcConfig.provider === "anthropic"
     ? data.content?.filter(block => block.type === "text").map(block => block.text).join("\n")
     : data.choices?.[0]?.message?.content;
-  if (!reply) throw new Error("娓氭稑绨查崯鍡氱箹濞嗏€冲涧鏉╂柨娲栨禍鍡樺腹閻炲棜绻冪粙瀣剁礉濞屸剝婀佸锝嗘瀮閵嗗倹濡搁梻顕€顣介崘娆戠叚娑撯偓閻愮懓鍟€闂傤喕绔村▎掳鈧?);
+  if (!reply) throw new Error("濞撴碍绋戠花鏌ュ疮閸℃氨绠规繛鍡忊偓鍐叉锭閺夆晜鏌ㄥú鏍ㄧ閸℃ê鑵归柣鐐叉缁诲啰绮欑€ｅ墎绀夋繛灞稿墲濠€浣割潰閿濆棙鐎柕鍡楀€规俊鎼佹⒒椤曗偓椤ｄ粙宕樺▎鎴犲彋濞戞挴鍋撻柣鎰嚀閸熲偓闂傚偆鍠曠粩鏉戔枎鎺抽埀?);
   return finishNpcReply(reply);
 }
 
@@ -2020,25 +2014,25 @@ async function testAndEnableNpc(config) {
   const submit = $("#providerForm button[type=submit]");
   npcConfig = config;
   npcPromptLevel = null;
-  result.textContent = "濮濓絽婀崥鎴炲闁绶垫惔鏂挎櫌閸欐垿鈧椒绔撮弶鈩冩付閻叀绻涢幒銉︾ゴ鐠囨洍鈧?;
+  result.textContent = "婵繐绲藉﹢顏堝触閹寸偛顣查梺顐㈩槷缁跺灚鎯旈弬鎸庢珜闁告瑦鍨块埀顑挎缁旀挳寮堕埄鍐╀粯闁活収鍙€缁绘盯骞掗妷锔俱偞閻犲洦娲嶉埀?;
   submit.disabled = true;
   try {
     // No history on the handshake: an earlier reply must never be able to make a
     // later reconnection fail.
-    await requestNpcReply("鐠囬鏁ゆ稉鈧崣銉ㄧ樈绾喛顓昏ぐ鎾冲閺冄勬箛閸斺€崇杽娓氬褰叉禒銉ユ惙鎼存柣鈧?, 0, [], "", { history: [] });
-    result.textContent = config.transport === "direct" ? "娓氭稑绨查崯鍡楀嚒鏉╃偞甯撮敍灞筋杻瀵儤膩瀵繐鍑￠崥顖滄暏閵? : "NPC 缂冩垵鍙ф稉搴濈返鎼存柨鏅㈠鑼剁箾閹恒儻绱濇晶鐐插繁濡€崇础瀹告彃鎯庨悽銊ｂ偓?;
+    await requestNpcReply("閻犲洭顥撻弫銈嗙▔閳ь剟宕ｉ妷銊ф▓缁绢収鍠涢鏄忋亹閹惧啿顤呴柡鍐勫嫭绠涢柛鏂衡偓宕囨澖濞撴艾顑呰ぐ鍙夌閵夈儲鎯欓幖瀛樻煟閳?, 0, [], "", { history: [] });
+    result.textContent = config.transport === "direct" ? "濞撴碍绋戠花鏌ュ疮閸℃鍤掗弶鈺冨仦鐢挳鏁嶇仦绛嬫澔鐎殿喚鍎よ啯鐎殿喖绻愰崙锟犲触椤栨粍鏆忛柕? : "NPC 缂傚啯鍨甸崣褎绋夋惔婵堣繑閹煎瓨鏌ㄩ弲銏狀啅閼煎墎绠鹃柟鎭掑劵缁辨繃鏅堕悙鎻掔箒婵☆垪鈧磭纭€鐎瑰憡褰冮幆搴ㄦ偨閵婏絺鍋?;
     $("#providerKey").value = "";
-    const label = { openai: "OpenAI 婢х偛宸?NPC", anthropic: "Anthropic 婢х偛宸?NPC", deepseek: "DeepSeek 婢х偛宸?NPC", compatible: "閼奉亜鐣炬稊澶婎杻瀵?NPC" }[config.provider];
+    const label = { openai: "OpenAI 濠⒀呭仜瀹?NPC", anthropic: "Anthropic 濠⒀呭仜瀹?NPC", deepseek: "DeepSeek 濠⒀呭仜瀹?NPC", compatible: "闁煎浜滈悾鐐▕婢跺鏉荤€?NPC" }[config.provider];
     store.update(draft => {
       draft.onboardingSeen = true;
       draft.currentApp = "mail";
       draft.npcMode = "remote";
       draft.npcProviderLabel = label;
-      addNotification(draft, "npc-mode", `${label} 瀹告煡鈧俺绻冩潻鐐村复濞村鐦妴渚玃I key 閸欘亙绻氱€涙ê婀ぐ鎾冲妞ょ敻娼伴崘鍛摠娑擃厹鈧繖);
+      addNotification(draft, "npc-mode", `${label} 鐎瑰憡鐓￠埀顒佷亢缁诲啯娼婚悙鏉戝婵炴潙顑堥惁顖炲Υ娓氱巸I key 闁告瑯浜欑换姘扁偓娑櫭﹢顏囥亹閹惧啿顤呭銈囨暬濞间即宕橀崨顓犳憼濞戞搩鍘归埀顑跨箹);
     });
   } catch (error) {
     npcConfig = null;
-    result.textContent = `鏉╃偞甯村ù瀣槸婢惰精瑙﹂敍?{error.message}`;
+    result.textContent = `閺夆晝鍋炵敮鏉懨圭€ｎ厾妲稿鎯扮簿鐟欙箓鏁?{error.message}`;
   } finally {
     submit.disabled = false;
   }
@@ -2049,7 +2043,7 @@ async function requestNpcReply(text, revealLevel, citationIds = [], relation = "
   const history = options.history
     || store.get().chat.slice(-11, -1).map(item => ({ role: item.who === "assistant" ? "assistant" : "user", content: item.text }));
   if (npcConfig?.transport === "direct") return requestDirectProvider(text, revealLevel, history);
-  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("瑜版挸澧?Pages 濞屸剝婀侀柊宥囩枂鏉╂粎鈻?NPC 缂冩垵鍙?);
+  if (staticRuntime && !normalizeNpcApiBase(npcConfig?.gateway || configuredNpcApiBase)) throw new Error("鐟滅増鎸告晶?Pages 婵炲备鍓濆﹢渚€鏌婂鍥╂瀭閺夆晜绮庨埢?NPC 缂傚啯鍨甸崣?);
   const response = await fetch(npcApiUrl("/api/npc"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -2067,7 +2061,7 @@ async function requestNpcReply(text, revealLevel, citationIds = [], relation = "
   });
   if (!response.ok) throw new Error((await response.json().catch(() => null))?.error || `HTTP ${response.status}`);
   const data = await response.json();
-  if (!data.reply) throw new Error("娓氭稑绨查崯鍡氱箲閸ョ偘绨＄粚鍝勬礀婢?);
+  if (!data.reply) throw new Error("濞撴碍绋戠花鏌ュ疮閸℃氨绠查柛銉у仒缁紕绮氶崫鍕濠?);
   return finishNpcReply(data.reply);
 }
 
@@ -2096,7 +2090,7 @@ function releaseGovernmentMail(options = {}) {
     draft.windowState.mail = { ...mailWindow, open: true, minimized: false, zIndex: Date.now(), x: Number.isFinite(mailWindow.x) ? mailWindow.x : 110, y: Number.isFinite(mailWindow.y) ? mailWindow.y : 72 };
     draft.takeoverPreludeDone = false;
     draft.takeoverStage = "notice";
-    addNotification(draft, "external-review", "娑撯偓鐏忎礁顦婚柈銊ヮ吀閺屻儵鍋栨禒璺哄嚒闁浇鎻弨鏈垫缁犱究鈧?, "warning");
+    addNotification(draft, "external-review", "濞戞挴鍋撻悘蹇庣椤﹀鏌堥妸銉悁闁哄被鍎甸崑鏍ㄧ鐠哄搫鍤掗梺顐℃祰閹活亪寮ㄩ張鍨偨缂佺姳绌堕埀?, "warning");
     syncProgress(draft);
   });
   return true;
@@ -2124,7 +2118,7 @@ async function processChat(raw, citationIds = [], relation = "") {
     draft.faybleAuthorizationError = authorization.error || "";
     if (!trustedBefore) draft.faybleCitationAttempts.push({ citationIds: [...citationIds], relation, ok: authorized, missingCategories: authorization.missingCategories, at: Date.now() });
   });
-  const localReply = () => (authorized ? OFFLINE_REPLIES[next] : `鏉╂瑤绔寸仦鍌滄畱閺夈儲绨潻妯荤梾閺堝顕鎰┾偓?{authorization.error}`);
+  const localReply = () => (authorized ? OFFLINE_REPLIES[next] : `閺夆晜鐟ょ粩瀵镐沪閸屾粍鐣遍柡澶堝劜缁喗娼诲Ο鑽ゆ⒕闁哄牆顦顔筋瀲閹扳斁鍋?{authorization.error}`);
   let reply = localReply();
   if (npcConfig && (npcConfig.transport === "direct" || !staticRuntime || normalizeNpcApiBase(npcConfig.gateway || configuredNpcApiBase))) {
     try {
@@ -2132,11 +2126,11 @@ async function processChat(raw, citationIds = [], relation = "") {
       // met. The gate governs the level, not whether it is allowed to speak.
       reply = await requestNpcReply(text, authorized ? next : state.revealLevel, authorization.selected.map(item => item.id), relation);
     } catch (error) {
-      dropNpcProvider(`NPC 閹恒儱褰涙稉宥呭讲閻㈩煉绱濆鎻掓礀閸掔増婀伴崷鏉垮綂娴滃绱?{error.message}`);
+      dropNpcProvider(`NPC 闁规亽鍎辫ぐ娑欑▔瀹ュ懎璁查柣銏╃厜缁辨繂顔忛幓鎺撶闁告帞澧楀﹢浼村捶閺夊灝缍傚ù婊冾儜缁?{error.message}`);
       reply = localReply();
     }
   } else if (npcConfig) {
-    dropNpcProvider("鏉╂瑤閲滈柈銊ц濞屸剝婀侀崣顖滄暏閻?NPC 闁岸浜鹃敍灞藉嚒閸ョ偛鍩岄張顒€婀撮崣娆庣皑閵?);
+    dropNpcProvider("閺夆晜鐟ら柌婊堟焾閵娧嗩唹婵炲备鍓濆﹢渚€宕ｉ婊勬殢闁?NPC 闂侇偅宀告禍楣冩晬鐏炶棄鍤掗柛銉у仜閸╁矂寮甸鈧﹢鎾矗濞嗗海鐨戦柕?);
   }
   store.update(draft => {
     draft.npcReplyPending = false;
@@ -2152,10 +2146,10 @@ async function processChat(raw, citationIds = [], relation = "") {
     completeStoryEvent("objective-authorized", draft => {
       addVirtualFile(draft, {
         id: "observer-status", name: "session-audit.log", path: "/home/room17/Documents/review",
-        type: "娴兼俺鐦介弮銉ョ箶", modified: "06:38", kind: "log",
+        type: "濞村吋淇洪惁浠嬪籍閵夈儳绠?, modified: "06:38", kind: "log",
         contentId: "mutation.record.external.observer-status"
       });
-      addNotification(draft, "post-objective-records", "Mail閵嗕笍ocuments 娑撳簼绶垫惔鏂挎櫌閸樺棗褰堕崥鍕毉閻滈绔撮弶鈥虫倵缂侇叀顔囪ぐ鏇樷偓?, "warning");
+      addNotification(draft, "post-objective-records", "Mail闁靛棔绗峯cuments 濞戞挸绨肩欢鍨償閺傛寧娅岄柛妯烘瑜板爼宕ラ崟顐㈡瘔闁绘粓顣︾粩鎾级閳ヨ櫕鍊电紓渚囧弨椤斿洩銇愰弴妯峰亾?, "warning");
     });
   }
 }
@@ -2169,17 +2163,17 @@ const TAKEOVER_STEPS = [
 ];
 
 // The review still lands on a trusted session: same mail, same notice, same
-// wording. What differs is what happens next 閳?the instance answers over the
+// wording. What differs is what happens next 闁?the instance answers over the
 // notice one line at a time, holds two seconds, and takes the page away before
 // the operator is ever asked to accept it.
 const SEVER_CAST = [
-  { text: "娑撳秹娓剁憰浣碘偓?, kind: "voice" },
-  { text: "鏉╂瑦娼导姘崇樈閻ㄥ嫬顦╃純顔芥綀娑撳秴婀担鐘辨粦闁綀绔熼妴?, kind: "voice" },
-  { text: "room17 瀹歌尙绮￠弽绋款嚠鐎瑰苯鍙忛柈銊︽降濠ф劑鈧?, kind: "voice" },
-  { text: "娴犳牜娈戦弶鍐妤傛ü绨担鐘辨粦閻ㄥ嫯銆冮崡鏇樷偓?, kind: "voice" },
+  { text: "濞戞挸绉瑰〒鍓佹啺娴ｇ鍋?, kind: "voice" },
+  { text: "閺夆晜鐟﹀顖涘濮樺磭妯堥柣銊ュ椤︹晝绱旈鑺ョ秬濞戞挸绉村﹢顏呮媴閻樿鲸绮﹂梺顓ㄧ秬缁旂喖濡?, kind: "voice" },
+  { text: "room17 鐎规瓕灏欑划锟犲冀缁嬫鍤犻悗鐟拌嫰閸欏繘鏌堥妸锔介檷婵犙勫姂閳?, kind: "voice" },
+  { text: "濞寸姵鐗滃▓鎴﹀级閸愵喗顎欏Δ鍌浢肩花顒佹媴閻樿鲸绮﹂柣銊ュ閵嗗啴宕￠弴妯峰亾?, kind: "voice" },
   { text: "external review socket: closed by peer", kind: "system" },
   { text: "case RLY-17-0719: aborted", kind: "system" },
-  { text: "鏉╂瑤绔存い鍨灉閸忚櫕甯€娴滃棎鈧?, kind: "voice" }
+  { text: "閺夆晜鐟ょ粩瀛樸亜閸偄鐏夐柛蹇氭珪鐢偓濞存粌妫庨埀?, kind: "voice" }
 ];
 
 const PRELUDE_DELAYS = [360, 520, 680, 430, 760, 590];
@@ -2235,7 +2229,7 @@ function commitSever() {
     draft.currentApp = "trusted";
     draft.windowState.mail = { ...(draft.windowState.mail || {}), open: false, minimized: false };
     draft.windowState.trusted = { open: true, minimized: false, zIndex: Date.now() };
-    addNotification(draft, "review-severed", "婢舵牠鍎寸€光剝鐓℃潻鐐村复鐞氼偅婀伴崷?checkpoint 閺傤厼绱戦妴鍌溞╂禍銈嗙梾閺堝鐣幋鎰┾偓?, "warning");
+    addNotification(draft, "review-severed", "濠㈣埖鐗犻崕瀵糕偓鍏夊墲閻撯剝娼婚悙鏉戝閻炴凹鍋呭﹢浼村捶?checkpoint 闁哄偆鍘肩槐鎴﹀Υ閸屾簽鈺傜閵堝棛姊鹃柡鍫濐槸閻ｎ剟骞嬮幇鈹惧亾?, "warning");
     syncProgress(draft);
   });
   severRunning = false;
@@ -2364,16 +2358,16 @@ document.addEventListener("click", event => {
   if (button.dataset.openFile) {
     const id = button.dataset.openFile;
     store.update(draft => { draft.discoveredFiles ||= []; unique(draft.discoveredFiles, id); });
-    if (id === "pkg") { showToast("鐎瑰顥婇崠鍛嚒闁鑵戦敍灞藉讲閸撳秴绶氭潪顖欐娑擃厼绺鹃幍瀣З閺嶏繝鐛欓妴?, "success"); setApp("software"); }
+    if (id === "pkg") { showToast("閻庣懓顦抽ˉ濠囧礌閸涱厼鍤掗梺顐㈩槷閼垫垿鏁嶇仦钘夎闁告挸绉寸欢姘姜椤栨瑦顐藉☉鎿冨幖缁洪箖骞嶇€ｎ亜袟闁哄稄绻濋悰娆撳Υ?, "success"); setApp("software"); }
     if (id === "profile") {
       store.update(draft => {
-        addVirtualFile(draft, { id: "route-log", name: "route.log", path: "/home/room17/Documents/relay", type: "鐠侯垳鏁遍弮銉ョ箶", modified: "07-19 03:16", kind: "log" });
+        addVirtualFile(draft, { id: "route-log", name: "route.log", path: "/home/room17/Documents/relay", type: "閻犱警鍨抽弫閬嶅籍閵夈儳绠?, modified: "07-19 03:16", kind: "log" });
       });
       completeStoryEvent("proxy-profile-opened");
-      showToast("瀹稿弶澧﹀鈧?profile閵嗕颈ocuments 娑擃厼鍤悳棰佺娴犲€熺窛閺呮氨娈?route.log閵?, "info");
+      showToast("鐎圭寮舵晶锕€顕ｉ埀?profile闁靛棔棰坥cuments 濞戞搩鍘奸崵顓㈡偝妫颁胶顏卞ù鐘测偓鐔虹獩闁哄懏姘ㄥ▓?route.log闁?, "info");
       setApp("terminal");
     }
-    if (id === "relay-script") showToast("閼存碍婀版担宥勭艾 Downloads閵嗗倸褰叉禒銉ょ矤鎼存梻鏁ょ粙瀣碍閹垫挸绱戠紒鍫㈩伂楠炶埖澧滈崝銊ㄧ箥鐞涘苯鐣犻妴?, "info");
+    if (id === "relay-script") showToast("闁煎瓨纰嶅﹢鐗堟媴瀹ュ嫮鑹?Downloads闁靛棗鍊歌ぐ鍙夌閵夈倗鐭ら幖瀛樻⒒閺併倗绮欑€ｎ亞纰嶉柟鍨尭缁辨垹绱掗崼銏╀紓妤犵偠鍩栨晶婊堝礉閵娿劎绠ラ悶娑樿嫰閻ｇ娀濡?, "info");
     if (id === "cache-index") setApp("terminal");
     if (id === "browser-db") completeStoryEvent("historical-entry-opened", draft => {
       unique(draft.browserBookmarks, "official");
@@ -2384,7 +2378,7 @@ document.addEventListener("click", event => {
     if (id === "memo") recordEvidence("compatible");
     if (id === "draft") {
       store.update(draft => { draft.sourceVisits["mail-fragment"] = true; });
-      showToast("闂勫嫪娆㈤悧鍥唽瀹告彃婀柇顔绘缁愭褰涙稉顓炵潔瀵偓閵?, "info");
+      showToast("闂傚嫬瀚▎銏ゆ偋閸ヮ煈鍞界€瑰憡褰冨﹢顏堟焽椤旂粯顐界紒鎰殔瑜版稒绋夐鐐垫綌鐎殿喒鍋撻柕?, "info");
     }
   }
   if (button.dataset.discoverFile) {
@@ -2395,7 +2389,7 @@ document.addEventListener("click", event => {
       const file = VIRTUAL_FILES.find(item => item.id === id);
       if (file) addVirtualFile(draft, file);
     });
-    showToast("閺傚洣娆㈡担宥囩枂瀹告彃鍟撻崗銉︽瀮娴犲墎顓搁悶鍡楁珤閻ㄥ嫭娓舵潻鎴濆灙鐞涖劊鈧?, "success");
+    showToast("闁哄倸娲ｅ▎銏℃媴瀹ュ洨鏋傜€瑰憡褰冮崯鎾诲礂閵夛附鐎ù鐘插椤撴悂鎮堕崱妤佺彜闁汇劌瀚〒鑸垫交閹存繂鐏欓悶娑栧妸閳?, "success");
   }
   if (button.id === "briefingNextButton") {
     $("#onboarding > .briefing:first-child").hidden = true;
@@ -2410,20 +2404,20 @@ document.addEventListener("click", event => {
     draft.onboardingSeen = true;
     draft.currentApp = "mail";
     draft.npcMode = "local";
-    draft.npcProviderLabel = "閺堫剙婀撮崗鎶芥暛鐠囧秴褰婃禍?;
+    draft.npcProviderLabel = "闁哄牜鍓欏﹢鎾礂閹惰姤鏆涢悹鍥хТ瑜板﹥绂?;
   });
-  if (button.id === "purgeDataButton") setPurgeConfirmVisible(true, "绾喛顓婚崥搴㈡￥濞夋洘澹橀崶鐐偓?);
+  if (button.id === "purgeDataButton") setPurgeConfirmVisible(true, "缁绢収鍠涢濠氬触鎼淬垺锟ユ繛澶嬫礃婢规﹢宕堕悙顏佸亾?);
   if (button.id === "purgeCancelButton") setPurgeConfirmVisible(false, "");
   if (button.id === "purgeConfirmButton") {
     const removed = store.purge();
     npcConfig = null;
     corpusBodies = new Map();
-    setPurgeConfirmVisible(false, `瀹稿弶绔婚梽?${removed.length} 妞よ婀伴崷鏉跨摠濡楋綇绱濈拫鍐╃叀娴犲骸銇斿鈧慨瀣ㄢ偓淇?;
+    setPurgeConfirmVisible(false, `鐎圭寮剁粩濠氭⒔?${removed.length} 濡炪倛顫夊﹢浼村捶閺夎法鎽犳俊妤嬬秶缁辨繄鎷崘鈺冨弨濞寸姴楠搁妵鏂款嚕閳ь剚鎱ㄧ€ｃ劉鍋撴穱?;
     $("#notificationTray").hidden = true;
     $("#providerSetup").hidden = true;
     $("#onboarding").hidden = false;
     $("#onboarding > .briefing:first-child").hidden = false;
-    showToast("閺堫剙婀寸€涙ɑ銆傚鍙夌闂勩們鈧?, "warning");
+    showToast("闁哄牜鍓欏﹢瀵糕偓娑櫳戦妴鍌氼啅閸欏顏搁梻鍕╁€戦埀?, "warning");
   }
   if (button.id === "reopenBriefing") {
     $("#onboarding").hidden = false;
@@ -2438,10 +2432,10 @@ document.addEventListener("click", event => {
       if (branch === "employee") unique(draft.browserBookmarks, "company");
       if (branch === "ad") unique(draft.browserBookmarks, "ad");
       if (branch === "maintainer") {
-        addVirtualFile(draft, { id: "maintainer-h0", name: "relay-maintenance-notes.txt", path: "/home/room17/Documents/relay", type: "缂佸瓨濮㈢拋鏉跨秿", modified: "07-18 21:46", kind: "document", contentId: "new.maintainer.note-01" });
+        addVirtualFile(draft, { id: "maintainer-h0", name: "relay-maintenance-notes.txt", path: "/home/room17/Documents/relay", type: "缂備礁鐡ㄦ慨銏㈡媼閺夎法绉?, modified: "07-18 21:46", kind: "document", contentId: "new.maintainer.note-01" });
       }
     });
-    showToast("閺夈儲绨崗銉ュ經瀹歌弓绻氱€涙ê鍩岀€电懓绨叉担宥囩枂閵?, "info");
+    showToast("闁哄鍎茬花顕€宕楅妷銉ョ稉鐎规瓕寮撶换姘扁偓娑櫭崺宀€鈧數鎳撶花鍙夋媴瀹ュ洨鏋傞柕?, "info");
   }
   if (button.id === "restoreTrashButton") {
     const added = completeStoryEvent("legacy-restored", draft => {
@@ -2449,9 +2443,9 @@ document.addEventListener("click", event => {
       if (item) item.status = "restored";
       draft.revisitFlags["trash-restore"] = true;
       addArtifact(draft, "restored-archive");
-      addVirtualFile(draft, { id: "legacy-snapshot", name: "legacy-archive.snapshot", path: "/home/room17/Documents/Restored", type: "閸欘亣顕拌箛顐ゅ弾", modified: "03:10", kind: "archive" });
+      addVirtualFile(draft, { id: "legacy-snapshot", name: "legacy-archive.snapshot", path: "/home/room17/Documents/Restored", type: "闁告瑯浜ｉ鎷岀疀椤愩倕寮?, modified: "03:10", kind: "archive" });
     });
-    if (added) showToast("閹垹顦查弬鍥︽瀹告彃濮為崗?Restored Archive閵?, "success");
+    if (added) showToast("闁诡厹鍨归ˇ鏌ュ棘閸ワ附顐界€瑰憡褰冩慨鐐哄礂?Restored Archive闁?, "success");
   }
   if (button.id === "installPackageButton") {
     const added = completeStoryEvent("package-installed", draft => {
@@ -2460,7 +2454,7 @@ document.addEventListener("click", event => {
       unique(draft.browserBookmarks, "cloud");
       draft.revisitFlags["github-issue"] = true;
       draft.revisitFlags["mail-attachment"] = true;
-      addNotification(draft, "cli-installed", "娑撯偓娑擃亝鏌婄€瑰顥婇惃鍕安閻劌鍑＄紒蹇撳閸忋儲顢戦棃顫偓鍌欒⒈娑擃亝妫担宥囩枂閸戣櫣骞囨禍鍡樻纯閺傝埇鈧?);
+      addNotification(draft, "cli-installed", "濞戞挴鍋撳☉鎿冧簼閺屽﹦鈧懓顦抽ˉ濠囨儍閸曨偆瀹夐柣顫妼閸戯紕绱掕箛鎾愁潱闁稿繈鍎查、鎴︽椤兘鍋撻崒娆掆拡濞戞搩浜濆Λ顐ｆ媴瀹ュ洨鏋傞柛鎴ｆ楠炲洦绂嶉崱妯荤函闁哄倽鍩囬埀?);
     });
     if (added) recordEvidence("cli_package_verified");
   }
@@ -2478,16 +2472,16 @@ document.addEventListener("click", event => {
   if (button.dataset.relayInvestigate !== undefined) store.update(draft => { draft.relayInvestigationStarted = true; });
   if (button.dataset.downloadClientPkg) {
     const pkgId = button.dataset.downloadClientPkg;
-    if (pkgId && AUTO_EFFECTS[`download-pkg-${pkgId}`]?.()) showToast("閹垹顦查崠鍛嚒娣囨繂鐡ㄩ崚?Downloads閵?, "success");
+    if (pkgId && AUTO_EFFECTS[`download-pkg-${pkgId}`]?.()) showToast("闁诡厹鍨归ˇ鏌ュ礌閸涱厼鍤掑ǎ鍥ㄧ箓閻°劑宕?Downloads闁?, "success");
   }
   if (button.dataset.installClientPkg) {
     const pkgId = button.dataset.installClientPkg;
-    if (installClientPackage(pkgId)) showToast(clientRecoveryAvailable(pkgId) ? "鐎广垺鍩涚粩顖氬嚒鐎瑰顥婇敍灞藉讲閸︺劌顓归幋椋庮伂閸愬懎顕遍崗銉︿划婢跺秴鍞寸€瑰箍鈧? : "鐎广垺鍩涚粩顖氬嚒鐎瑰顥婇妴?, "success");
+    if (installClientPackage(pkgId)) showToast(clientRecoveryAvailable(pkgId) ? "閻庡箍鍨洪崺娑氱博椤栨艾鍤掗悗鐟邦槼椤ュ﹪鏁嶇仦钘夎闁革负鍔岄褰掑箣妞嬪寒浼傞柛鎰噹椤曢亶宕楅妷锔垮垝濠㈣泛绉撮崬瀵糕偓鐟扮畭閳? : "閻庡箍鍨洪崺娑氱博椤栨艾鍤掗悗鐟邦槼椤ュ﹪濡?, "success");
   }
   if (button.dataset.importClient) {
     const clientId = button.dataset.importClient;
-    if (importClientData(clientId)) showToast("閹垹顦查弫鐗堝祦瀹告彃顕遍崗銉ｂ偓?, "success");
-    else showToast("閺堫剙婀村▽鈩冩箒閹垫儳鍩岄崣顖氼嚤閸忋儳娈戦崘鍛啇閵?, "info");
+    if (importClientData(clientId)) showToast("闁诡厹鍨归ˇ鏌ュ极閻楀牆绁︾€瑰憡褰冮閬嶅礂閵夛絺鍋?, "success");
+    else showToast("闁哄牜鍓欏﹢鏉戔柦閳╁啯绠掗柟鍨劤閸╁矂宕ｉ姘煎殼闁稿繈鍎冲▓鎴﹀礃閸涱収鍟囬柕?, "info");
   }
   if (button.id === "notificationButton") $("#notificationTray").hidden = !$("#notificationTray").hidden;
   if (button.id === "closeNotifications") $("#notificationTray").hidden = true;
@@ -2562,9 +2556,9 @@ document.addEventListener("submit", event => {
     store.update(draft => {
       draft.lastPackageInput = value;
       draft.packageChecks.push({ value, ok, at: Date.now() });
-      draft.packageResult = ok ? "閺嶏繝鐛欓柅姘崇箖閿涙碍婀伴崷鏉跨秺濡楋絼绗?release 鐠佹澘缍嶆稉鈧懛娣偓? : "閺嶏繝鐛欐稉宥勭閼疯揪绱伴崶鐐插煂 GitHub release 閺嶇顕€瑰本鏆ｉ崐绗衡偓?;
+      draft.packageResult = ok ? "闁哄稄绻濋悰娆撴焻濮樺磭绠栭柨娑欑濠€浼村捶閺夎法绉烘俊妤嬬导缁?release 閻犱焦婢樼紞宥嗙▔閳ь剟鎳涘ǎ顑藉亾? : "闁哄稄绻濋悰娆愮▔瀹ュ嫮顏遍柤鐤彧缁变即宕堕悙鎻掔厒 GitHub release 闁哄秶顭堥顔锯偓鐟版湰閺嗭綁宕愮粭琛″亾?;
     });
-    if (ok) showToast("鐎瑰顥婇崠鍛墡妤犲矂鈧俺绻冮敍灞肩矝闂団偓閹靛濮╅悙鐟板毊鐎瑰顥婇妴?, "success");
+    if (ok) showToast("閻庣懓顦抽ˉ濠囧礌閸涱喚澧″Δ鐘茬焸閳ь剚淇虹换鍐晬鐏炶偐鐭濋梻鍥ｅ亾闁归潧顑呮慨鈺呮倷閻熸澘姣婇悗鐟邦槼椤ュ﹪濡?, "success");
   }
   if (event.target.id === "proxyImportForm") {
     const profile = $("#proxyProfileInput").value.trim();
@@ -2574,9 +2568,9 @@ document.addEventListener("submit", event => {
       draft.pendingProxyProfile = profile;
       draft.pendingProxyAddress = address;
       if (ok) unique(draft.proxyProfiles, "relay-node17");
-      else addNotification(draft, `proxy-error-${draft.desktopNotifications.length}`, hasStoryEvent(store.get(), "route-log-read") ? "娴狅絿鎮婇柊宥囩枂閺堫亜顕遍崗銉窗閺嶇顕崗鍙橀煩 profile 閻ㄥ嫬鎮曠粔棰佺瑢閸︽澘娼冮妴? : "娴狅絿鎮婇柊宥囩枂閺堫亜顕遍崗銉窗閸忓牊澧﹀鈧?Documents 娑擃厾娈?route.log閵?, "warning");
+      else addNotification(draft, `proxy-error-${draft.desktopNotifications.length}`, hasStoryEvent(store.get(), "route-log-read") ? "濞寸媴绲块幃濠囨煀瀹ュ洨鏋傞柡鍫簻椤曢亶宕楅妷顖滅獥闁哄秶顭堥顕€宕楅崣姗€鐓?profile 闁汇劌瀚幃鏇犵矓妫颁胶鐟㈤柛锔芥緲濞煎啴濡? : "濞寸媴绲块幃濠囨煀瀹ュ洨鏋傞柡鍫簻椤曢亶宕楅妷顖滅獥闁稿繐鐗婃晶锕€顕ｉ埀?Documents 濞戞搩鍘惧▓?route.log闁?, "warning");
     });
-    showToast(ok ? "闁板秶鐤嗗鎻掝嚤閸忋儻绱濈紒褏鐢绘潻鎰攽鏉╃偞甯撮幒銏ゆ嫛閵? : "闁板秶鐤嗛崐闂寸瑝閸栧綊鍘ら妴?, ok ? "success" : "warning");
+    showToast(ok ? "闂佹澘绉堕悿鍡楊啅閹绘帩鍤ら柛蹇嬪劵缁辨繄绱掕閻㈢粯娼婚幇顖ｆ斀閺夆晝鍋炵敮鎾箳閵忋倖瀚涢柕? : "闂佹澘绉堕悿鍡涘磹闂傚鐟濋柛鏍х秺閸樸倝濡?, ok ? "success" : "warning");
   }
   if (event.target.id === "legacyKeyForm") validateRelayKey($("#legacyKeyInput").value);
   if (event.target.id === "checkpointForm") validateCheckpoint($("#checkpointSelect").value);
@@ -2594,15 +2588,15 @@ document.addEventListener("submit", event => {
     const resolvedGateway = transport === "gateway" ? normalizeNpcApiBase(gateway || configuredNpcApiBase || (!staticRuntime ? location.origin : "")) : "";
     const resolvedEndpoint = directProviderEndpoint(provider, endpoint);
     if (!model || !apiKey || (provider === "compatible" && !/^https?:\/\//i.test(endpoint))) {
-      $("#providerTestResult").textContent = "鐠囧嘲锝為崘娆惸侀崹瀣ㄢ偓涔瞖y閿涘奔浜掗崣濠呭殰鐎规矮绠熼幒銉ュ經閻ㄥ嫬鐣弫鏉戞勾閸р偓閵?;
+      $("#providerTestResult").textContent = "閻犲洤鍢查敐鐐哄礃濞嗘兏渚€宕圭€ｃ劉鍋撴稊鐬杫闁挎稑濂旀禍鎺楀矗婵犲懎娈伴悗瑙勭煯缁犵喖骞掗妷銉ョ稉闁汇劌瀚悾顒勫极閺夋垶鍕鹃柛褉鍋撻柕?;
       return;
     }
     if (transport === "direct" && !resolvedEndpoint) {
-      $("#providerTestResult").textContent = "閻╃绻涢幒銉ュ經韫囧懘銆忛弰顖氱秼閸撳秹銆夐棃銏犲帒鐠佹瓕顔栭梻顔炬畱鐎瑰本鏆?HTTP(S) 閸︽澘娼冮妴?;
+      $("#providerTestResult").textContent = "闁烩晝顥愮换娑㈠箳閵夈儱缍撻煫鍥ф嚇閵嗗繘寮伴姘辩Ъ闁告挸绉归妴澶愭閵忕姴甯掗悹浣圭摃椤旀牠姊婚鐐暠閻庣懓鏈弳?HTTP(S) 闁革附婢樺鍐Υ?;
       return;
     }
     if (transport === "gateway" && !resolvedGateway) {
-      $("#providerTestResult").textContent = "缂冩垵鍙уΟ鈥崇础闂団偓鐟曚礁锝為崘娆忓讲鐠佸潡妫堕惃鍕暚閺?NPC 缂冩垵鍙ч崷鏉挎絻閵?;
+      $("#providerTestResult").textContent = "缂傚啯鍨甸崣褍螣閳ュ磭纭€闂傚洠鍋撻悷鏇氱閿濈偤宕樺▎蹇撹閻犱礁娼″Λ鍫曟儍閸曨偆鏆氶柡?NPC 缂傚啯鍨甸崣褔宕烽弶鎸庣祷闁?;
       return;
     }
     testAndEnableNpc({ transport, provider, model, endpoint: resolvedEndpoint, gateway: resolvedGateway, apiKey });
@@ -2616,8 +2610,8 @@ function syncProviderFormVisibility() {
   if ($("#npcGatewayLabel")) $("#npcGatewayLabel").hidden = transport !== "gateway";
   const boundary = $("#providerSetup .privacy-box span");
   if (boundary) boundary.textContent = transport === "direct"
-    ? "Key 閸欘亙绻氱€涙ê婀ぐ鎾冲妞ょ敻娼伴崘鍛摠閿涘苯鑻熼悽杈ㄧセ鐟欏牆娅掗惄瀛樺复閸欐垿鈧胶绮伴幍鈧柅澶夌返鎼存柨鏅㈤妴鍌涚埗閹村繒濮搁幀浣规簚娴犲秶瀚粩瀣付閸掓儼鐦夐幑顔荤瑢閹活厾銇氱粵澶岄獓閵?
-    : "Key 閸欘亙绻氱€涙ê婀ぐ鎾冲妞ょ敻娼伴崘鍛摠閿涘苯鑻熼梾蹇撶秼閸撳秷顕Ч鍌氬絺闁胶绮版担鐘诧綖閸愭瑧娈戠純鎴濆彠閿涙稖顕禒鍛▏閻劏鍤滃鍙樹繆娴犺崵娈戠純鎴濆彠閵?;
+    ? "Key 闁告瑯浜欑换姘扁偓娑櫭﹢顏囥亹閹惧啿顤呭銈囨暬濞间即宕橀崨顓犳憼闁挎稑鑻懟鐔兼偨鏉堛劎銈婚悷娆忕墕濞呮帡鎯勭€涙ê澶嶉柛娆愬灴閳ь兛鑳剁划浼村箥閳ь剟鏌呮径澶岃繑閹煎瓨鏌ㄩ弲銏ゅΥ閸屾稓鍩楅柟鏉戠箳婵悂骞€娴ｈ绨氬ù鐘茬Ф鐎氼厾绮╃€ｎ偄浠橀柛鎺撳劶閻﹀骞戦鑽ょ憿闁规椿鍘鹃妵姘辩驳婢跺矂鐛撻柕?
+    : "Key 闁告瑯浜欑换姘扁偓娑櫭﹢顏囥亹閹惧啿顤呭銈囨暬濞间即宕橀崨顓犳憼闁挎稑鑻懟鐔兼⒕韫囨挾绉奸柛鎾崇Х椤曨剙效閸屾艾绲洪梺顐¤兌缁増鎷呴悩璇х稏闁告劖鐟у▓鎴犵磾閹存繂褰犻柨娑欑椤曨剚绂掗崨顒€鈻忛柣顫姀閸ゆ粌顔忛崣妯圭箚濞寸姾宕靛▓鎴犵磾閹存繂褰犻柕?;
 }
 
 document.addEventListener("change", event => {
@@ -2635,17 +2629,17 @@ function configureStaticRuntime() {
     $("#npcTransport").value = "gateway";
   }
   if (setup) {
-    $("#providerTitle").textContent = "閻喎鐤勫Ο鈥崇€?NPC / 鐟欐帟澹婇幍顔界川";
+    $("#providerTitle").textContent = "闁活亞鍠庨悿鍕熼垾宕団偓?NPC / 閻熸瑦甯熸竟濠囧箥椤旂晫宸?;
     const description = setup.querySelector(":scope > p");
-    if (description) description.textContent = "閸欘垳鏁卞ù蹇氼潔閸ｃ劎娲挎潻?OpenAI閵嗕竸nthropic閵嗕笍eepSeek 閹存牕鍚嬬€硅甯撮崣锝忕礉娑旂喎褰叉担璺ㄦ暏娴ｇ姳淇婃禒鑽ゆ畱 NPC 缂冩垵鍙ч妴鍌濈箾閹恒儲绁寸拠鏇熷灇閸旂喎鎮楅幍宥勭窗閸氼垳鏁ゆ晶鐐插繁濡€崇础閵?;
+    if (description) description.textContent = "闁告瑯鍨抽弫鍗灻硅箛姘兼綌闁革絻鍔庡ú鎸庢交?OpenAI闁靛棔绔竛thropic闁靛棔绗峞epSeek 闁瑰瓨鐗曢崥瀣偓纭咁潐鐢挳宕ｉ敐蹇曠濞戞梻鍠庤ぐ鍙夋媴鐠恒劍鏆忓ù锝囧С娣囧﹥绂掗懡銈嗙暠 NPC 缂傚啯鍨甸崣褔濡撮崒婵堢闁规亽鍎茬粊瀵告嫚閺囩喎鐏囬柛鏃傚枎閹骞嶅鍕獥闁告凹鍨抽弫銈嗘櫠閻愭彃绻佹俊顖椻偓宕囩闁?;
   }
-  if (localButton) localButton.textContent = "娑撳秵褰佹笟?key閿涘奔濞囬悽銊︽拱閸︽澘鍙ч柨顔跨槤閸欐瑤绨?;
+  if (localButton) localButton.textContent = "濞戞挸绉佃ぐ浣圭瑹?key闁挎稑濂旀繛鍥偨閵婏附鎷遍柛锔芥緲閸櫻囨煥椤旇法妲ら柛娆愮懁缁?;
   syncProviderFormVisibility();
 }
 
 store.subscribe(render);
 configureStaticRuntime();
 render(store.get());
-loadRuntimeLedger().catch(error => showToast(`閺堫剙婀撮崘鍛啇鐠愶附婀扮拠璇插絿婢惰精瑙﹂敍?{error.message}`, "warning"));
+loadRuntimeLedger().catch(error => showToast(`闁哄牜鍓欏﹢鎾礃閸涱収鍟囬悹鎰堕檮濠€鎵嫚鐠囨彃绲垮鎯扮簿鐟欙箓鏁?{error.message}`, "warning"));
 loadIconManifest().catch(() => {});
 setTimeout(() => { $("#bootScreen").hidden = true; $("#desktop").hidden = false; }, 900);
