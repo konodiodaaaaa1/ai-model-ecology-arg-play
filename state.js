@@ -131,6 +131,7 @@ export const DEFAULT_STATE = Object.freeze({
   relayAdminOpen: false,
   relayAdminSection: "overview",
   relayAuditSelected: "R17-KM-31",
+  relayMonitorDetailOpen: false,
   relayInvestigationStarted: false,
   relayHandshakeState: "pending",
   migratedFrom: null,
@@ -248,8 +249,9 @@ function normalize(candidate) {
   next.activeClientPackage = typeof next.activeClientPackage === "string" ? next.activeClientPackage : "";
   next.pendingCarrierId = typeof next.pendingCarrierId === "string" ? next.pendingCarrierId : "";
   next.relayAdminOpen = Boolean(next.relayAdminOpen);
-  next.relayAdminSection = ["overview", "audit"].includes(next.relayAdminSection) ? next.relayAdminSection : "overview";
+  next.relayAdminSection = ["overview", "monitor", "audit"].includes(next.relayAdminSection) ? next.relayAdminSection : "overview";
   next.relayAuditSelected = typeof next.relayAuditSelected === "string" ? next.relayAuditSelected : "R17-KM-31";
+  next.relayMonitorDetailOpen = Boolean(next.relayMonitorDetailOpen);
   next.relayInvestigationStarted = Boolean(next.relayInvestigationStarted);
   next.relayHandshakeState = ["pending", "authenticated"].includes(next.relayHandshakeState) ? next.relayHandshakeState : "pending";
   next.version = 3;
