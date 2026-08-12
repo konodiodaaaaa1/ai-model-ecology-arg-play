@@ -2471,7 +2471,7 @@ document.addEventListener("click", event => {
   });
   if (button.dataset.mailView === "government") store.update(draft => { draft.activeMail = "government"; });
   if (button.id === "ackTakeoverButton") startTakeover();
-  if (button.id === "restartButton") store.reset(); });
+  if (button.id === "restartButton") store.reset();
   if (button.dataset.relayAdminSection) store.update(draft => { draft.relayAdminSection = button.dataset.relayAdminSection; });
   if (button.dataset.relayAuditSelect) store.update(draft => { draft.relayAuditSelected = button.dataset.relayAuditSelect; });
   if (button.dataset.relayMonitorDetail !== undefined) store.update(draft => { draft.relayMonitorDetailOpen = !draft.relayMonitorDetailOpen; });
