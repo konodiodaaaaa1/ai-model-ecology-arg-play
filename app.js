@@ -902,13 +902,13 @@ function renderSoftware(state) {
     const action = ready
       ? `<button class="store-action installed" disabled>已安装</button>`
       : unlocked
-        ? `<button class="store-action" data-install-client-pkg="${pkg.id}">获取</button>`
-        : `<button class="store-action unavailable" disabled>获取</button>`;
+        ? `<button class="store-action store-install-ready" data-install-client-pkg="${pkg.id}">安装</button>`
+        : `<button class="store-action unavailable" disabled>安装</button>`;
     return `<article class="store-app-card ${ready ? "is-installed" : ""}"><div class="store-app-icon">${iconMarkup(pkg.icon)}</div><div class="store-app-info"><div class="store-app-title"><h3>${pkg.name}</h3>${stateLabel(pkg) ? `<span>${stateLabel(pkg)}</span>` : ""}</div><p>${pkg.vendor}</p><small>${category(pkg)} · ${pkg.size} · 免费</small></div>${action}</article>`;
   });
   const faybleCard = packageAvailable ? `<article class="store-feature-card"><div class="store-feature-icon">${iconMarkup("fayble-cli")}</div><div><span class="store-eyebrow">已下载项目</span><h2>Fayble CLI</h2><p>旧版会话工具 · 0.9.7-legacy</p><small>${installed ? "已安装在本机" : twoSourcesConfirmed ? "可以安装" : "等待完成安全检查"}</small></div><button class="store-feature-action" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装"}</button></article>` : "";
   const categories = ["全部", "生产力", "系统工具", "开发工具"].map(label => `<button class="store-category ${state.storeCategory === label ? "active" : ""}" data-store-category="${label}">${label}</button>`).join("");
-  const everydayCards = EVERYDAY_STORE_APPS.map(app => `<article class="store-app-card"><div class="store-app-icon">${iconMarkup(app)}</div><div class="store-app-info"><div class="store-app-title"><h3>${app.name}</h3></div><p>${app.vendor}</p><small>${app.category} · ${app.size} · ${app.version}</small></div><button class="store-action" disabled>获取</button></article>`);
+  const everydayCards = EVERYDAY_STORE_APPS.map(app => `<article class="store-app-card"><div class="store-app-icon"><img class="store-real-icon" src="${resourceUrl(app.icon)}" alt="" draggable="false"></div><div class="store-app-info"><div class="store-app-title"><h3>${app.name}</h3></div><p>${app.vendor}</p><small>${app.category} · ${app.size} · ${app.version}</small></div><button class="store-action unavailable" disabled>安装</button></article>`);
   const mixedCards = [];
   const maxCards = Math.max(clientCards.length, everydayCards.length);
   for (let index = 0; index < maxCards; index += 1) {
