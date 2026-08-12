@@ -27,6 +27,14 @@ export function stagePolicy(stage = "H0") {
 }
 
 function embeddedAuthorshipStage(root, record) {
+  const memoIndex = String(record?.id || "").match(/^legacy\.memo\.(\d{2})$/)?.[1];
+  if (memoIndex) {
+    const index = Number(memoIndex);
+    if (index <= 4) return "H0";
+    if (index <= 10) return "H1";
+    if (index <= 12) return "H2";
+    return "H3";
+  }
   const embedded = [...root.querySelectorAll("[data-authorship-stage]")]
     .find(element => !record?.id || element.dataset.contentId === record.id);
   return embedded?.dataset.authorshipStage || record?.authorshipStage || root.dataset.authorshipStage || "H0";
