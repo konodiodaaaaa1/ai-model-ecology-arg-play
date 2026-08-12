@@ -320,8 +320,8 @@ const GENERATED_APPS = {
   "client-groke-feed": { id: "groke-feed", name: "Groke Feed", icon: "groke-feed", accent: "#c0544c" },
   "client-glem-memory": { id: "glem-memory", name: "Glem Memory", icon: "glem", accent: "#b44c48" },
   "client-kemy-space": { id: "kemy-space", name: "Kemy Space", icon: "kemy", accent: "#5d75d6" },
-  "client-repo-mirror": { id: "repo-mirror", name: "镜像仓库", icon: "repo-mirror", accent: "#7a9ab5" }
-  // notes-db is NOT a dock app — it restores to Files, no standalone window
+  "client-repo-mirror": { id: "repo-mirror", name: "镜像仓库", icon: "repo-mirror", accent: "#7a9ab5" },
+  "client-notes-db": { id: "notes-db", name: "通用备忘录", icon: "notebook", accent: "#d8b94e" },
 };
 
 const APP_ICON_KEYS = {
@@ -329,13 +329,13 @@ const APP_ICON_KEYS = {
   software: "package", network: "network", trash: "trash", journal: "notebook", archive: "archive",
   cli: "fayble-cli", relay: "radio", fayble: "fayble", ending: "receipt", trusted: "fayble",
   "gamini-ws": "gamini", chengzhen: "chengzhen", yunzhen: "yunzhen",
-  "groke-feed": "groke-feed", "glem-memory": "glem", "kemy-space": "kemy", "repo-mirror": "repo-mirror"
+  "groke-feed": "groke-feed", "glem-memory": "glem", "kemy-space": "kemy", "repo-mirror": "repo-mirror", "notes-db": "notebook"
 };
 const VENDOR_ICON_KEYS = ["dipsik", "glem", "kemy", "groke", "lunet", "gamini", "fayble", "compatible"];
 
 const CLIENT_PACKAGES = Object.freeze([
   { id: "gamini-ws", name: "Gamini 工作空间", file: "gamini-session-7749.gmx", size: "2.1 MB", vendor: "Gogle / Gamini", icon: "gamini", unlock: "historical-entry-opened", time: "03:41" },
-  { id: "notes-db", name: "Notes 数据库恢复", file: "notes-sync-r17.rsc", size: "640 KB", vendor: "本地便笺同步", icon: "folder", unlock: "legacy-restored", time: "04:02" },
+  { id: "notes-db", name: "通用备忘录", file: "notes-sync-r17.rsc", size: "640 KB", vendor: "系统应用", icon: "notebook", unlock: "legacy-restored", time: "04:02" },
   { id: "chengzhen", name: "澄帧协作", file: "chengzhen-ws-relay.ctw", size: "4.7 MB", vendor: "澄帧科技", icon: "chengzhen", unlock: "two-carriers-read", time: "04:12" },
   { id: "yunzhen", name: "云笺", file: "yunzhen-user-2025Q3.yzx", size: "1.8 MB", vendor: "云笺文工", icon: "yunzhen", unlock: "two-carriers-read", time: "04:12" },
   { id: "groke-feed", name: "Groke Feed", file: "groke-session-exai.grk", size: "3.2 MB", vendor: "Exai Groke", icon: "groke-feed", unlock: "vendor-alias-confirmed", time: "04:24" },
@@ -344,6 +344,7 @@ const CLIENT_PACKAGES = Object.freeze([
   { id: "repo-mirror", name: "镜像仓库", file: "k2-mirror-repo.gitb", size: "9.4 MB", vendor: "k2-maint", icon: "repo-mirror", unlock: "repository-recovered", time: "04:36" }
 ]);
 const CLIENT_PACKAGE_BY_ID = new Map(CLIENT_PACKAGES.map(pkg => [pkg.id, pkg]));
+const EVERYDAY_STORE_APPS = Object.freeze([{id:"qq",name:"QQ",vendor:"腾讯科技",size:"312 MB",category:"社交",version:"9.9.22",icon:"https://cdn.simpleicons.org/tencentqq/12aeea"},{id:"wechat",name:"微信",vendor:"腾讯科技",size:"286 MB",category:"社交",version:"3.9.12",icon:"https://cdn.simpleicons.org/wechat/07c160"},{id:"douyin",name:"抖音",vendor:"字节跳动",size:"418 MB",category:"娱乐",version:"31.4.0",icon:"https://cdn.simpleicons.org/tiktok/111111"},{id:"weibo",name:"微博",vendor:"新浪科技",size:"268 MB",category:"社交",version:"14.8.2",icon:"https://cdn.simpleicons.org/sinaweibo/e6162d"},{id:"tieba",name:"百度贴吧",vendor:"百度",size:"194 MB",category:"社区",version:"12.73.1",icon:"https://cdn.simpleicons.org/baidu/2932e1"},{id:"taobao",name:"淘宝",vendor:"淘宝中国",size:"356 MB",category:"购物",version:"10.38.0",icon:"https://cdn.simpleicons.org/taobao/ff5000"}]);
 const VENDOR_DOMAIN_RECORDS = Object.freeze({
   "exai.groke.local": "new.groke.public-portal",
   "ai.gogle.local": "legacy.gamini.protocol",
@@ -661,7 +662,7 @@ function installClientPackage(id) {
   return store.handleEvent(`story:client-${id}-installed`, draft => {
     unique(draft.downloadedClientPackages, id);
     unique(draft.installedClients, id);
-    if (id !== "notes-db") addArtifact(draft, `client-${id}`);
+    addArtifact(draft, `client-${id}`);
     addNotification(draft, `client-${id}-installed`, `${pkg.name} 已从本地软件源安装，恢复数据仍需在客户端内导入。`, "info");
   });
 }
@@ -751,6 +752,7 @@ function appLockReason(id, state) {
 }
 
 function iconMarkup(name) {
+  if (typeof name === "object" && name?.icon) return `<span class="icon-glyph raster-icon store-real-icon"><img src="${escapeHtml(name.icon)}" alt="" draggable="false"></span>`;
   const file = ["system", "generated", "sources", "vendors"].map(group => iconManifest?.[group]?.[name]).find(Boolean);
   if (!file) return '<span class="icon-glyph raster-icon icon-fallback" aria-hidden="true"></span>';
   return `<span class="icon-glyph raster-icon" aria-hidden="true"><img src="${escapeHtml(resourceUrl(`assets/icons/${file}`))}" alt="" draggable="false" onerror="this.parentElement.classList.add('icon-fallback');this.remove()"></span>`;
@@ -903,10 +905,17 @@ function renderSoftware(state) {
         ? `<button class="store-action" data-install-client-pkg="${pkg.id}">获取</button>`
         : `<button class="store-action unavailable" disabled>获取</button>`;
     return `<article class="store-app-card ${ready ? "is-installed" : ""}"><div class="store-app-icon">${iconMarkup(pkg.icon)}</div><div class="store-app-info"><div class="store-app-title"><h3>${pkg.name}</h3>${stateLabel(pkg) ? `<span>${stateLabel(pkg)}</span>` : ""}</div><p>${pkg.vendor}</p><small>${category(pkg)} · ${pkg.size} · 免费</small></div>${action}</article>`;
-  }).join("");
+  });
   const faybleCard = packageAvailable ? `<article class="store-feature-card"><div class="store-feature-icon">${iconMarkup("fayble-cli")}</div><div><span class="store-eyebrow">已下载项目</span><h2>Fayble CLI</h2><p>旧版会话工具 · 0.9.7-legacy</p><small>${installed ? "已安装在本机" : twoSourcesConfirmed ? "可以安装" : "等待完成安全检查"}</small></div><button class="store-feature-action" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装"}</button></article>` : "";
   const categories = ["全部", "生产力", "系统工具", "开发工具"].map(label => `<button class="store-category ${state.storeCategory === label ? "active" : ""}" data-store-category="${label}">${label}</button>`).join("");
-  const appList = clientCards || `<div class="store-empty"><strong>此分类暂时没有应用</strong><span>切换其他分类查看可用应用。</span></div>`;
+  const everydayCards = EVERYDAY_STORE_APPS.map(app => `<article class="store-app-card"><div class="store-app-icon">${iconMarkup(app)}</div><div class="store-app-info"><div class="store-app-title"><h3>${app.name}</h3></div><p>${app.vendor}</p><small>${app.category} · ${app.size} · ${app.version}</small></div><button class="store-action" disabled>获取</button></article>`);
+  const mixedCards = [];
+  const maxCards = Math.max(clientCards.length, everydayCards.length);
+  for (let index = 0; index < maxCards; index += 1) {
+    if (clientCards[index]) mixedCards.push(clientCards[index]);
+    if (everydayCards[index]) mixedCards.push(everydayCards[index]);
+  }
+  const appList = mixedCards.join("") || `<div class="store-empty"><strong>此分类暂时没有应用</strong><span>切换其他分类查看可用应用。</span></div>`;
   return windowFrame("software", "软件中心", `<div class="software-store"><header class="store-header"><div><span class="store-eyebrow">本机软件中心</span><h1>发现适合这台工作站的应用</h1><p>从本地目录获取、安装和管理应用。</p></div><div class="store-account"><span class="store-account-avatar">R</span><span>room17</span></div></header><nav class="store-categories">${categories}</nav>${faybleCard ? `<section class="store-section"><h2>继续使用</h2>${faybleCard}</section>` : ""}<section class="store-section"><div class="store-section-heading"><div><h2>${state.storeCategory === "全部" ? "推荐应用" : state.storeCategory}</h2><p>来自本机软件目录 · ${visiblePackages.length} 个应用</p></div><button class="store-link-button">查看全部</button></div><div class="store-app-list">${appList}</div></section><footer class="store-footer">应用会安装到本地沙盒 · 不会调用真实系统包管理器</footer></div>`, { iconKey: "package", wide: true });
 }
 function renderNetwork(state) {
@@ -1389,6 +1398,18 @@ function renderGaminiWs(state) {
   return windowFrame("gamini-ws", "Gamini 工作空间", `<div class="split-layout gamini-ws-shell">${sidebar}<section class="gamini-reader">${reader}</section></div>`, { wide: true });
 }
 
+function renderNotesClient(state) {
+  const restored = state.importedClients?.includes("notes-db");
+  const notes = restored ? [
+    ["夜宵和旧节点", "夜宵钱得给他转了，应该是38，36是不加蛋的。"],
+    ["room17 风扇", "风扇声音越来越怪，先拿本书垫一下。"],
+    ["返回时间", "原始流先留着，返回时间暂时不动。"]
+  ] : [];
+  const list = notes.length ? notes.map(([title, body], i) => `<button class="notes-list-item ${i === 0 ? "active" : ""}"><strong>${title}</strong><small>最近编辑 · 本地</small></button>`).join("") : `<div class="notes-empty-list">没有备忘录</div>`;
+  const content = notes.length ? `<article class="notes-editor"><header><input value="${notes[0][0]}" aria-label="备忘录标题"><small>已保存到本机</small></header><div class="notes-editor-body"><p>${notes[0][1]}</p><p>今天先记在这里，之后再整理。</p></div></article>` : `<section class="notes-welcome"><div>${iconMarkup("notebook")}<h2>开始记录</h2><p>你的备忘录会显示在这里。</p><button class="primary-button">新建备忘录</button></div></section>`;
+  return windowFrame("notes-db", "通用备忘录", `<div class="notes-client"><aside><div class="notes-brand">${iconMarkup("notebook")}<strong>通用备忘录</strong></div><button class="notes-new">新建备忘录</button><nav><button class="active">所有备忘录</button><button>最近编辑</button><button>已删除</button></nav><small class="notes-count">${notes.length} 条备忘录</small></aside><main><header><strong>${restored ? "所有备忘录" : "备忘录"}</strong><div><button>搜索</button><button>排序</button></div></header><section class="notes-workspace"><div class="notes-list">${list}</div>${content}</section></main></div>`, { iconKey: "notebook", wide: true });
+}
+
 function renderChengzhen(state) {
   if (!state.importedClients?.includes("chengzhen")) return windowFrame("chengzhen", "澄帧协作", clientImportScreen("chengzhen"), { wide: true });
   const CZIDS = ["new.employee.minutes-01","new.employee.minutes-02","new.employee.incident-03","new.employee.routing-04","new.maintainer.incident-03","new.glem.support-case"];
@@ -1649,7 +1670,7 @@ function render(state) {
   $("#gameClock").textContent = state.storyClock?.time || "03:17";
   renderDock(state);
   renderNotifications(state);
-  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "glem-memory": renderGlemMemory, "kemy-space": renderKemySpace, "repo-mirror": renderRepoMirror };
+  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "notes-db": renderNotesClient, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "glem-memory": renderGlemMemory, "kemy-space": renderKemySpace, "repo-mirror": renderRepoMirror };
   const openWindows = Object.entries(state.windowState)
     .filter(([id, window]) => renderers[id] && window?.open && !window.minimized)
     .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0));
