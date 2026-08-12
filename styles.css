@@ -1041,17 +1041,6 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
   cursor: pointer;
 }
 .files-record-reader > button { margin: 16px 18px 0; }
-.notes-native-shell { display: grid; min-height: 100%; grid-template-columns: 245px minmax(0, 1fr); background: #ece9df; }
-.notes-native-sidebar { display: flex; min-width: 0; flex-direction: column; border-right: 1px solid #c9c5b9; background: #dedbd1; color: #2d2d29; }
-.notes-native-sidebar header { display: flex; min-height: 50px; align-items: center; justify-content: space-between; padding: 0 13px; border-bottom: 1px solid #c9c5b9; }
-.notes-native-sidebar header button { border: 0; background: transparent; color: #67645c; font-size: 18px; }
-.notes-native-sidebar nav { overflow: auto; }
-.notes-native-row { display: grid; width: 100%; gap: 3px; padding: 10px 13px; border: 0; border-bottom: 1px solid #cbc8bd; background: transparent; color: inherit; text-align: left; }
-.notes-native-row:hover, .notes-native-row.active { background: #fff3b0; }
-.notes-native-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-.notes-native-row small { color: #77736a; font-size: 9px; }
-.notes-native-shell .files-record-reader { min-width: 0; min-height: 100%; background: #f5f3ec; }
-.notes-native-shell .native-notes-bar { background: #f5f3ec; }
 .terminal-record-reader > header,
 .relay-record-reader > header {
   display: flex;
@@ -1383,6 +1372,23 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
   .archive-source-pointer { padding: 24px 18px 80px; }
 }
 
+/* Unified Notes owns note bodies; source surfaces only link here. */
+.notes-client .notes-list { min-width: 0; overflow-y: auto; }
+.notes-client .notes-list-item strong,
+.notes-client .notes-list-item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notes-client .notes-editor { min-width: 0; padding: 0; overflow: auto; background: #f7f7f5; }
+.notes-client .notes-editor > header { min-height: 58px; padding: 12px 20px; border-bottom: 1px solid #e1e4e5; background: #fff; }
+.notes-client .notes-editor > header div,
+.notes-client .notes-editor > header strong,
+.notes-client .notes-editor > header small { display: block; min-width: 0; }
+.notes-client .notes-editor > header strong { overflow: hidden; color: #27313d; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.notes-client .notes-editor > header small { margin-top: 4px; color: #89949d; font-size: 9px; }
+.notes-client .notes-editor-body { max-width: none; padding: 0; font-size: inherit; line-height: inherit; }
+.notes-client .notes-editor-body > .native-carrier > .native-notes-bar { display: none; }
+.notes-client .notes-editor-body .native-carrier { min-height: 100%; }
+.notes-client .notes-editor-body .corpus-runtime { min-height: 100%; }
+.notes-client .notes-import-button { display: block; margin: 10px auto 0; padding: 8px 12px; border: 1px solid #176b5b; border-radius: 5px; background: #fff; color: #176b5b; cursor: pointer; }
+
 /* ── V2 NATIVE CLIENT UI COMPONENTS ────────────────────────── */
 
 /* Shared nav section label */
@@ -1690,3 +1696,10 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .store-app-icon > .store-real-icon > img { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
 .store-app-icon.store-bundled-icon { overflow: visible; background: transparent; }
 .store-app-icon.store-bundled-icon > .icon-glyph { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+
+@media (max-width: 760px) {
+  .notes-workspace { grid-template-rows: minmax(120px, 30vh) minmax(0, 1fr); }
+  .notes-client .notes-list { display: block; border-right: 0; border-bottom: 1px solid #dfe4e8; overflow-y: auto; }
+  .notes-client .notes-editor { min-height: 0; }
+  .notes-client > main > header { height: 48px; }
+}

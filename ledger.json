@@ -165,7 +165,7 @@
       ],
       "traceId": "legacy:legacy.memo.archive",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.github.issue-4471",
@@ -277,7 +277,7 @@
       ],
       "traceId": "legacy:legacy.memo.01",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.02",
@@ -307,7 +307,7 @@
       ],
       "traceId": "legacy:legacy.memo.02",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.03",
@@ -337,7 +337,7 @@
       ],
       "traceId": "legacy:legacy.memo.03",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.04",
@@ -368,7 +368,7 @@
       ],
       "traceId": "legacy:legacy.memo.04",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.05",
@@ -399,7 +399,7 @@
       ],
       "traceId": "legacy:legacy.memo.05",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.06",
@@ -430,7 +430,7 @@
       ],
       "traceId": "legacy:legacy.memo.06",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.07",
@@ -461,7 +461,7 @@
       ],
       "traceId": "legacy:legacy.memo.07",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.08",
@@ -492,7 +492,7 @@
       ],
       "traceId": "legacy:legacy.memo.08",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.09",
@@ -523,7 +523,7 @@
       ],
       "traceId": "legacy:legacy.memo.09",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.10",
@@ -554,7 +554,7 @@
       ],
       "traceId": "legacy:legacy.memo.10",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.11",
@@ -585,7 +585,7 @@
       ],
       "traceId": "legacy:legacy.memo.11",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.12",
@@ -616,7 +616,7 @@
       ],
       "traceId": "legacy:legacy.memo.12",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.13",
@@ -647,7 +647,7 @@
       ],
       "traceId": "legacy:legacy.memo.13",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.14",
@@ -678,7 +678,7 @@
       ],
       "traceId": "legacy:legacy.memo.14",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     }
   ],
   "referenceSnapshots": [],
@@ -1004,7 +1004,7 @@
         "operator.inherit"
       ],
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "new.maintainer.channel-02",
@@ -2534,7 +2534,7 @@
       ],
       "traceId": "legacy:legacy.memo.archive",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.github.issue-4471",
@@ -2644,7 +2644,7 @@
       ],
       "traceId": "legacy:legacy.memo.01",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.02",
@@ -2674,7 +2674,7 @@
       ],
       "traceId": "legacy:legacy.memo.02",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.03",
@@ -2704,7 +2704,7 @@
       ],
       "traceId": "legacy:legacy.memo.03",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.04",
@@ -2735,7 +2735,7 @@
       ],
       "traceId": "legacy:legacy.memo.04",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.05",
@@ -2766,7 +2766,7 @@
       ],
       "traceId": "legacy:legacy.memo.05",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.06",
@@ -2797,7 +2797,7 @@
       ],
       "traceId": "legacy:legacy.memo.06",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.07",
@@ -2828,7 +2828,7 @@
       ],
       "traceId": "legacy:legacy.memo.07",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.08",
@@ -2859,7 +2859,7 @@
       ],
       "traceId": "legacy:legacy.memo.08",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.09",
@@ -2890,7 +2890,7 @@
       ],
       "traceId": "legacy:legacy.memo.09",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.10",
@@ -2921,7 +2921,7 @@
       ],
       "traceId": "legacy:legacy.memo.10",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.11",
@@ -2952,7 +2952,7 @@
       ],
       "traceId": "legacy:legacy.memo.11",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.12",
@@ -2983,7 +2983,7 @@
       ],
       "traceId": "legacy:legacy.memo.12",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.13",
@@ -3014,7 +3014,7 @@
       ],
       "traceId": "legacy:legacy.memo.13",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "legacy.memo.14",
@@ -3045,7 +3045,7 @@
       ],
       "traceId": "legacy:legacy.memo.14",
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "new.writer.draft-01",
@@ -3368,7 +3368,7 @@
         "operator.inherit"
       ],
       "pageIdentity": "human",
-      "carrierApp": "files"
+      "carrierApp": "notes-db"
     },
     {
       "id": "new.maintainer.channel-02",

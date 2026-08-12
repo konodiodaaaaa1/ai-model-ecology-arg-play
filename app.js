@@ -669,7 +669,7 @@ function installClientPackage(id) {
 
 function clientRecoveryAvailable(id, state = store.get()) {
   const discoveries = state.contentDiscoveries || [];
-  if (id === "notes-db") return discoveries.some(contentId => contentId.startsWith("legacy.memo."));
+  if (id === "notes-db") return discoveries.some(contentId => isNotesRecord(contentRecord(contentId)));
   return discoveries.some(contentId => recordCarrierApp(contentRecord(contentId)) === id);
 }
 
@@ -677,10 +677,11 @@ function importClientData(id) {
   const pkg = CLIENT_PACKAGE_BY_ID.get(id);
   const state = store.get();
   if (!pkg || !state.installedClients.includes(id) || !clientRecoveryAvailable(id, state)) return false;
-  return store.handleEvent(`story:client-${id}-imported`, draft => {
+  const imported = store.handleEvent(`story:client-${id}-imported`, draft => {
     unique(draft.importedClients, id);
     addNotification(draft, `client-${id}-imported`, `${pkg.name} 的恢复数据已经导入。`, "info");
   });
+  return imported;
 }
 
 function runAutoEffect(name) {
@@ -811,23 +812,10 @@ function renderFiles(state) {
   const place = state.activeFilePlace || "home";
   const installed = state.installedClients || [];
   const notesRestored = state.importedClients?.includes("notes-db");
-  const activeRecord = contentRecord(state.activeContentId);
-  const activeFileRecord = activeRecord
-    && recordCarrierApp(activeRecord) === "files"
-    && state.carrierReads?.includes(`files:${activeRecord.id}`);
-  if (activeFileRecord) {
-    const memoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
-    const noteNav = memoIds.filter(id => contentIsUnlocked(contentRecord(id), state)).map(id => `<button class="notes-native-row ${id === activeRecord.id ? "active" : ""}" data-content-entry="${id}"><strong>${escapeHtml(contentRecord(id)?.title || id)}</strong><small>${id}</small></button>`).join("");
-    const reader = `<div class="notes-native-shell"><aside class="notes-native-sidebar"><header><strong>Notes</strong><button data-close-carrier-record="files" aria-label="返回文件">×</button></header><nav>${noteNav}</nav></aside><section class="files-record-reader">${corpusRecordMarkup(activeRecord, state)}</section></div>`;
-    return windowFrame("files", "Notes", reader, { wide: true });
-  }
-  const allMemoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
-  if (hasStoryEvent(state, "checkpoint-handshake") && notesRestored) allMemoIds.push("legacy.memo.archive");
-  const unlockedMemoIds = notesRestored ? allMemoIds : [];
-  const noteRecords = ["recent", "documents"].includes(place)
-    ? unlockedMemoIds.map(id => contentEntryMarkup(id,
-        id === "legacy.memo.archive" ? "笔记本恢复副本" : `便笺记录 ${id.slice(-2)}`,
-        id === "legacy.memo.archive" ? "本地便笺 · 全部记录" : "本地便笺 · 单条记录", "folder"))
+  const noteRecords = notesRestored && ["recent", "documents"].includes(place)
+    ? [...(runtimeLedger?.entries || []), ...state.generatedContentRecords]
+      .filter(record => isNotesRecord(record) && contentIsUnlocked(record, state))
+      .map(record => contentEntryMarkup(record.id, record.title, `${record.displayTimestamp || "时间不详"} · 在通用备忘录中打开`, "notebook"))
       .filter(Boolean).join("")
     : "";
   const virtualFiles = [...state.virtualFiles];
@@ -856,7 +844,7 @@ function renderFiles(state) {
   const notesImport = installed.includes("notes-db") && !notesRestored && ["recent", "documents"].includes(place)
     ? `<section class="notes-backup-entry" data-client="notes-db">${iconMarkup("folder")}<button data-import-client="notes-db">从本地备份恢复 Notes</button></section>`
     : "";
-  return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}${notesImport}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 数据库 / 已恢复记录</strong><small>每条记录保持原始 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
+  return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}${notesImport}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 数据库</strong><small>恢复位置 · 正文由通用备忘录打开</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
 }
 
 function renderTrash(state) {
@@ -1043,6 +1031,7 @@ function renderBrowser(state) {
 }
 
 const V2_CLIENT_DETAILS = {
+  "notes-db": { name: "通用备忘录", icon: "notebook", detail: "系统应用 · 本地与恢复的备忘录" },
   "gamini-ws": { name: "Gamini 工作空间", icon: "gamini", detail: "Gogle 工作空间 · 已恢复会话与文档" },
   chengzhen: { name: "澄帧协作", icon: "chengzhen", detail: "企业协作 · 会议纪要与消息线程" },
   yunzhen: { name: "云笺", icon: "yunzhen", detail: "写作工具 · 文稿、版本历史与申诉" },
@@ -1137,8 +1126,16 @@ function contentRecord(id) {
     || null;
 }
 
+function isNotesRecord(record) {
+  const id = String(record?.id || "").toLowerCase();
+  const identity = `${record?.carrierType || ""} ${record?.sourceIdentity || ""}`.toLowerCase();
+  return id.startsWith("legacy.memo.")
+    || /notes-database|recovered-local-notebook|local-maintenance-note|local-session-log/.test(identity);
+}
+
 function recordCarrierApp(record) {
   if (!record) return "archive";
+  if (isNotesRecord(record)) return "notes-db";
   if (record.carrierApp) return record.carrierApp;
   const id = String(record.id || "").toLowerCase();
   const source = String(record.sourceApp || "").toLowerCase();
@@ -1148,12 +1145,10 @@ function recordCarrierApp(record) {
     if (source === "repo-mirror") return "repo-mirror";
     if (["cloud", "company", "official", "github", "vendors", "channel", "mirror"].includes(source)) return "browser";
   }
-  if (id.startsWith("legacy.memo.")) return "files";
   if (id === "legacy.github.issue-4471") return "repo-mirror";
   if (id === "legacy.deptseek.protocol") return "terminal";
   if (id.includes("maintainer.channel") || id.includes("relay-reconciliation")) return "relay";
   if (id.includes("maintainer.outbox") || id.includes("evidence-preservation")) return "mail";
-  if (id.includes("maintainer.note")) return "files";
   if (id === "new.groke.raw-public-repository") return "repo-mirror";
   if (id.startsWith("new.writer.")) return "yunzhen";
   if (id.startsWith("new.employee.") || id === "new.maintainer.incident-03") return "chengzhen";
@@ -1162,7 +1157,6 @@ function recordCarrierApp(record) {
   if (id.startsWith("new.kemy.") && !/timeline-repository/.test(id)) return "kemy-space";
   if (id.startsWith("legacy.gamini.")) return "gamini-ws";
   if (/repository|pull-request|issue-mirror/.test(identity)) return "repo-mirror";
-  if (/notes-database|local-maintenance-note|local-session-log/.test(identity)) return "files";
   if (/mail|outbox/.test(identity)) return "mail";
   if (/channel-export|reconciliation/.test(identity)) return "relay";
   return "browser";
@@ -1233,7 +1227,7 @@ function corpusRuntimeMarkup(id, state) {
 }
 
 const CARRIER_LABEL_RULES = [
-  [/notes-database|recovered-local-notebook|local-maintenance-note/, "本地笔记"],
+  [/notes-database|recovered-local-notebook|local-maintenance-note|local-session-log/, "本地笔记"],
   [/mail|outbox/, "邮件记录"],
   [/conversation|chatlog|channel-export/, "聊天记录"],
   [/protocol|policy|agreement/, "条款与政策"],
@@ -1401,13 +1395,15 @@ function renderGaminiWs(state) {
 
 function renderNotesClient(state) {
   const restored = state.importedClients?.includes("notes-db");
-  const notes = restored ? [
-    ["夜宵和旧节点", "夜宵钱得给他转了，应该是38，36是不加蛋的。"],
-    ["room17 风扇", "风扇声音越来越怪，先拿本书垫一下。"],
-    ["返回时间", "原始流先留着，返回时间暂时不动。"]
-  ] : [];
-  const list = notes.length ? notes.map(([title, body], i) => `<button class="notes-list-item ${i === 0 ? "active" : ""}"><strong>${title}</strong><small>最近编辑 · 本地</small></button>`).join("") : `<div class="notes-empty-list">没有备忘录</div>`;
-  const content = notes.length ? `<article class="notes-editor"><header><input value="${notes[0][0]}" aria-label="备忘录标题"><small>已保存到本机</small></header><div class="notes-editor-body"><p>${notes[0][1]}</p><p>今天先记在这里，之后再整理。</p></div></article>` : `<section class="notes-welcome"><div>${iconMarkup("notebook")}<h2>开始记录</h2><p>你的备忘录会显示在这里。</p><button class="primary-button">新建备忘录</button></div></section>`;
+  const notes = restored
+    ? [...(runtimeLedger?.entries || []), ...state.generatedContentRecords]
+      .filter(record => isNotesRecord(record) && contentIsUnlocked(record, state))
+    : [];
+  const activeRecord = notes.find(record => record.id === state.activeContentId) || notes[0] || null;
+  const list = notes.length ? notes.map(record => `<button class="notes-list-item ${record.id === activeRecord?.id ? "active" : ""}" data-content-entry="${escapeHtml(record.id)}"><strong>${escapeHtml(record.title || record.id)}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || "时间不详")} · ${escapeHtml(record.sourceIdentity || "本地备忘录")}</small></button>`).join("") : `<div class="notes-empty-list">没有备忘录</div>`;
+  const content = activeRecord
+    ? `<article class="notes-editor"><header><div><strong>${escapeHtml(activeRecord.title || activeRecord.id)}</strong><small>${escapeHtml(activeRecord.displayTimestamp || activeRecord.chronologyKey || "时间不详")} · 已同步到本机</small></div></header><div class="notes-editor-body">${corpusRecordMarkup(activeRecord, state)}</div></article>`
+    : `<section class="notes-welcome"><div>${iconMarkup("notebook")}<h2>开始记录</h2><p>你的备忘录会显示在这里。</p><button class="primary-button">新建备忘录</button>${!restored && clientRecoveryAvailable("notes-db", state) ? `<button class="notes-import-button" data-import-client="notes-db">从本机导入备忘录</button>` : ""}</div></section>`;
   return windowFrame("notes-db", "通用备忘录", `<div class="notes-client"><aside><div class="notes-brand">${iconMarkup("notebook")}<strong>通用备忘录</strong></div><button class="notes-new">新建备忘录</button><nav><button class="active">所有备忘录</button><button>最近编辑</button><button>已删除</button></nav><small class="notes-count">${notes.length} 条备忘录</small></aside><main><header><strong>${restored ? "所有备忘录" : "备忘录"}</strong><div><button>搜索</button><button>排序</button></div></header><section class="notes-workspace"><div class="notes-list">${list}</div>${content}</section></main></div>`, { iconKey: "notebook", wide: true });
 }
 
