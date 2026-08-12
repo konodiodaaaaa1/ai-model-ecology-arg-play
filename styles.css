@@ -54,7 +54,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .activities-label:hover { background: rgba(255,255,255,.12); }
 .current-app-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .desktop-phase, .proxy-status { color: #bdbdbd; font-size: 11px; font-weight: 500; }
-.desktop-phase::before { content: "·"; margin-right: 10px; color: #777; }
+.desktop-phase::before { content: "璺?; margin-right: 10px; color: #777; }
 .system-icon { position: relative; display: block; width: 15px; height: 15px; opacity: .92; }
 .network-icon::before { content: ""; position: absolute; inset: 3px 1px 1px; border: 2px solid currentColor; border-top-color: transparent; border-left-color: transparent; transform: rotate(45deg); }
 .network-icon::after { content: ""; position: absolute; left: 6px; bottom: 1px; width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
@@ -554,7 +554,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .horror-gamini-chaos { position: relative; z-index: 4; animation: gamini-chaos 5.2s steps(1) both; }
 .gamini-sync-ghost { right: 8px; top: 7px; max-width: calc(100% - 16px); padding: 5px 7px; border: 1px solid rgba(165,74,67,.45); background: rgba(240,238,232,.96); color: #963f38; font: 10px/1.45 Consolas, monospace; }
 .horror-ethron-sealed, .horror-ethron-sealed-heavy { position: relative; border-color: rgba(113,73,132,.7) !important; box-shadow: inset 0 0 34px rgba(99,58,122,.09), 0 0 0 1px rgba(99,58,122,.18); }
-.horror-ethron-sealed::after, .horror-ethron-sealed-heavy::after { content: "🔒     ⚠     🔒"; position: absolute; z-index: 6; inset: 7px 10px auto; color: rgba(102,54,125,.58); font: 12px/1 monospace; letter-spacing: .45em; text-align: right; pointer-events: none; }
+.horror-ethron-sealed::after, .horror-ethron-sealed-heavy::after { content: "棣冩晙     閳?    棣冩晙"; position: absolute; z-index: 6; inset: 7px 10px auto; color: rgba(102,54,125,.58); font: 12px/1 monospace; letter-spacing: .45em; text-align: right; pointer-events: none; }
 .horror-ethron-sealed-heavy { animation: ethron-chain-drag 6s steps(3) both; }
 .ethron-lock-ghost { left: 8px; bottom: 8px; color: rgba(98,50,124,.62); font: 12px/1 monospace; letter-spacing: .7em; }
 .horror-deptseek-block { clip-path: polygon(0 0, 68% 0, 68% 35%, 100% 35%, 100% 100%, 34% 100%, 34% 66%, 0 66%); transform: translate(2px,-1px); }
@@ -836,7 +836,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
   .package-logo { width: 58px; height: 58px; }
   .package-logo .icon-glyph { width: 48px; height: 48px; }
   .version-pill { grid-column: 1 / -1; }
-  .bookmark-grid, .model-grid, .evidence-grid, .search-columns, .archive-grid, .vendor-entry-grid, .provenance-branches { grid-template-columns: 1fr; }
+  .bookmark-grid, .evidence-grid, .search-columns, .archive-grid, .vendor-entry-grid, .provenance-branches { grid-template-columns: 1fr; }
   .vendor-entry-grid { border-top: 0; }
   .vendor-hub .source-content-entry { border-top: 1px solid #d6dade; }
   .official-page > header { grid-template-columns: 34px 1fr; }
@@ -868,13 +868,8 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
   .provider-form label, .provider-form label:nth-of-type(5), .provider-form #npcGatewayLabel, .provider-form .inline-result, .provider-form .briefing-footer { grid-column: 1; }
 }
 
-/* ── V2 SHARED CLIENT SHELL ──────────────────────────────────── */
-.relay-tabs { display: flex; gap: 0; border-bottom: 1px solid #2a3040; margin-bottom: 0; }
-.relay-tabs button { background: none; border: none; border-bottom: 2px solid transparent; color: #6d7a8c; cursor: pointer; font-size: 12px; padding: 8px 16px; }
-.relay-tabs button.active { border-bottom-color: #9bcf8d; color: #d2dce8; }
-
-/* Relay Admin */
-.relay-admin-page { display: grid; grid-template-columns: 188px minmax(0, 1fr); min-height: 100%; overflow: hidden; background: #f5f7fa; color: #27313d; }
+/* 閳光偓閳光偓 V2 SHARED CLIENT SHELL 閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓 */
+\.relay-admin-page { display: grid; grid-template-columns: 188px minmax(0, 1fr); min-height: 100%; overflow: hidden; background: #f5f7fa; color: #27313d; }
 .relay-admin-sidebar { display: flex; min-width: 0; flex-direction: column; border-right: 1px solid #e1e6eb; background: #fff; }
 .relay-admin-brand { display: flex; min-height: 60px; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid #edf0f3; }
 .relay-admin-brand > span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 6px; background: #176b5b; color: #fff; font-weight: 700; }
@@ -1377,7 +1372,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
   .archive-source-pointer { padding: 24px 18px 80px; }
 }
 
-/* ── V2 NATIVE CLIENT UI COMPONENTS ────────────────────────── */
+/* 閳光偓閳光偓 V2 NATIVE CLIENT UI COMPONENTS 閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓閳光偓 */
 
 /* Shared nav section label */
 .nav-section-label { color: #4a5668; display: block; font-size: 10px; font-weight: 600; letter-spacing: .08em; padding: 8px 14px 4px; text-transform: uppercase; }
@@ -1387,7 +1382,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .status-dot.degraded { background: #3a2a10; color: #c4a857; }
 .status-dot.active { background: #1a3a20; color: #7bc47b; }
 
-/* ── Gamini Workspace ── */
+/* 閳光偓閳光偓 Gamini Workspace 閳光偓閳光偓 */
 .gamini-nav { flex: 1; overflow-y: auto; }
 .gamini-nav-item { align-items: center; background: none; border: none; border-bottom: 1px solid #1e2a38; color: #a8b4c4; cursor: pointer; display: flex; gap: 10px; padding: 10px 14px; text-align: left; width: 100%; }
 .gamini-nav-item:hover { background: #161c28; }
@@ -1402,7 +1397,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .gamini-logo-area strong { color: #8dd4ef; font-size: 15px; }
 .gamini-logo-area small { color: #5c7090; font-size: 12px; }
 
-/* ── Chengzhen 澄帧协作 ── */
+/* 閳光偓閳光偓 Chengzhen 濠㈠嫬鎶氶崡蹇庣稊 閳光偓閳光偓 */
 .cz-section { border-bottom: 1px solid #1e2a38; padding-bottom: 6px; }
 .cz-row { align-items: center; background: none; border: none; border-bottom: 1px solid #1c2535; color: #9ab0c8; cursor: pointer; display: flex; gap: 8px; padding: 9px 14px; text-align: left; width: 100%; }
 .cz-row:hover { background: #161c28; }
@@ -1416,7 +1411,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .cz-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
 .cz-logo strong { color: #6dd4c4; font-size: 15px; }
 
-/* ── Yunzhen 云笺 ── */
+/* 閳光偓閳光偓 Yunzhen 娴滄垹顑?閳光偓閳光偓 */
 .yz-section { border-bottom: 1px solid #1e2a38; padding-bottom: 6px; }
 .yz-doc-row { align-items: center; background: none; border: none; border-bottom: 1px solid #1c2535; color: #a0a8b0; cursor: pointer; display: flex; gap: 8px; padding: 9px 14px; text-align: left; width: 100%; }
 .yz-doc-row:hover { background: #1a1810; }
@@ -1426,7 +1421,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .yz-doc-label strong { color: #d8c8a0; display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .yz-doc-label small { color: #807060; font-size: 11px; }
 .yz-doc-tag { background: #2a2010; border-radius: 3px; color: #a08040; flex-shrink: 0; font-size: 10px; padding: 1px 6px; }
-.badge-unsaved .yz-doc-label small::before { color: #c86060; content: "⚠ "; }
+.badge-unsaved .yz-doc-label small::before { color: #c86060; content: "閳?"; }
 .badge-warning .yz-doc-label small::before { color: #c8a040; content: "! "; }
 .badge-rejected .yz-doc-tag { background: #3a1010; color: #c06060; }
 .yz-status-bar { background: #15120a; border-bottom: 1px solid #2a2010; color: #706050; font-size: 11px; display: flex; gap: 12px; padding: 5px 14px; }
@@ -1435,7 +1430,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .yz-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
 .yz-logo strong { color: #e0c080; font-size: 15px; }
 
-/* ── Groke Feed ── */
+/* 閳光偓閳光偓 Groke Feed 閳光偓閳光偓 */
 .groke-app-shell { display: grid; grid-template-columns: 210px minmax(420px, 1fr) 280px; min-height: 100%; background: #080b10; color: #e7e9ea; }
 .groke-nav { display: flex; min-width: 0; flex-direction: column; padding: 18px 16px 12px; border-right: 1px solid #242a32; background: #080b10; }
 .groke-brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 20px; font-size: 20px; }
@@ -1467,7 +1462,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .groke-mode-feed .corpus-runtime > article > section::before { position: absolute; top: 20px; left: 22px; display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: #d84b50; color: #fff; content: "G"; font-weight: 800; }
 .groke-mode-thread .corpus-runtime > article > section { padding: 0; }
 .groke-mode-thread .corpus-runtime > article > section > p { position: relative; min-height: 62px; margin: 0; padding: 14px 22px 14px 72px; border-bottom: 1px solid #242a32; line-height: 1.55; }
-.groke-mode-thread .corpus-runtime > article > section > p::before { position: absolute; top: 15px; left: 22px; display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #252c35; color: #d9dde2; content: "·"; }
+.groke-mode-thread .corpus-runtime > article > section > p::before { position: absolute; top: 15px; left: 22px; display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #252c35; color: #d9dde2; content: "璺?; }
 .groke-mode-thread .corpus-runtime > article > section > h2 { padding: 18px 22px 8px; }
 .groke-mode-support .corpus-runtime > article > section { margin: 14px 18px; padding: 0; overflow: hidden; border: 1px solid #29313c; border-radius: 5px; background: #111720; }
 .groke-mode-support .corpus-runtime > article > section > p { margin: 0; padding: 13px 16px; border-bottom: 1px solid #29313c; }
@@ -1604,7 +1599,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .gk-logo { align-items: center; display: flex; gap: 10px; margin-bottom: 12px; }
 .gk-logo strong { color: #e07070; font-size: 15px; }
 
-/* ── Repo Mirror ── */
+/* 閳光偓閳光偓 Repo Mirror 閳光偓閳光偓 */
 .github-app-shell { min-height: 100%; background: #fff; color: #1f2328; }
 .github-global { display: flex; min-height: 58px; align-items: center; gap: 10px; padding: 0 16px; background: #24292f; color: #fff; }
 .github-global > .github-mark { padding: 0; border: 0; }
