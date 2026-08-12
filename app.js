@@ -771,9 +771,10 @@ function fileIconKey(file) {
 function windowFrame(appId, title, body, options = {}) {
   const placement = store.get().windowState[appId] || {};
   const style = `left:${Number.isFinite(placement.x) ? placement.x : 110}px;top:${Number.isFinite(placement.y) ? placement.y : 72}px;width:${Number.isFinite(placement.width) ? placement.width + "px" : ""};height:${Number.isFinite(placement.height) ? placement.height + "px" : ""};z-index:${Number.isFinite(placement.zIndex) ? placement.zIndex : 30}`;
-  return `<section class="app-window app-${appId} ${options.wide ? "wide" : ""}" data-app-window="${appId}" style="${style}">
+  const focused = store.get().currentApp === appId ? " is-focused" : "";
+  return `<section class="app-window app-${appId}${focused} ${options.wide ? "wide" : ""}" data-app-window="${appId}" style="${style}">
     <header class="window-bar"><div class="window-title">${iconMarkup(options.iconKey || APP_ICON_KEYS[appId])}<span>${title}</span></div><div class="window-controls"><button data-window-action="minimize" aria-label="退出当前窗口">−</button><button data-window-action="close" aria-label="退出当前窗口">×</button></div></header>
-    <div class="window-body">${body}</div><span class="window-resize-handle resize-nw" data-resize="nw"></span><span class="window-resize-handle resize-ne" data-resize="ne"></span><span class="window-resize-handle resize-sw" data-resize="sw"></span><span class="window-resize-handle resize-se" data-resize="se"></span></section>`;
+    <div class="window-body">${body}</div><span class="window-resize-handle resize-nw" data-resize="nw"></span><span class="window-resize-handle resize-n" data-resize="n"></span><span class="window-resize-handle resize-ne" data-resize="ne"></span><span class="window-resize-handle resize-e" data-resize="e"></span><span class="window-resize-handle resize-se" data-resize="se"></span><span class="window-resize-handle resize-s" data-resize="s"></span><span class="window-resize-handle resize-sw" data-resize="sw"></span><span class="window-resize-handle resize-w" data-resize="w"></span></section>`;
 }
 
 function renderMail(state) {
@@ -2374,6 +2375,14 @@ function beginTakeoverTransfer() {
 }
 
 document.addEventListener("click", event => {
+  const clickedWindow = event.target.closest(".app-window");
+  if (clickedWindow?.dataset.appWindow && store.get().currentApp !== clickedWindow.dataset.appWindow) {
+    const appId = clickedWindow.dataset.appWindow;
+    store.update(draft => {
+      draft.currentApp = appId;
+      draft.windowState[appId] = { ...(draft.windowState[appId] || {}), zIndex: Date.now() };
+    });
+  }
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.openMirror !== undefined) openMirrorFromMail();

@@ -87,7 +87,7 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .app-window { position: absolute; z-index: 30; display: flex; width: min(920px, calc(100vw - 112px)); height: min(690px, calc(100vh - 76px)); flex-direction: column; overflow: hidden; border: 1px solid #4a4a4a; border-radius: var(--radius); background: var(--surface); box-shadow: 0 22px 70px rgba(0,0,0,.58), 0 0 0 1px rgba(255,255,255,.035) inset; pointer-events: auto; animation: window-in .2s ease both; }
 .app-window.is-focused { box-shadow: 0 24px 74px rgba(0,0,0,.62), 0 0 0 1px rgba(126,184,161,.42) inset; }
 .window-resize-handle { position:absolute; z-index:5; width:12px; height:12px; }
-.resize-nw{left:-2px;top:-2px;cursor:nwse-resize}.resize-ne{right:-2px;top:-2px;cursor:nesw-resize}.resize-sw{left:-2px;bottom:-2px;cursor:nesw-resize}.resize-se{right:-2px;bottom:-2px;cursor:nwse-resize}
+.resize-nw{left:-2px;top:-2px;cursor:nwse-resize}.resize-n{left:12px;right:12px;top:-3px;width:auto;cursor:ns-resize}.resize-ne{right:-2px;top:-2px;cursor:nesw-resize}.resize-e{right:-3px;top:12px;bottom:12px;height:auto;cursor:ew-resize}.resize-sw{left:-2px;bottom:-2px;cursor:nesw-resize}.resize-s{left:12px;right:12px;bottom:-3px;width:auto;cursor:ns-resize}.resize-se{right:-2px;bottom:-2px;cursor:nwse-resize}.resize-w{left:-3px;top:12px;bottom:12px;height:auto;cursor:ew-resize}
 .app-window.wide { width: min(1120px, calc(100vw - 112px)); }
 .app-window { animation: none; }
 @keyframes window-in { from { opacity: 0; transform: translateY(8px) scale(.985); } }
