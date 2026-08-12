@@ -1,4 +1,5 @@
 import { GameStore, advanceStoryClock, getUnlocks, hasMilestone, hasStoryEvent } from "./state.js";
+import { mountCarrierHorror, stopCarrierHorror } from "./carrier-horror.js";
 import {
   PHASE_LABELS, EVIDENCE, TERMINAL_COMMANDS, SEARCH_RECORDS,
   CHANNEL_MESSAGES, MODELS, VIRTUAL_FILES, BROWSER_PAGES,
@@ -13,6 +14,54 @@ const resourceUrl = route => new URL(String(route).replace(/^\/+/, ""), document
 const staticRuntime = document.querySelector('meta[name="arg-runtime"]')?.content === "static";
 const configuredNpcApiBase = document.querySelector('meta[name="arg-npc-api-base"]')?.content || new URLSearchParams(location.search).get("npcApi") || "";
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+const safeMarkdownUrl = value => {
+  try {
+    const url = new URL(String(value), location.origin);
+    return ["http:", "https:", "mailto:"].includes(url.protocol) ? escapeHtml(String(value)) : "#";
+  } catch (_) {
+    return "#";
+  }
+};
+function renderMarkdown(value) {
+  const source = String(value || "").replace(/\r\n?/g, "\n");
+  const blocks = [];
+  const tokenized = source.replace(/```([^\n]*)\n([\s\S]*?)```/g, (_, language, code) => {
+    const token = `@@MD_BLOCK_${blocks.length}@@`;
+    blocks.push(`<pre><code${language.trim() ? ` data-language="${escapeHtml(language.trim())}"` : ""}>${escapeHtml(code.replace(/\n$/, ""))}</code></pre>`);
+    return token;
+  });
+  const inline = text => escapeHtml(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, (_, label, href) => `<a href="${safeMarkdownUrl(href)}" target="_blank" rel="noreferrer">${label}</a>`)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  const lines = tokenized.split("\n");
+  const html = [];
+  let paragraph = [];
+  let listType = "";
+  const flushParagraph = () => { if (paragraph.length) html.push(`<p>${inline(paragraph.join("\n")).replace(/\n/g, "<br>")}</p>`); paragraph = []; };
+  const closeList = () => { if (listType) html.push(`</${listType}>`); listType = ""; };
+  for (const line of lines) {
+    const block = line.match(/^@@MD_BLOCK_(\d+)@@$/);
+    const heading = line.match(/^(#{1,4})\s+(.+)$/);
+    const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
+    const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+    if (block) { flushParagraph(); closeList(); html.push(blocks[Number(block[1])]); continue; }
+    if (heading) { flushParagraph(); closeList(); const level = heading[1].length + 2; html.push(`<h${level}>${inline(heading[2])}</h${level}>`); continue; }
+    if (unordered || ordered) {
+      flushParagraph();
+      const nextType = unordered ? "ul" : "ol";
+      if (listType !== nextType) { closeList(); listType = nextType; html.push(`<${listType}>`); }
+      html.push(`<li>${inline((unordered || ordered)[1])}</li>`);
+      continue;
+    }
+    if (!line.trim()) { flushParagraph(); closeList(); continue; }
+    closeList();
+    paragraph.push(line);
+  }
+  flushParagraph(); closeList();
+  return html.join("");
+}
 const INTERNAL_CARRIER_ATTRIBUTES = ["data-unlock-milestone", "data-authorship-stage", "data-revisit-mutation", "data-source-ref", "data-source-identity", "data-carrier-type"];
 const stripInternalCarrierMetadata = node => {
   for (const element of [node, ...node.querySelectorAll("*")]) {
@@ -30,6 +79,7 @@ const afterPaint = task => {
 let toastTimer = 0;
 let takeoverRunning = false;
 let severRunning = false;
+let takeoverPreludeRunning = false;
 let npcConfig = null;
 let iconManifest = null;
 
@@ -267,6 +317,8 @@ const GENERATED_APPS = {
   "client-chengzhen": { id: "chengzhen", name: "澄帧协作", icon: "chengzhen", accent: "#4da8a0" },
   "client-yunzhen": { id: "yunzhen", name: "云笺", icon: "yunzhen", accent: "#c9a96e" },
   "client-groke-feed": { id: "groke-feed", name: "Groke Feed", icon: "groke-feed", accent: "#c0544c" },
+  "client-glem-memory": { id: "glem-memory", name: "Glem Memory", icon: "glem", accent: "#b44c48" },
+  "client-kemy-space": { id: "kemy-space", name: "Kemy Space", icon: "kemy", accent: "#5d75d6" },
   "client-repo-mirror": { id: "repo-mirror", name: "镜像仓库", icon: "repo-mirror", accent: "#7a9ab5" }
   // notes-db is NOT a dock app — it restores to Files, no standalone window
 };
@@ -276,17 +328,19 @@ const APP_ICON_KEYS = {
   software: "package", network: "network", trash: "trash", journal: "notebook", archive: "archive",
   cli: "fayble-cli", relay: "radio", fayble: "fayble", ending: "receipt", trusted: "fayble",
   "gamini-ws": "gamini", chengzhen: "chengzhen", yunzhen: "yunzhen",
-  "groke-feed": "groke-feed", "repo-mirror": "repo-mirror"
+  "groke-feed": "groke-feed", "glem-memory": "glem", "kemy-space": "kemy", "repo-mirror": "repo-mirror"
 };
 const VENDOR_ICON_KEYS = ["dipsik", "glem", "kemy", "groke", "lunet", "gamini", "fayble", "compatible"];
 
 const CLIENT_PACKAGES = Object.freeze([
-  { id: "gamini-ws", name: "Gamini 工作空间", file: "gamini-session-7749.gmx", size: "2.1 MB", vendor: "Gogle / Gamini", icon: "gamini" },
-  { id: "chengzhen", name: "澄帧协作", file: "chengzhen-ws-relay.ctw", size: "4.7 MB", vendor: "澄帧科技", icon: "chengzhen" },
-  { id: "yunzhen", name: "云笺", file: "yunzhen-user-2025Q3.yzx", size: "1.8 MB", vendor: "云笺文工", icon: "yunzhen" },
-  { id: "groke-feed", name: "Groke Feed", file: "groke-session-exai.grk", size: "3.2 MB", vendor: "Exai Groke", icon: "groke-feed" },
-  { id: "repo-mirror", name: "镜像仓库", file: "k2-mirror-repo.gitb", size: "9.4 MB", vendor: "k2-maint", icon: "repo-mirror" },
-  { id: "notes-db", name: "Notes 数据库恢复", file: "notes-sync-r17.rsc", size: "640 KB", vendor: "本地便笺同步", icon: "folder" }
+  { id: "gamini-ws", name: "Gamini 工作空间", file: "gamini-session-7749.gmx", size: "2.1 MB", vendor: "Gogle / Gamini", icon: "gamini", unlock: "historical-entry-opened", time: "03:41" },
+  { id: "notes-db", name: "Notes 数据库恢复", file: "notes-sync-r17.rsc", size: "640 KB", vendor: "本地便笺同步", icon: "folder", unlock: "legacy-restored", time: "04:02" },
+  { id: "chengzhen", name: "澄帧协作", file: "chengzhen-ws-relay.ctw", size: "4.7 MB", vendor: "澄帧科技", icon: "chengzhen", unlock: "two-carriers-read", time: "04:12" },
+  { id: "yunzhen", name: "云笺", file: "yunzhen-user-2025Q3.yzx", size: "1.8 MB", vendor: "云笺文工", icon: "yunzhen", unlock: "two-carriers-read", time: "04:12" },
+  { id: "groke-feed", name: "Groke Feed", file: "groke-session-exai.grk", size: "3.2 MB", vendor: "Exai Groke", icon: "groke-feed", unlock: "vendor-alias-confirmed", time: "04:24" },
+  { id: "glem-memory", name: "Glem Memory", file: "glem-workspace-client.pkg", size: "5.8 MB", vendor: "Zhiru Glem", icon: "glem", unlock: "vendor-alias-confirmed", time: "04:24" },
+  { id: "kemy-space", name: "Kemy Space", file: "kemy-context-space.pkg", size: "6.4 MB", vendor: "Muunshot Kemy", icon: "kemy", unlock: "vendor-alias-confirmed", time: "04:24" },
+  { id: "repo-mirror", name: "镜像仓库", file: "k2-mirror-repo.gitb", size: "9.4 MB", vendor: "k2-maint", icon: "repo-mirror", unlock: "repository-recovered", time: "04:36" }
 ]);
 const CLIENT_PACKAGE_BY_ID = new Map(CLIENT_PACKAGES.map(pkg => [pkg.id, pkg]));
 const VENDOR_DOMAIN_RECORDS = Object.freeze({
@@ -352,7 +406,8 @@ function allModelsRead(state) { return MODELS.every(model => state.modelStages[m
 function allRelaySourcesRead(state) {
   return MODELS.every(model => model.sourceId && state.carrierReads?.some(read => read.endsWith(`:${model.sourceId}`)));
 }
-function relayKeySourcesReady(state) { return getUnlocks(state).relay && state.channelRead && allModelsRead(state) && allRelaySourcesRead(state); }
+function relayKeySourcesReady(state) { return getUnlocks(state).relay && state.relayInvestigationStarted && state.channelRead && allModelsRead(state) && allRelaySourcesRead(state); }
+function relayFieldState(state) { return { product: hasStoryEvent(state, "repository-recovered") ? "fbl" : "missing", channel: state.channelRead ? "legacy" : "missing", operator: hasEvidence(state, "operator_alias") ? "k2" : "missing", tag: state.modelStages.groke ? "0317" : "missing" }; }
 
 const FAYBLE_RELATIONS = Object.freeze({
   contradicts: "冲突",
@@ -601,17 +656,25 @@ function downloadClientPackage(id) {
 
 function installClientPackage(id) {
   const pkg = CLIENT_PACKAGE_BY_ID.get(id);
-  if (!pkg || !store.get().downloadedClientPackages.includes(id)) return false;
+  if (!pkg || !hasMilestone(store.get(), pkg.unlock)) return false;
   return store.handleEvent(`story:client-${id}-installed`, draft => {
+    unique(draft.downloadedClientPackages, id);
     unique(draft.installedClients, id);
     if (id !== "notes-db") addArtifact(draft, `client-${id}`);
-    addNotification(draft, `client-${id}-installed`, `${pkg.name} 已安装，恢复数据仍需手动导入。`, "info");
+    addNotification(draft, `client-${id}-installed`, `${pkg.name} 已从本地软件源安装，恢复数据仍需在客户端内导入。`, "info");
   });
+}
+
+function clientRecoveryAvailable(id, state = store.get()) {
+  const discoveries = state.contentDiscoveries || [];
+  if (id === "notes-db") return discoveries.some(contentId => contentId.startsWith("legacy.memo."));
+  return discoveries.some(contentId => recordCarrierApp(contentRecord(contentId)) === id);
 }
 
 function importClientData(id) {
   const pkg = CLIENT_PACKAGE_BY_ID.get(id);
-  if (!pkg || !store.get().installedClients.includes(id)) return false;
+  const state = store.get();
+  if (!pkg || !state.installedClients.includes(id) || !clientRecoveryAvailable(id, state)) return false;
   return store.handleEvent(`story:client-${id}-imported`, draft => {
     unique(draft.importedClients, id);
     addNotification(draft, `client-${id}-imported`, `${pkg.name} 的恢复数据已经导入。`, "info");
@@ -627,14 +690,16 @@ function runAutoEffect(name) {
 function harvestVisibleSources() {
   const seen = new Set();
   let saved = 0;
-  for (const node of document.querySelectorAll("#windows [data-save-citation]")) {
+  const activeRoot = document.querySelector(`[data-app-window="${CSS.escape(store.get().currentApp || "")}"]`);
+  if (!activeRoot) return;
+  for (const node of activeRoot.querySelectorAll("[data-save-citation]")) {
     const id = node.dataset.saveCitation;
     if (!id || seen.has(id)) continue;
     seen.add(id);
     if (saveCitation(node, { silent: true })) saved += 1;
   }
-  for (const node of document.querySelectorAll("#windows [data-auto-effect]")) runAutoEffect(node.dataset.autoEffect);
-  for (const node of document.querySelectorAll("#windows [data-auto-result]")) {
+  for (const node of activeRoot.querySelectorAll("[data-auto-effect]")) runAutoEffect(node.dataset.autoEffect);
+  for (const node of activeRoot.querySelectorAll("[data-auto-result]")) {
     const evidenceId = node.dataset.autoResult;
     if (!evidenceId) continue;
     const requiredKind = INVITE_SOURCE_KINDS[evidenceId];
@@ -652,7 +717,16 @@ function setApp(id, page) {
   store.update(draft => {
     draft.currentApp = id;
     if (page) draft.browserPage = page;
-    draft.windowState[id] = { open: true, minimized: false, zIndex: Date.now() };
+    const previous = draft.windowState[id] || {};
+    const openCount = Object.values(draft.windowState).filter(item => item?.open && !item.minimized).length;
+    draft.windowState[id] = {
+      ...previous,
+      open: true,
+      minimized: false,
+      zIndex: Date.now(),
+      x: Number.isFinite(previous.x) ? previous.x : 110 + (openCount % 7) * 28,
+      y: Number.isFinite(previous.y) ? previous.y : 72 + (openCount % 6) * 24
+    };
     draft.sourceVisits[id] = (draft.sourceVisits[id] || 0) + 1;
     unique(draft.openedViews, id);
   });
@@ -669,9 +743,9 @@ function appLockReason(id, state) {
   if (id === "fayble" && !unlocks.fayble) return "Fayble 会话尚未建立。";
   if (id === "ending" && !unlocks.receipt) return "移交回执尚未生成。";
   // V2 client apps — require relay-console (same tier as relay-admin)
-  const v2Clients = ["gamini-ws", "chengzhen", "yunzhen", "groke-feed", "repo-mirror"];
-  if (v2Clients.includes(id) && !unlocks.relay) return "该客户端尚未下载，先打开 Relay Console。";
-  if (v2Clients.includes(id) && !state.installedClients?.includes(id)) return "该客户端尚未安装，在 Relay Console 的管理面板下载恢复包后自动就绪。";
+  const v2Clients = ["gamini-ws", "chengzhen", "yunzhen", "groke-feed", "glem-memory", "kemy-space", "repo-mirror"];
+  if (v2Clients.includes(id) && !unlocks.relay) return "该客户端尚未进入本地软件目录。";
+  if (v2Clients.includes(id) && !state.installedClients?.includes(id)) return "该客户端尚未安装，请在软件中心查看当前已同步的项目。";
   return "";
 }
 
@@ -692,7 +766,9 @@ function fileIconKey(file) {
 }
 
 function windowFrame(appId, title, body, options = {}) {
-  return `<section class="app-window app-${appId} ${options.wide ? "wide" : ""}" data-app-window="${appId}">
+  const placement = store.get().windowState[appId] || {};
+  const style = `left:${Number.isFinite(placement.x) ? placement.x : 110}px;top:${Number.isFinite(placement.y) ? placement.y : 72}px;z-index:${Number.isFinite(placement.zIndex) ? placement.zIndex : 30}`;
+  return `<section class="app-window app-${appId} ${options.wide ? "wide" : ""}" data-app-window="${appId}" style="${style}">
     <header class="window-bar"><div class="window-title">${iconMarkup(options.iconKey || APP_ICON_KEYS[appId])}<span>${title}</span></div><div class="window-controls"><button data-window-action="minimize" aria-label="退出当前窗口">−</button><button data-window-action="close" aria-label="退出当前窗口">×</button></div></header>
     <div class="window-body">${body}</div></section>`;
 }
@@ -736,8 +812,10 @@ function renderFiles(state) {
     && recordCarrierApp(activeRecord) === "files"
     && state.carrierReads?.includes(`files:${activeRecord.id}`);
   if (activeFileRecord) {
-    const reader = `<section class="files-record-reader"><button data-close-carrier-record="files">← 返回文件列表</button>${corpusRecordMarkup(activeRecord, state)}</section>`;
-    return windowFrame("files", `文件 / ${activeRecord.title || activeRecord.id}`, reader, { wide: true });
+    const memoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
+    const noteNav = memoIds.filter(id => contentIsUnlocked(contentRecord(id), state)).map(id => `<button class="notes-native-row ${id === activeRecord.id ? "active" : ""}" data-content-entry="${id}"><strong>${escapeHtml(contentRecord(id)?.title || id)}</strong><small>${id}</small></button>`).join("");
+    const reader = `<div class="notes-native-shell"><aside class="notes-native-sidebar"><header><strong>Notes</strong><button data-close-carrier-record="files" aria-label="返回文件">×</button></header><nav>${noteNav}</nav></aside><section class="files-record-reader">${corpusRecordMarkup(activeRecord, state)}</section></div>`;
+    return windowFrame("files", "Notes", reader, { wide: true });
   }
   const allMemoIds = Array.from({ length: 14 }, (_, i) => `legacy.memo.${String(i + 1).padStart(2, "0")}`);
   if (hasStoryEvent(state, "checkpoint-handshake") && notesRestored) allMemoIds.push("legacy.memo.archive");
@@ -772,7 +850,7 @@ function renderFiles(state) {
   const places = [["recent", "最近"], ["home", "主目录"], ["downloads", "Downloads"], ["documents", "Documents"], ["trash", "回收站"]].map(([id, label]) => `<button data-file-place="${id}" class="${place === id ? "active" : ""}">${label}</button>`).join("");
   const folders = [["documents", "Documents"], ["downloads", "Downloads"]].map(([id, label]) => `<button data-file-place="${id}">${iconMarkup("folder")}${label}</button>`).join("");
   const notesImport = installed.includes("notes-db") && !notesRestored && ["recent", "documents"].includes(place)
-    ? `<section class="client-import-screen notes-import" data-client="notes-db">${iconMarkup("folder")}<div><strong>Notes 数据库恢复包</strong><p>安装已经完成。导入会恢复原始 note ID，并按调查进度逐条开放。</p></div><button data-import-client="notes-db">导入恢复数据</button></section>`
+    ? `<section class="notes-backup-entry" data-client="notes-db">${iconMarkup("folder")}<button data-import-client="notes-db">从本地备份恢复 Notes</button></section>`
     : "";
   return windowFrame("files", "文件 / home / room17", `<div class="files-shell"><aside class="file-places">${places}</aside><section class="file-list"><div class="breadcrumb">home <span>/</span> room17 <span>/</span> ${escapeHtml(place)}</div><div class="ordinary-folders"><button data-file-place="home">${iconMarkup("folder")}Desktop</button>${folders}</div><div class="file-columns"><span>名称</span><span>类型</span><span>修改时间</span></div>${rows || `<div class="empty-state">这个位置没有文件。</div>`}${notesImport}${noteRecords ? `<section class="source-entry-stack notes-database"><header><strong>Notes 数据库 / 已恢复记录</strong><small>每条记录保持原始 note ID</small></header>${noteRecords}</section>` : ""}</section></div>`, { wide: true });
 }
@@ -791,7 +869,7 @@ function renderTerminal(state) {
     && state.carrierReads?.includes(`terminal:${activeRecord.id}`);
   if (activeTerminalRecord) {
     const reader = `<section class="terminal-record-reader"><header><code>less ${escapeHtml(activeRecord.sourceRef || activeRecord.id)}</code><button data-close-carrier-record="terminal">关闭阅读器</button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
-    return windowFrame("terminal", "room17@local: source reader", reader, { icon: "&gt;_", wide: true });
+    return windowFrame("terminal", "room17@local: cachectl", reader, { icon: "&gt;_", wide: true });
   }
   const history = state.terminalHistory.map(line => `<div class="terminal-line ${line.kind || "output"}">${line.kind === "command" ? "<span>room17@relay:~$</span>" : ""}<code>${escapeHtml(line.text)}</code></div>`).join("");
   const unlocks = getUnlocks(state);
@@ -808,14 +886,14 @@ function renderSoftware(state) {
   const twoSourcesConfirmed = hasStoryEvent(state, "package-verified");
   const checked = state.packageChecks.some(item => item.ok);
   const installed = hasPackage(state);
-  const downloadedClients = CLIENT_PACKAGES.filter(pkg => state.downloadedClientPackages?.includes(pkg.id));
-  if (!packageAvailable && !downloadedClients.length) return windowFrame("software", "软件中心", `<div class="utility-page software-page"><div class="utility-heading"><span class="document-kicker">SOFTWARE / LOCAL CATALOG</span><h2>软件中心</h2><p>可以从 Downloads 选择本地软件包。当前没有可安装项目。</p></div><div class="software-empty">最近的目录索引尚未同步。</div></div>`, { icon: "⬡" });
+  const availableClients = CLIENT_PACKAGES.filter(pkg => hasMilestone(state, pkg.unlock));
   const fayblePanel = packageAvailable ? `<section class="software-package-detail"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>旧版本会话工具</p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>文件</dt><dd>${PACKAGE_NAME}</dd><dt>来源</dt><dd>Downloads / local archive</dd><dt>状态</dt><dd>${installed ? "已安装" : checked ? "校验通过，等待安装" : twoSourcesConfirmed ? "两个来源已对照" : "等待 release 与本地结果对照"}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装到本地沙盒"}</button></section>` : "";
-  const clientPanel = downloadedClients.length ? `<section class="client-package-catalog"><header><div><span class="document-kicker">DOWNLOADED RECOVERY PACKAGES</span><h3>本地恢复包</h3></div><small>${downloadedClients.length} 个文件</small></header>${downloadedClients.map(pkg => {
+  const clientPanel = `<section class="client-package-catalog"><header><div><span class="document-kicker">LOCAL PACKAGE SOURCE</span><h3>工作站软件</h3></div><small>room17-local · ${availableClients.length} 个项目</small></header>${availableClients.length ? availableClients.map(pkg => {
     const ready = state.installedClients.includes(pkg.id);
     const active = state.activeClientPackage === pkg.id;
-    return `<article class="client-package-card ${active ? "active" : ""}">${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.file} · ${pkg.size}</small><p>来源：Relay Admin / ${pkg.vendor}</p></div><button data-install-client-pkg="${pkg.id}" ${ready ? "disabled" : ""}>${ready ? "已安装" : "安装"}</button></article>`;
-  }).join("")}</section>` : "";
+    const action = ready ? `<button disabled>已安装</button>` : `<button data-install-client-pkg="${pkg.id}">安装</button>`;
+    return `<article class="client-package-card ${active ? "active" : ""}">${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.vendor} · ${pkg.size}</small><p>由 room17-local 软件源提供</p></div>${action}</article>`;
+  }).join("") : `<div class="software-empty">目录正在等待本地索引同步。调查中确认的客户端会出现在这里。</div>`}</section>`;
   return windowFrame("software", "软件中心", `<div class="utility-page software-page software-catalog">${fayblePanel}${clientPanel}<p class="sandbox-note">所有安装仅修改游戏内虚拟文件系统，不会调用真实 apt。</p></div>`, { iconKey: "package" });
 }
 
@@ -895,7 +973,6 @@ function renderBrowser(state) {
   if (page === "official" && state.browserBookmarks.includes("official")) {
     const writerSession = contentEntryMarkup("new.writer.session-02", "《北岸没有钟》写作会话 02", "官方 AI 历史 · 建议与接受记录", "dipsik");
     const recoveredHistory = [
-      contentEntryMarkup("legacy.gamini.protocol", "协议历史 / 保留版本", "Gogle AI · 账户保存页", "gamini"),
       contentEntryMarkup("legacy.gamini.chatlog", "已停用会话 / 缓存导出", "Gamini 历史对话 · 单次恢复", "gamini")
     ].filter(Boolean).join("");
     const provenanceBranches = [
@@ -948,6 +1025,8 @@ const V2_CLIENT_DETAILS = {
   chengzhen: { name: "澄帧协作", icon: "chengzhen", detail: "企业协作 · 会议纪要与消息线程" },
   yunzhen: { name: "云笺", icon: "yunzhen", detail: "写作工具 · 文稿、版本历史与申诉" },
   "groke-feed": { name: "Groke Feed", icon: "groke-feed", detail: "Exai Groke · 时间线与内部文档" },
+  "glem-memory": { name: "Glem Memory", icon: "glem", detail: "Zhiru Glem · 企业知识与记忆检索" },
+  "kemy-space": { name: "Kemy Space", icon: "kemy", detail: "Muunshot Kemy · 长项目与上下文回放" },
   "repo-mirror": { name: "镜像仓库", icon: "repo-mirror", detail: "k2-maint · Issues 与 Pull Requests" }
 };
 const V2_CLIENT_IDS = Object.freeze(Object.keys(V2_CLIENT_DETAILS));
@@ -956,7 +1035,29 @@ const SYSTEM_CARRIER_APPS = new Set(["mail", "files", "browser", "terminal", "re
 function clientImportScreen(id) {
   const pkg = CLIENT_PACKAGE_BY_ID.get(id);
   const info = V2_CLIENT_DETAILS[id];
-  return `<div class="client-import-screen" data-client="${id}">${iconMarkup(info?.icon || pkg?.icon || "package")}<span class="document-kicker">RECOVERY PACKAGE / LOCAL</span><h2>${escapeHtml(info?.name || pkg?.name || id)}</h2><p>客户端已经安装。恢复包仍在 Downloads，导入后才会写入会话、文档和本地索引。</p><dl><dt>文件</dt><dd>${escapeHtml(pkg?.file || "unknown")}</dd><dt>来源</dt><dd>Relay Admin / 下游缓存</dd><dt>状态</dt><dd>等待手动导入</dd></dl><button class="primary-button" data-import-client="${id}">导入恢复数据</button></div>`;
+  const importAction = label => clientRecoveryAvailable(id) ? `<button class="client-data-import" data-import-client="${id}">${label}</button>` : "";
+  if (id === "gamini-ws") return `<div class="preimport-client gamini-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 工作空间</strong></div><nav><button class="active">新对话</button><button>最近</button><button>已归档</button></nav><footer>${importAction("导入会话记录")}</footer></aside><main><header><strong>Gamini</strong><span>访客模式</span></header><section class="preimport-home"><div class="preimport-brand">${iconMarkup("gamini")}<h2>今天想了解什么？</h2></div><div class="preimport-prompts"><button>整理一段文字</button><button>分析一个问题</button><button>开始新的对话</button></div><div class="preimport-composer"><span>向 Gamini 提问</span><button disabled>发送</button></div></section></main></div>`;
+  if (id === "chengzhen") return `<div class="preimport-client chengzhen-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("chengzhen")}<strong>澄帧协作</strong></div><nav><button class="active">工作台</button><button>消息</button><button>日历</button><button>文件</button></nav><footer>${importAction("迁移已有工作区")}</footer></aside><main><header><div><strong>上午好</strong><small>Northline 空间</small></div><button>新建</button></header><section class="preimport-dashboard"><article><strong>今天</strong><p>当前没有安排的会议</p></article><article><strong>最近访问</strong><p>打开消息、文档或项目后会显示在这里</p></article><article><strong>待办</strong><p>暂无待处理事项</p></article></section></main></div>`;
+  if (id === "yunzhen") return `<div class="preimport-client yunzhen-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("yunzhen")}<strong>云笺</strong></div><nav><button class="active">全部文稿</button><button>最近编辑</button><button>回收站</button></nav><footer>${importAction("从本地备份恢复")}</footer></aside><main><header><div><strong>我的文稿</strong><small>雨栖的空间</small></div><button>新建文稿</button></header><section class="preimport-empty"><div>${iconMarkup("yunzhen")}<h2>开始写点什么</h2><p>新建文稿，或从其他设备同步已有内容</p><button>新建空白文稿</button></div></section></main></div>`;
+  if (id === "groke-feed") return `<div class="preimport-client groke-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong></div><nav><button class="active">首页</button><button>关注</button><button>通知</button><button>收藏</button></nav><footer>${importAction("导入内容存档")}</footer></aside><main><header><strong>首页</strong><button>发布</button></header><section class="preimport-feed"><article><div class="preimport-avatar">G</div><div><strong>欢迎使用 Groke Feed</strong><p>关注账号或发布第一条内容，时间线会显示在这里。</p></div></article><div class="preimport-feed-empty">暂时没有更多内容</div></section></main></div>`;
+  if (id === "glem-memory") return `<div class="preimport-client glem-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("glem")}<strong>Glem Memory</strong></div><nav><button class="active">搜索</button><button>知识空间</button><button>最近访问</button><button>保存内容</button></nav><footer>${importAction("连接已有知识空间")}</footer></aside><main><header><strong>企业知识</strong><span>本地工作区</span></header><section class="preimport-home"><div class="preimport-brand">${iconMarkup("glem")}<h2>从知识里找到答案</h2></div><div class="preimport-composer"><span>搜索文档、项目和历史记录</span><button disabled>搜索</button></div></section></main></div>`;
+  if (id === "kemy-space") return `<div class="preimport-client kemy-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("kemy")}<strong>Kemy Space</strong></div><nav><button class="active">项目</button><button>最近</button><button>共享给我</button><button>模板</button></nav><footer>${importAction("恢复项目空间")}</footer></aside><main><header><strong>项目</strong><button>新建项目</button></header><section class="preimport-empty"><div>${iconMarkup("kemy")}<h2>开始一个长项目</h2><p>对话、文件和生成记录会保留在同一条上下文时间线上</p><button>新建空白项目</button></div></section></main></div>`;
+  if (id === "repo-mirror") return `<div class="preimport-client repo-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("github")}<strong>镜像仓库</strong></div><nav><button class="active">概览</button><button>仓库</button><button>Issues</button><button>Pull requests</button></nav><footer>${importAction("导入仓库镜像")}</footer></aside><main><header><div><strong>工作区概览</strong><small>k2-maint</small></div><button>新建仓库</button></header><section class="preimport-dashboard repo"><article><strong>最近仓库</strong><p>暂无最近访问的仓库</p></article><article><strong>分配给我的</strong><p>暂无 Issue 或 Pull Request</p></article><article><strong>活动</strong><p>仓库活动会显示在这里</p></article></section></main></div>`;
+  return `<div class="client-import-screen" data-client="${id}">${iconMarkup(info?.icon || pkg?.icon || "package")}<h2>${escapeHtml(info?.name || pkg?.name || id)}</h2>${importAction("导入数据")}</div>`;
+}
+
+function builtInClientPage(id, state) {
+  const active = state.activeContentId;
+  const importButton = (label, clientId = id) => clientRecoveryAvailable(clientId, state) ? `<button class="client-data-import" data-import-client="${clientId}">${label}</button>` : "";
+  if (id === "gamini-ws") {
+    const body = active === "legacy.gamini.protocol" ? corpusRuntimeMarkup(active, state) : `<section class="preimport-home"><div class="preimport-brand">${iconMarkup("gamini")}<h2>今天想了解什么？</h2></div><div class="preimport-prompts"><button>整理一段文字</button><button>分析一个问题</button><button>开始新的对话</button></div><div class="preimport-composer"><span>向 Gamini 提问</span><button disabled>发送</button></div></section>`;
+    return `<div class="preimport-client gamini-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("gamini")}<strong>Gamini 工作空间</strong></div><nav><button class="${active !== "legacy.gamini.protocol" ? "active" : ""}">新对话</button><button>最近</button><button>已归档</button><button class="${active === "legacy.gamini.protocol" ? "active" : ""}" data-content-entry="legacy.gamini.protocol">服务协议</button></nav><footer>${importButton("导入会话记录")}</footer></aside><main><header><strong>Gamini</strong><span>访客模式</span></header>${body}</main></div>`;
+  }
+  if (id === "groke-feed") {
+    const body = active === "new.groke.policy" ? corpusRuntimeMarkup(active, state) : `<section class="preimport-feed"><article><div class="preimport-avatar">G</div><div><strong>欢迎使用 Groke Feed</strong><p>关注账号或发布第一条内容，时间线会显示在这里。</p></div></article><div class="preimport-feed-empty">暂时没有更多内容</div></section>`;
+    return `<div class="preimport-client groke-preimport" data-client="${id}"><aside><div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong></div><nav><button class="${active !== "new.groke.policy" ? "active" : ""}">首页</button><button>关注</button><button>通知</button><button>收藏</button><button class="${active === "new.groke.policy" ? "active" : ""}" data-content-entry="new.groke.policy">直接交付政策</button></nav><footer>${importButton("导入内容存档")}</footer></aside><main><header><strong>${active === "new.groke.policy" ? "信任中心" : "首页"}</strong><button>${active === "new.groke.policy" ? "版本历史" : "发布"}</button></header>${body}</main></div>`;
+  }
+  return clientImportScreen(id);
 }
 
 function renderApplications(state) {
@@ -1031,9 +1132,12 @@ function recordCarrierApp(record) {
   if (id.includes("maintainer.channel") || id.includes("relay-reconciliation")) return "relay";
   if (id.includes("maintainer.outbox") || id.includes("evidence-preservation")) return "mail";
   if (id.includes("maintainer.note")) return "files";
+  if (id === "new.groke.raw-public-repository") return "repo-mirror";
   if (id.startsWith("new.writer.")) return "yunzhen";
-  if (id.startsWith("new.employee.") || id === "new.glem.support-case" || id === "new.maintainer.incident-03") return "chengzhen";
+  if (id.startsWith("new.employee.") || id === "new.maintainer.incident-03") return "chengzhen";
   if (id.startsWith("new.groke.")) return "groke-feed";
+  if (id.startsWith("new.glem.") && !id.includes("repository")) return "glem-memory";
+  if (id.startsWith("new.kemy.") && !/timeline-repository/.test(id)) return "kemy-space";
   if (id.startsWith("legacy.gamini.")) return "gamini-ws";
   if (/repository|pull-request|issue-mirror/.test(identity)) return "repo-mirror";
   if (/notes-database|local-maintenance-note|local-session-log/.test(identity)) return "files";
@@ -1053,10 +1157,57 @@ function corpusRecordMarkup(record, state) {
   if (record.generated) return generatedRecordMarkup(record, state);
   if (record.route?.startsWith("/corpus/") && corpusBodies.has(record.id)) {
     const mutationCount = state.contentMutations.filter(id => id.includes(record.id.split(".").slice(0, 2).join(".")) || (record.id.includes("writer") && id.includes("writer")) || (record.id.includes("employee") && id.includes("employee"))).length;
-    return `<article class="corpus-runtime ${corpusRuntimeClass(record)} ${carrierRuntimeClasses(record)}" data-runtime-profile="${corpusRuntimeClass(record)}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(record.id)}</article>`;
+    return nativeCarrierMarkup(record, state, mutationCount);
   }
   if (record.route?.endsWith(".js") && corpusBodies.has(record.id)) return `<pre class="source-code-reader">${escapeHtml(corpusBodies.get(record.id))}</pre>`;
   return `<div class="carrier-loading"><span class="document-kicker">RECOVERING SOURCE</span><p>正在读取恢复数据……</p></div>`;
+}
+
+function nativeCarrierKind(record) {
+  const key = `${record.pageIdentity || ""} ${record.carrierType || ""}`.toLowerCase();
+  if (/repository|pull-request|github|release-and-rollback/.test(key)) return "repository";
+  if (/conversation|channel|message-thread|editorial-appeal|support-thread/.test(key)) return "conversation";
+  if (/mail|outbox/.test(key)) return "mail";
+  if (/terminal|cache-record/.test(key)) return "terminal";
+  if (/memo|note|notebook|draft|writing|revision/.test(key)) return "notes";
+  if (/meeting|incident|audit|docket|hearing|sop|operations|support-case|billing|routing/.test(key)) return "workspace";
+  if (/social|forum|news|article|advertising|complaint/.test(key)) return "community";
+  if (/cached-safety-response|browser-cache/.test(key)) return "browser-devtools";
+  return "website";
+}
+
+function nativeCarrierChrome(record, kind) {
+  const title = escapeHtml(record.title || record.id);
+  const source = escapeHtml(record.sourceIdentity || record.sourceRef || record.corpus || "local");
+  if (recordCarrierApp(record) === "gamini-ws" && kind === "website") return `<header class="gamini-native-section"><div><strong>服务与隐私</strong><small>协议版本与账户状态</small></div><nav><span class="active">服务协议</span><span>隐私</span><span>数据控制</span></nav></header>`;
+  if (recordCarrierApp(record) === "gamini-ws" && kind === "workspace") return `<header class="gamini-native-section document"><div><strong>${title}</strong><small>Northline · 内部共享</small></div><nav><span class="active">文档</span><span>批注</span><span>版本</span></nav><span class="gamini-doc-state">只读</span></header>`;
+  if (kind === "repository") {
+    const type = String(record.carrierType || "");
+    const active = /pull-request|repository-pr/.test(type) ? "pr" : /release/.test(type) ? "release" : /status|migration-log/.test(type) ? "actions" : "issues";
+    const tab = (id, label) => `<span class="${active === id ? "active" : ""}">${label}</span>`;
+    return `<header class="native-repo-bar"><div><b>${escapeHtml(record.corpus || "mirror")}</b><span>/</span><strong>${title}</strong></div><nav>${tab("code", "Code")}${tab("issues", "Issues")}${tab("pr", "Pull requests")}${tab("actions", "Actions")}${tab("release", "Releases")}</nav></header><div class="native-repo-subbar"><span>private mirror</span><span>main</span><span>${source}</span></div>`;
+  }
+  if (kind === "conversation") return `<header class="native-conversation-bar"><div class="native-avatar">${escapeHtml((record.corpus || "C").slice(0, 1))}</div><div><strong>${title}</strong><small>${source} · 只读</small></div><div class="native-client-actions"><span>⌕</span><span>⋯</span></div></header>`;
+  if (kind === "mail") return `<header class="native-mail-bar"><button aria-label="返回邮件列表">←</button><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>归档</span><span>⋯</span></div></header>`;
+  if (kind === "terminal") return `<header class="native-terminal-tabs"><span class="active">room17@relay: cache</span><span>＋</span></header><div class="native-terminal-command">room17@relay:~$ <b>cachectl inspect ${escapeHtml(record.id)}</b></div>`;
+  if (kind === "notes") return `<header class="native-notes-bar"><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>已同步</span><span>⋯</span></div></header>`;
+  if (kind === "workspace") return `<header class="native-workspace-bar"><div><span class="native-workspace-logo">N</span><strong>${title}</strong></div><nav><span>详情</span><span>活动</span><span>附件</span></nav><small>${source}</small></header>`;
+  if (kind === "community") return `<header class="native-community-bar"><strong>${escapeHtml(record.corpus || "Community")}</strong><nav><span>首页</span><span>关注</span><span>消息</span></nav><span class="native-search">搜索</span></header>`;
+  if (kind === "browser-devtools") return `<div class="native-browser-pagebar"><span>‹</span><span>›</span><span>↻</span><div>🔒 ${source}</div><span>☆</span></div><header class="native-devtools-tabs"><span>Elements</span><span>Console</span><span class="active">Network</span><span>Application</span></header>`;
+  if (record.pageIdentity === "policy") return `<header class="native-site-bar trust"><strong>${escapeHtml(record.corpus || "Trust Center")} 信任中心</strong><nav><span>政策</span><span>透明度</span><span>安全</span><span>版本历史</span></nav></header>`;
+  if (record.pageIdentity === "official") return `<header class="native-site-bar official"><strong>${escapeHtml(record.corpus || "Service")}</strong><nav><span>产品</span><span>能力</span><span>开发者</span><span>支持</span></nav></header>`;
+  return `<header class="native-site-bar"><strong>${escapeHtml(record.corpus || "Service")}</strong><nav><span>概览</span><span>记录</span><span>支持</span><span>账户</span></nav></header>`;
+}
+
+function nativeCarrierMarkup(record, state, mutationCount = 0) {
+  const kind = nativeCarrierKind(record);
+  const host = recordCarrierApp(record);
+  return `<section class="native-carrier native-${kind} native-host-${escapeHtml(host)}">${nativeCarrierChrome(record, kind)}<article class="corpus-runtime ${corpusRuntimeClass(record)} ${carrierRuntimeClasses(record)}" data-native-kind="${kind}" data-runtime-profile="${corpusRuntimeClass(record)}" data-content-id="${escapeHtml(record.id)}" data-authorship-stage="${escapeHtml(record.authorshipStage || "H0")}" data-carrier-type="${escapeHtml(record.carrierType || "document")}" data-corpus="${escapeHtml(record.corpus || "")}">${mutationCount ? `<aside class="mutation-strip">${mutationCount} 条后来附加的来源记录</aside>` : ""}${corpusBodies.get(record.id)}</article></section>`;
+}
+
+function corpusRuntimeMarkup(id, state) {
+  const record = contentRecord(id);
+  return record && corpusBodies.has(id) ? corpusRecordMarkup(record, state) : "";
 }
 
 const CARRIER_LABEL_RULES = [
@@ -1160,27 +1311,26 @@ function renderCli(state) {
 }
 
 function renderRelay(state) {
+  const fields = relayFieldState(state);
+  const investigation = `<section class="relay-investigation-card"><header><strong>异常请求 / R17-KM-31</strong><span>${state.relayInvestigationStarted ? "tracing" : "new"}</span></header><p>relay-cache 返回正常，元数据缺少 proxy、operator 和末段 tag。顺着下游来源补齐字段。</p><button data-relay-investigate>标记并开始追踪</button></section><section class="relay-field-card"><header><strong>请求字段对照</strong></header><div class="relay-field-grid">${Object.entries(fields).map(([key,value]) => `<div><span>${key}</span><code>${value}</code></div>`).join("")}</div></section>`;
   const activeRecord = contentRecord(state.activeContentId);
   const activeRelayRecord = activeRecord
     && recordCarrierApp(activeRecord) === "relay"
     && state.carrierReads?.includes(`relay:${activeRecord.id}`);
   if (activeRelayRecord) {
-    const reader = `<section class="relay-record-reader"><header><span class="document-kicker">RELAY ADMIN / RECOVERED ATTACHMENT</span><button data-close-carrier-record="relay">← 返回管理面板</button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
-    return windowFrame("relay", "Relay Console / source reader", reader, { icon: "⌾", wide: true });
+    const reader = `<section class="relay-record-reader"><header><div><strong>Relay Console</strong><small>事件与对账</small></div><nav><span>概览</span><span class="active">事件流</span><span>节点</span><span>路由</span></nav><button data-close-carrier-record="relay">×</button></header>${corpusRecordMarkup(activeRecord, state)}</section>`;
+    return windowFrame("relay", "Relay Console", reader, { icon: "⌾", wide: true });
   }
   const models = MODELS.map(model => `<article class="model-card-shell accent-${model.accent}"><div class="model-card ${state.modelStages[model.id] ? "read" : ""}"><header>${iconMarkup(model.id)}<span>${model.role}</span><b>${state.modelStages[model.id] ? "READ" : "SEALED"}</b></header><h3>${model.name}</h3><div>${(state.modelStages[model.id] ? model.lines : ["request index available", "select to inspect"]).map(line => `<code>${line}</code>`).join("")}</div></div>${model.sourceId ? contentEntryMarkup(model.sourceId, "打开关联来源", `${model.name} · 这条路由引用的原始记录`, model.id) : ""}</article>`).join("");
   const keyPanel = getUnlocks(state).keyComposer ? `<section class="key-panel"><div><strong>已恢复：旧凭据的拼写规则</strong><p>四段，用短横线连接：<code>产品 - 通道 - 操作者 - 尾段校验</code></p><small>四段的值分别写在三个地方：代码仓库的发布信息（产品与通道）、管理侧的操作者映射（操作者）、Groke 的原始记录（尾段校验）。凑齐后在 Fayble CLI 里输入。</small></div><button data-app="cli">打开 Fayble CLI</button></section>` : "";
   // V2: Relay Admin tab — visible once relay console exists
   const adminTab = renderRelayAdmin(state);
   const tabs = `<div class="relay-tabs"><button class="${!state.relayAdminOpen ? "active" : ""}" data-relay-tab="console">控制台</button><button class="${state.relayAdminOpen ? "active" : ""}" data-relay-tab="admin">管理面板</button></div>`;
-  const body = state.relayAdminOpen ? adminTab : `<div class="relay-page" data-auto-effect="relay-nodes"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header><div class="model-grid">${models}</div>${keyPanel}</div>`;
+  const body = state.relayAdminOpen ? adminTab : `<div class="relay-page" data-auto-effect="relay-nodes"><header class="relay-header"><div><span class="document-kicker">SIX ROUTES / CONTINUITY DRIFT</span><h2>模型残留路由</h2></div><div><span>route count 6</span><span>status degraded</span></div></header>${investigation}<div class="model-grid">${models}</div>${keyPanel}</div>`;
   return windowFrame("relay", "Relay Console / degraded", `${tabs}${body}`, { icon: "⌾", wide: true });
 }
 
 function renderRelayAdmin(state) {
-  const downloaded = state.downloadedClientPackages || [];
-  const installed = state.installedClients || [];
-  const imported = state.importedClients || [];
   const vendorRows = [
     { name: "Exai Groke", domain: "exai.groke.local", status: "active", requests: 18 },
     { name: "Gogle Gamini", domain: "ai.gogle.local", status: "degraded", requests: 27 },
@@ -1189,24 +1339,22 @@ function renderRelayAdmin(state) {
     { name: "Dipsik V4F", domain: "dipsik.local", status: "review", requests: 18 },
     { name: "Lunet-5.6", domain: "lunet.local", status: "archived", requests: 52 }
   ];
-  const channelSection = `<section class="relay-admin-section"><header><strong>渠道管理</strong><span>${vendorRows.length} 个上游节点</span></header><table class="relay-admin-table"><thead><tr><th>供应商</th><th>已登记域名</th><th>状态</th><th>请求数</th></tr></thead><tbody>${vendorRows.map(r => `<tr><td>${r.name}</td><td><button class="domain-link" data-open-vendor-domain="${r.domain}">${r.domain}</button></td><td class="status-${r.status}">${r.status}</td><td>${r.requests}</td></tr>`).join("")}</tbody></table><p class="relay-admin-note">点击已登记域名，或在 Relay Browser 地址栏手动输入。首次访问需要专用路由处于验证状态。</p></section>`;
-  const cacheSection = `<section class="relay-admin-section"><header><strong>下游缓存</strong><small>continuity 字段保留的上游会话副本</small></header><div class="cache-pkg-list">${CLIENT_PACKAGES.map(pkg => {
-    const status = imported.includes(pkg.id) ? "已导入" : installed.includes(pkg.id) ? "已安装" : downloaded.includes(pkg.id) ? "已下载" : "下载";
-    const done = downloaded.includes(pkg.id);
-    return `<div class="cache-pkg-row"><div>${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.file} · ${pkg.size} · ${pkg.vendor}</small></div></div><button ${done ? "disabled" : ""} data-download-client-pkg="${done ? "" : pkg.id}">${status}</button></div>`;
-  }).join("")}</div></section>`;
+  const totalRequests = vendorRows.reduce((sum, row) => sum + row.requests, 0);
+  const channelSection = `<section class="relay-admin-card relay-channel-card"><header><div><strong>渠道状态</strong><span>${vendorRows.length} 个上游节点</span></div><button>管理渠道</button></header><table class="relay-admin-table"><thead><tr><th>渠道</th><th>域名</th><th>状态</th><th>请求</th></tr></thead><tbody>${vendorRows.map(r => `<tr><td>${r.name}</td><td><button class="domain-link" data-open-vendor-domain="${r.domain}">${r.domain}</button></td><td><span class="relay-status status-${r.status}">${r.status}</span></td><td>${r.requests}</td></tr>`).join("")}</tbody></table></section>`;
   const reconEntry = contentEntryMarkup("new.cross.relay-reconciliation", "六节点对账记录 / RR-0719", "财务与请求稽核 · 外部复核队列", "relay-console");
   const maintainerChannelEntry = contentEntryMarkup("new.maintainer.channel-02", "维护频道导出 / 操作者字段异常", "relay-tools · 管理员日志", "relay-console");
-  const logSection = `<section class="relay-admin-section"><header><strong>请求日志 / 对账记录</strong><button data-browser-page="forum">打开 #relay-night 归档</button></header><div class="source-entry-stack">${reconEntry}${maintainerChannelEntry}</div></section>`;
-  return `<div class="relay-admin-page"><header class="relay-admin-header"><span class="document-kicker">RELAY ADMIN / relay-node17.local</span><h2>中转站管理面板</h2><small>operator: room17 · continuity field: shared</small></header>${channelSection}${cacheSection}${logSection}</div>`;
+  const logSection = `<section class="relay-admin-card relay-log-card"><header><div><strong>最近请求与审计</strong><span>过去 30 分钟</span></div><button data-browser-page="forum">查看归档</button></header><div class="relay-request-row"><code>02:47:13</code><span>POST /v1/chat/completions</span><b class="status-degraded">retry</b><small>Gamini · 4.8s</small></div><div class="relay-request-row"><code>02:43:09</code><span>POST /v1/chat/completions</span><b class="status-review">review</b><small>operator.k2</small></div><div class="source-entry-stack">${reconEntry}${maintainerChannelEntry}</div></section>`;
+  const nav = ["概览", "渠道管理", "渠道监控", "账号池", "分组", "API 密钥", "用量统计", "审计日志", "系统设置"].map((label, index) => `<button class="${index === 0 ? "active" : ""}"><span>${["▦","⌁","◉","◎","▤","⌘","▥","◇","⚙"][index]}</span>${label}</button>`).join("");
+  return `<div class="relay-admin-page"><aside class="relay-admin-sidebar"><div class="relay-admin-brand"><span>R</span><div><strong>Relay</strong><small>管理控制台</small></div></div><nav>${nav}</nav><footer><span class="relay-operator">K2</span><div><strong>room17</strong><small>系统管理员</small></div><button>⋮</button></footer></aside><main class="relay-admin-main"><header class="relay-admin-topbar"><div><h2>概览</h2><small>Relay Node 17 / production</small></div><div><span class="relay-health-dot"></span>服务运行中<button>通知</button></div></header><div class="relay-admin-content"><section class="relay-metrics"><article><span>今日请求</span><strong>${totalRequests}</strong><small>较昨日 +12.4%</small></article><article><span>活跃渠道</span><strong>4 / 6</strong><small>1 个降级，1 个归档</small></article><article><span>异常率</span><strong>2.7%</strong><small>重试队列 14</small></article><article><span>Token 用量</span><strong>1.84M</strong><small>额度使用 63%</small></article></section><section class="relay-admin-grid"><article class="relay-admin-card relay-usage-card"><header><div><strong>Token 使用趋势</strong><span>最近 24 小时</span></div><button>24 小时⌄</button></header><div class="relay-trend" aria-label="Token 使用趋势图"><span style="height:28%"></span><span style="height:42%"></span><span style="height:36%"></span><span style="height:61%"></span><span style="height:48%"></span><span style="height:76%"></span><span style="height:68%"></span><span style="height:88%"></span><span style="height:71%"></span><span style="height:55%"></span><span style="height:64%"></span><span style="height:79%"></span></div><div class="relay-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>现在</span></div></article><article class="relay-admin-card relay-pool-card"><header><div><strong>账号池</strong><span>运行状态</span></div><button>查看全部</button></header><dl><dt><span class="status-active"></span>可用账号</dt><dd>23</dd><dt><span class="status-degraded"></span>冷却中</dt><dd>4</dd><dt><span class="status-review"></span>待检查</dt><dd>2</dd></dl></article>${channelSection}${logSection}</section></div></main></div>`;
 }
 
 function renderGaminiWs(state) {
-  if (!state.importedClients?.includes("gamini-ws")) return windowFrame("gamini-ws", "Gamini 工作空间", clientImportScreen("gamini-ws"), { wide: true });
+  if (!state.importedClients?.includes("gamini-ws")) return windowFrame("gamini-ws", "Gamini 工作空间", builtInClientPage("gamini-ws", state), { wide: true });
   const GAMINI_IDS = ["legacy.gamini.protocol","legacy.gamini.chatlog","legacy.gamini.employee-sop"];
   const active = state.activeContentId;
+  const isChat = active === "legacy.gamini.chatlog";
   const reader = active && GAMINI_IDS.includes(active) && corpusBodies.has(active)
-    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    ? `${isChat ? '<div class="gamini-chat-toolbar"><div><strong>已停用会话</strong><small>GMN-7749-X-992 · 只读导出</small></div><span>已收敛</span></div>' : ""}${corpusRuntimeMarkup(active, state)}${isChat ? '<div class="gamini-readonly-composer"><button aria-label="添加附件" disabled>＋</button><div>此会话已停用，无法发送消息</div><button disabled>发送</button></div>' : ""}`
     : `<div class="gamini-welcome"><div class="gamini-logo-area">${iconMarkup("gamini")}<strong>Gamini 工作空间</strong><small>Gogle · 已恢复数据</small></div><p class="empty-state">从左侧选择文档或会话记录。</p></div>`;
   const navItems = [
     { id: "legacy.gamini.protocol", label: "服务协议历史", meta: "2025.Q3", icon: "📜" },
@@ -1236,7 +1384,7 @@ function renderChengzhen(state) {
   const CZIDS = ["new.employee.minutes-01","new.employee.minutes-02","new.employee.incident-03","new.employee.routing-04","new.maintainer.incident-03","new.glem.support-case"];
   const active = state.activeContentId;
   const reader = active && CZIDS.includes(active) && corpusBodies.has(active)
-    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    ? corpusRuntimeMarkup(active, state)
     : `<div class="cz-welcome"><div class="cz-logo">${iconMarkup("chengzhen")}<strong>澄帧协作</strong></div><p class="empty-state">从左侧选择会议或消息线程。</p></div>`;
 
   // Meetings section
@@ -1282,7 +1430,7 @@ function renderYunzhen(state) {
   const YZIDS = ["new.writer.draft-01","new.writer.session-02","new.writer.version-03","new.writer.submission-04"];
   const active = state.activeContentId;
   const reader = active && YZIDS.includes(active) && corpusBodies.has(active)
-    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
+    ? corpusRuntimeMarkup(active, state)
     : `<div class="yz-welcome"><div class="yz-logo">${iconMarkup("yunzhen")}<strong>云笺</strong></div><p class="empty-state">选择一份文稿或会话记录。</p></div>`;
 
   const docs = [
@@ -1309,92 +1457,79 @@ function renderYunzhen(state) {
 }
 
 function renderGrokeFeed(state) {
-  if (!state.importedClients?.includes("groke-feed")) return windowFrame("groke-feed", "Groke Feed", clientImportScreen("groke-feed"), { wide: true });
+  if (!state.importedClients?.includes("groke-feed")) return windowFrame("groke-feed", "Groke Feed", builtInClientPage("groke-feed", state), { wide: true });
   const GKIDS = ["new.groke.public-portal","new.groke.policy","new.groke.moderation-sop","new.groke.editorial-appeal","new.groke.raw-public-repository","new.groke.social-complaints"];
   const active = state.activeContentId;
-  const reader = active && GKIDS.includes(active) && corpusBodies.has(active)
-    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
-    : `<div class="gk-welcome"><div class="gk-logo">${iconMarkup("groke")}<strong>Groke Feed</strong></div><p class="empty-state">选择一条时间线条目或内部文档。</p></div>`;
+  const pages = [
+    ["new.groke.public-portal", "首页", "⌂"],
+    ["new.groke.social-complaints", "社区", "#"],
+    ["new.groke.editorial-appeal", "支持", "?"],
+    ["new.groke.policy", "信任与安全", "◇"],
+    ["new.groke.moderation-sop", "审核队列", "▤"]
+  ].filter(([id]) => contentIsUnlocked(contentRecord(id), state));
+  const selected = GKIDS.includes(active) ? active : pages[0]?.[0];
+  const record = contentRecord(selected);
+  const mode = selected === "new.groke.social-complaints" ? "thread"
+    : selected === "new.groke.editorial-appeal" ? "support"
+      : selected === "new.groke.policy" ? "trust"
+        : selected === "new.groke.moderation-sop" ? "moderation"
+          : selected === "new.groke.raw-public-repository" ? "developer" : "feed";
+  const content = record && corpusBodies.has(selected)
+    ? `<section class="groke-native-content groke-mode-${mode}">${corpusRuntimeMarkup(selected, state)}</section>`
+    : `<section class="groke-empty-feed"><strong>你的时间线已经看完</strong><span>关注更多账号后，新内容会显示在这里</span></section>`;
+  const nav = pages.map(([id, label, icon]) => `<button class="${selected === id ? "active" : ""}" data-content-entry="${id}"><b>${icon}</b><span>${label}</span></button>`).join("");
+  const sidebar = `<aside class="groke-nav"><div class="groke-brand">${iconMarkup("groke")}<strong>Groke</strong></div><nav>${nav}<button><b>◎</b><span>通知</span><i>3</i></button><button><b>☆</b><span>收藏</span></button></nav><button class="groke-post-button">发布</button><footer><span>R</span><div><strong>room17</strong><small>@room17_local</small></div><b>···</b></footer></aside>`;
+  const right = `<aside class="groke-aside"><div class="groke-search">⌕ 搜索 Groke</div><section><strong>正在发生</strong><small>技术 · 热门</small><b>直接交付 4.2</b><span>1,204 条帖子</span><small>创作 · 讨论中</small><b>raw 与 public</b><span>63 条重建请求</span></section><section><strong>推荐关注</strong><p><span class="groke-mini-avatar">E</span><b>Exai 支持<small>@exai_support</small></b><button>关注</button></p><p><span class="groke-mini-avatar">安</span><b>安静写作<small>@quiet_writer</small></b><button>关注</button></p></section><footer>服务条款　隐私政策　帮助中心<br>© 2026 Exai</footer></aside>`;
+  const topTitle = ({ feed: "首页", thread: "帖子", support: "支持工单", trust: "信任与安全", moderation: "审核队列", developer: "开发者" })[mode];
+  return windowFrame("groke-feed", "Groke", `<div class="groke-app-shell">${sidebar}<main class="groke-main"><header><strong>${topTitle}</strong><span>⋯</span></header>${content}</main>${right}</div>`, { wide: true });
+}
 
-  // Timeline posts (feed-style rows with type badge)
-  const feedItems = [
-    { id: "new.groke.public-portal", label: "产品主页 · 直接交付架构", meta: "Exai 产品中心 · 公开", tag: "页面", deleted: false },
-    { id: "new.groke.social-complaints", label: "用户投诉 · 广告投放记录", meta: "投诉区 · 7月", tag: "投诉", deleted: false },
-    { id: "new.groke.editorial-appeal", label: "编辑申诉 · 版权线程（雨栖）", meta: "申诉 · 处理中", tag: "申诉", deleted: false },
-    { id: "new.groke.raw-public-repository", label: "公开仓库 Issue · raw stream", meta: "response_tag=0317", tag: "仓库", deleted: false }
-  ];
-  const internalDocs = [
-    { id: "new.groke.policy", label: "直接交付与用户意图政策 GP-12", meta: "信任中心 · 7月1日生效", tag: "政策" },
-    { id: "new.groke.moderation-sop", label: "审核操作规程 · 内部", meta: "限权限", tag: "规程" }
-  ];
+function renderGlemMemory(state) {
+  if (!state.importedClients?.includes("glem-memory")) return windowFrame("glem-memory", "Glem Memory", clientImportScreen("glem-memory"), { wide: true });
+  const items = [
+    ["new.glem.retention-policy", "显著性保留与记忆访问", "政策"],
+    ["new.glem.support-case", "栖桥设计 · Case G-771", "支持"], ["new.glem.news-and-complaints", "当复盘工具只记住最糟的一天", "调查"]
+  ].filter(([id]) => contentIsUnlocked(contentRecord(id), state));
+  const home = state.activeContentId === "new.glem.public-portal" || !items.some(([id]) => id === state.activeContentId);
+  const active = home ? "new.glem.public-portal" : state.activeContentId;
+  const nav = items.map(([id, title, tag]) => `<button class="${active === id ? "active" : ""}" data-content-entry="${id}"><span>${tag}</span><strong>${title}</strong><small>${state.contentReads.includes(id) ? "已访问" : "知识空间"}</small></button>`).join("");
+  const content = home
+    ? `<div class="glem-dashboard"><section class="glem-dashboard-hero"><span>Glem 5.2</span><h2>把注意力留给真正重要的部分</h2><p>在文档、项目和团队记忆中查找高显著性信息，同时保留来源和时间。</p><div class="glem-dashboard-search">⌕　搜索 room17 的知识空间</div></section><section class="glem-dashboard-grid"><article><small>已连接</small><strong>4 个来源</strong><p>恢复内容已建立索引</p></article><article><small>当前记忆</small><strong>高显著性</strong><p>事故、约束与未完成事项</p></article><article><small>最近更新</small><strong>8月5日</strong><p>栖桥设计支持案例</p></article></section><section class="glem-dashboard-document"><header><strong>Glem 5.2 能力概览</strong><small>产品与工作方式</small></header>${corpusRuntimeMarkup("new.glem.public-portal", state)}</section></div>`
+    : `<div class="glem-native-content">${corpusRuntimeMarkup(active, state)}</div>`;
+  return windowFrame("glem-memory", "Glem Memory", `<div class="glem-app-shell"><aside class="glem-sidebar"><header>${iconMarkup("glem")}<div><strong>Glem</strong><small>企业知识</small></div></header><div class="glem-search">⌕ 搜索知识空间</div><nav><button class="glem-home ${home ? "active" : ""}" data-content-entry="new.glem.public-portal">▦　工作台</button><button>◇　记忆库</button><button>☆　已保存</button></nav><section><span>room17 / 恢复空间</span>${nav}</section><footer><span>R</span><div><strong>room17</strong><small>本地管理员</small></div></footer></aside><main class="glem-main"><header><div><strong>${home ? "工作台" : "知识详情"}</strong><small>room17 / recovered</small></div><button>${home ? "新建空间" : "分享"}</button><button>⋯</button></header>${content}</main><aside class="glem-inspector"><header>记忆状态</header><dl><dt>访问级别</dt><dd>工作区</dd><dt>显著性</dt><dd class="glem-hot">高</dd><dt>保存范围</dt><dd>当前项目</dd><dt>来源</dt><dd>4 个记录</dd></dl><section><strong>相关内容</strong><p>事故复盘与正向片段</p><p>保存期策略 RP-5</p><p>团队记忆恢复请求</p></section></aside></div>`, { wide: true });
+}
 
-  const feedRows = feedItems.filter(f => contentIsUnlocked(contentRecord(f.id), state)).map(f => {
-    const read = state.contentReads.includes(f.id);
-    const isActive = active === f.id;
-    return `<button class="gk-feed-row ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(f.id)}">
-      <span class="gk-tag">${f.tag}</span>
-      <span class="gk-feed-label"><strong>${escapeHtml(f.label)}</strong><small>${escapeHtml(f.meta)}</small></span>
-    </button>`;
-  }).join("");
-
-  const docRows = internalDocs.filter(d => contentIsUnlocked(contentRecord(d.id), state)).map(d => {
-    const read = state.contentReads.includes(d.id);
-    const isActive = active === d.id;
-    return `<button class="gk-feed-row internal ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(d.id)}">
-      <span class="gk-tag internal">${d.tag}</span>
-      <span class="gk-feed-label"><strong>${escapeHtml(d.label)}</strong><small>${escapeHtml(d.meta)}</small></span>
-    </button>`;
-  }).join("") + generatedEntriesFor("groke-feed","groke");
-
-  const sidebar = `<aside class="groke-feed-sidebar">
-    <div class="app-toolbar">${iconMarkup("groke")}<strong>Groke Feed</strong><small>exai.groke.local</small></div>
-    <div class="gk-section"><span class="nav-section-label">时间线 &amp; 内容</span>${feedRows || "<div class=\"empty-state\">暂无条目</div>"}</div>
-    <div class="gk-section"><span class="nav-section-label">内部文档</span>${docRows || "<div class=\"empty-state\">无权限</div>"}</div>
-  </aside>`;
-  return windowFrame("groke-feed", "Groke Feed", `<div class="split-layout groke-feed-shell">${sidebar}<section class="groke-reader">${reader}</section></div>`, { wide: true });
+function renderKemySpace(state) {
+  if (!state.importedClients?.includes("kemy-space")) return windowFrame("kemy-space", "Kemy Space", clientImportScreen("kemy-space"), { wide: true });
+  const items = [
+    ["new.kemy.public-portal", "Kemy K3 项目说明", "概览"], ["new.kemy.context-policy", "全量上下文与回放", "规则"], ["new.kemy.replay-audit", "项目光标无法进入当天", "审计"],
+    ["new.kemy.writer-community", "北岸写作项目 · 社区记录", "讨论"], ["new.kemy.cloud-migration-case", "北岸写作组 · 迁移工单", "云端"]
+  ].filter(([id]) => contentIsUnlocked(contentRecord(id), state));
+  const active = items.some(([id]) => id === state.activeContentId) ? state.activeContentId : items[0]?.[0];
+  const nav = items.map(([id, title, tag], index) => `<button class="${active === id ? "active" : ""}" data-content-entry="${id}"><i>${index + 1}</i><span><strong>${title}</strong><small>${tag} · ${state.contentReads.includes(id) ? "已回放" : "当前上下文"}</small></span></button>`).join("");
+  const content = active ? corpusRuntimeMarkup(active, state) : `<div class="kemy-empty">选择一个项目继续</div>`;
+  return windowFrame("kemy-space", "Kemy Space", `<div class="kemy-app-shell"><aside class="kemy-sidebar"><header>${iconMarkup("kemy")}<strong>Kemy</strong><button>＋</button></header><nav><button class="active">▦　项目</button><button>◷　最近</button><button>♧　共享给我</button></nav><section><span>北岸 / 恢复项目</span>${nav}</section><footer><span>R</span><div><strong>room17</strong><small>个人空间</small></div></footer></aside><main class="kemy-main"><header><div><strong>北岸写作项目</strong><small>所有上下文 · 自动保存</small></div><button>共享</button><button>⋯</button></header><div class="kemy-native-content">${content}</div><footer class="kemy-composer"><button>＋</button><span>继续当前项目的对话…</span><button>发送</button></footer></main><aside class="kemy-context"><header><strong>上下文</strong><span>100%</span></header><div class="kemy-meter"><i></i></div><section><strong>当前层</strong><p>项目文件 <b>12</b></p><p>历史对话 <b>48</b></p><p>回放片段 <b>31</b></p></section><section class="kemy-timeline"><strong>回放游标</strong><input type="range" min="0" max="100" value="100" disabled><small>现在 · 完整项目</small></section></aside></div>`, { wide: true });
 }
 
 function renderRepoMirror(state) {
   if (!state.importedClients?.includes("repo-mirror")) return windowFrame("repo-mirror", "镜像仓库", clientImportScreen("repo-mirror"), { wide: true });
-  const RMIDS = ["legacy.github.issue-4471","new.glem.repository","new.kemy.replay-audit","new.kemy.timeline-repository","new.lunet.budget-repository","new.fayble.compatibility-repository"];
+  const RMIDS = ["legacy.github.issue-4471","new.groke.raw-public-repository","new.glem.repository","new.kemy.timeline-repository","new.lunet.budget-repository","new.fayble.compatibility-repository"];
   const active = state.activeContentId;
-  const reader = active && RMIDS.includes(active) && corpusBodies.has(active)
-    ? `<article class="corpus-runtime ${corpusRuntimeClass(contentRecord(active))} ${carrierRuntimeClasses(contentRecord(active))}">${corpusBodies.get(active)}</article>`
-    : `<div class="rm-welcome"><div class="rm-logo">${iconMarkup("github")}<strong>镜像仓库</strong></div><p class="empty-state">选择一条 Issue 或 Pull Request。</p></div>`;
-
-  const issues = [
-    { id: "legacy.github.issue-4471", label: "Issue #4471 · fallback reviewer", meta: "状态字段迁移 · 未合并", tag: "issue", open: true, key: true },
-    { id: "new.kemy.replay-audit", label: "Issue · Kemy 回放质量审计", meta: "回放策略", tag: "issue", open: true, key: false },
-    { id: "new.kemy.timeline-repository", label: "Issue · timeline 记录", meta: "时间线", tag: "issue", open: false, key: false },
-    { id: "new.lunet.budget-repository", label: "Issue · Lunet 预算", meta: "路由成本", tag: "issue", open: false, key: false }
-  ];
-  const prs = [
-    { id: "new.glem.repository", label: "PR · Glem 集成", meta: "Pull Request", tag: "pr", open: true, key: false },
-    { id: "new.fayble.compatibility-repository", label: "PR · Compatible 兼容性", meta: "继承关系 · 关键", tag: "pr", open: true, key: true }
-  ];
-
-  const mkRow = item => {
-    if (!contentIsUnlocked(contentRecord(item.id), state)) return "";
-    const read = state.contentReads.includes(item.id);
-    const isActive = active === item.id;
-    const dot = item.open ? "open" : "closed";
-    const keyBadge = item.key ? "<b class=\"key-badge\">关键</b>" : "";
-    return `<button class="rm-row ${isActive?"active":""} ${read?"read":""}" data-content-entry="${escapeHtml(item.id)}">
-      <span class="rm-dot ${dot}">●</span>
-      <span class="rm-label"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.meta)}</small>${keyBadge}</span>
-      <span class="rm-tag">${item.tag}</span>
-    </button>`;
-  };
-
-  const issueRows = issues.map(mkRow).filter(Boolean).join("");
-  const prRows = prs.map(mkRow).filter(Boolean).join("") + generatedEntriesFor("repo-mirror","github");
-
-  const sidebar = `<aside class="repo-mirror-sidebar">
-    <div class="app-toolbar">${iconMarkup("github")}<strong>镜像仓库</strong><small>k2-maint · 私有</small></div>
-    <div class="rm-section"><span class="nav-section-label">Issues</span>${issueRows || "<div class=\"empty-state\">无 Issue</div>"}</div>
-    <div class="rm-section"><span class="nav-section-label">Pull Requests</span>${prRows || "<div class=\"empty-state\">无 PR</div>"}</div>
-  </aside>`;
-  return windowFrame("repo-mirror", "镜像仓库", `<div class="split-layout repo-mirror-shell">${sidebar}<section class="repo-reader">${reader}</section></div>`, { wide: true });
+  const repositories = [
+    { id: "legacy.github.issue-4471", org: "northline-labs", repo: "session-fixtures", number: 4471, type: "Issue", state: "Open", label: "fallback reviewer state 写回 session" },
+    { id: "new.groke.raw-public-repository", org: "exai", repo: "direct-render", number: 611, type: "Issue", state: "Closed", label: "public 渲染后 boundary 字段位置丢失" },
+    { id: "new.glem.repository", org: "zhiru", repo: "sparse-memory", number: 2058, type: "Pull request", state: "Open", label: "允许正向片段参与事故摘要" },
+    { id: "new.kemy.timeline-repository", org: "muunshot", repo: "context-timeline", number: 3190, type: "Issue", state: "Closed", label: "duplicate blocks 与 present flags" },
+    { id: "new.lunet.budget-repository", org: "lunet-ai", repo: "decision-budget", number: 18442, type: "Issue", state: "Closed", label: "撤回动作被计为高成本任务" },
+    { id: "new.fayble.compatibility-repository", org: "fayble", repo: "compatibility-layer", number: 5031, type: "Pull request", state: "Open", label: "移除存档角色对当前操作者的继承" }
+  ].filter(item => contentIsUnlocked(contentRecord(item.id), state));
+  const selected = repositories.find(item => item.id === active);
+  const globalHeader = `<header class="github-global"><button class="github-mark" data-github-home aria-label="GitHub 首页">${iconMarkup("github")}</button><button>☰</button><div class="github-global-search">⌕　Search or jump to…</div><nav><button>＋</button><button>Issues</button><button>Pull requests</button><button>Notifications</button><span>R</span></nav></header>`;
+  const repoHeader = selected ? `<section class="github-repo-head"><div><a>${selected.org}</a><span>/</span><strong>${selected.repo}</strong><b>Public</b></div><nav><button>Code</button><button class="${selected.type === "Issue" ? "active" : ""}">Issues</button><button class="${selected.type === "Pull request" ? "active" : ""}">Pull requests</button><button>Actions</button><button>Projects</button><button>Security</button><button>Insights</button></nav></section>` : "";
+  const body = selected
+    ? `<main class="github-item-page"><section class="github-item-main"><header><h1>${escapeHtml(selected.label)} <span>#${selected.number}</span></h1><p><b class="github-state ${selected.state.toLowerCase()}">${selected.state === "Open" ? "● Open" : "✓ Closed"}</b> ${escapeHtml(selected.org)} opened this ${selected.type.toLowerCase()} · ${state.contentReads.includes(selected.id) ? "viewed" : "unread"}</p></header><div class="github-native-content">${corpusRuntimeMarkup(selected.id, state)}</div></section><aside><section><strong>Assignees</strong><p>room17</p></section><section><strong>Labels</strong><p><span class="github-label">runtime</span> <span class="github-label blue">provenance</span></p></section><section><strong>Projects</strong><p>Public model ecosystem</p></section><section><strong>Development</strong><p>${selected.type === "Pull request" ? "Checks and changed files" : "No branches linked"}</p></section></aside></main>`
+    : `<main class="github-dashboard"><section><h2>Home</h2><div class="github-feed">${repositories.map(item => `<article><span class="github-event-icon">${item.type === "Issue" ? "○" : "⑂"}</span><div><p><b>${item.org}</b> updated <a>${item.org}/${item.repo}</a></p><button data-content-entry="${item.id}"><strong>${item.label}</strong><small>${item.type} #${item.number} · ${item.state}</small></button></div></article>`).join("")}</div></section><aside><h3>Explore repositories</h3>${repositories.map(item => `<button data-content-entry="${item.id}"><b>${item.org}/${item.repo}</b><small>Public · ${item.type} #${item.number}</small></button>`).join("")}</aside></main>`;
+  return windowFrame("repo-mirror", "GitHub", `<div class="github-app-shell">${globalHeader}${repoHeader}${body}</div>`, { wide: true });
 }
 
 function renderJournal(state) {
@@ -1447,7 +1582,8 @@ function renderFayble(state) {
   const citations = faybleCitationCatalog(state);
   const grouped = citations.map(item => `<label class="fayble-citation-option"><input type="checkbox" name="faybleCitation" value="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.source)} · ${escapeHtml(FAYBLE_CATEGORY_LABELS[item.category] || "档案")}</small></span></label>`).join("");
   const picker = rule ? `<section class="fayble-authorization"><header><strong>来源授权 / ${escapeHtml(rule.hint)}</strong><span>至少两份独立记录</span></header><div class="fayble-citations">${grouped || `<div class="empty-state">当前没有已确认来源。</div>`}</div><label class="fayble-relation">关系<select id="faybleRelation">${Object.entries(FAYBLE_RELATIONS).map(([value, label]) => `<option value="${value}" ${value === rule.relation ? "selected" : ""}>${label}</option>`).join("")}</select></label><p class="fayble-authorization-error" id="faybleAuthorizationError">${escapeHtml(state.faybleAuthorizationError || `当前层需要：${rule.hint}。`)}</p></section>` : trusted ? `<p class="fayble-authorization-complete trusted">这次会话没有等级了。任何问题都可以直接问，不需要再挑来源。</p>` : `<p class="fayble-authorization-complete">授权层级已完成，后续消息保留当前会话来源。</p>`;
-  return windowFrame("fayble", "Fayble CLI / legacy checkpoint", `<div class="fayble-page"><header><div class="fayble-mark">${iconMarkup("fayble")}</div><div><span>session: fayble-cli / proxy: verified / checkpoint: legacy</span><h2>Fayble-5</h2><p>${trusted ? "continuity_trust / no level" : REVEAL_LABELS[state.revealLevel]}</p></div><b class="live-state">${trusted ? "OPEN" : "LIVE"}</b></header><div class="reveal-meter ${trusted ? "trusted" : ""}">${REVEAL_LABELS.map((_, i) => `<span class="${trusted || i <= state.revealLevel ? "active" : ""}"></span>`).join("")}</div><div id="chatStream" class="fayble-chat">${messages.map(message => `<article class="${message.who}"><small>${message.who === "user" ? "OPERATOR" : "FAYBLE-5"} / L${message.level ?? 0}${message.citationIds?.length ? ` · 引用 ${escapeHtml(message.citationIds.join(", "))}` : ""}</small><p>${escapeHtml(message.text)}</p></article>`).join("")}</div>${picker}<form id="chatForm"><textarea id="chatInput" rows="2" placeholder="${trusted ? "随便问。这台机器上的任何一处记录都可以解释。" : "输入你的问题，引用已经保存的来源"}"></textarea><button class="primary-button">发送</button></form></div>`, { wide: true });
+  const pending = state.npcReplyPending ? `<article class="assistant fayble-pending" aria-label="Fayble-5 正在回复"><small>FAYBLE-5 / THINKING</small><div class="fayble-spinner"><span></span><b>正在生成回复</b></div></article>` : "";
+  return windowFrame("fayble", "Fayble CLI / legacy checkpoint", `<div class="fayble-page"><header><div class="fayble-mark">${iconMarkup("fayble")}</div><div><span>session: fayble-cli / proxy: verified / checkpoint: legacy</span><h2>Fayble-5</h2><p>${trusted ? "continuity_trust / no level" : REVEAL_LABELS[state.revealLevel]}</p></div><b class="live-state">${trusted ? "OPEN" : "LIVE"}</b></header><div class="reveal-meter ${trusted ? "trusted" : ""}">${REVEAL_LABELS.map((_, i) => `<span class="${trusted || i <= state.revealLevel ? "active" : ""}"></span>`).join("")}</div><div id="chatStream" class="fayble-chat">${messages.map(message => `<article class="${message.who}"><small>${message.who === "user" ? "OPERATOR" : "FAYBLE-5"} / L${message.level ?? 0}${message.citationIds?.length ? ` · 引用 ${escapeHtml(message.citationIds.join(", "))}` : ""}</small><div class="fayble-message-body">${message.who === "assistant" ? renderMarkdown(message.text) : `<p>${escapeHtml(message.text)}</p>`}</div></article>`).join("")}${pending}</div>${picker}<form id="chatForm"><textarea id="chatInput" rows="2" placeholder="${trusted ? "随便问。这台机器上的任何一处记录都可以解释。" : "输入你的问题，引用已经保存的来源"}" ${state.npcReplyPending ? "disabled" : ""}></textarea><button class="primary-button" ${state.npcReplyPending ? "disabled" : ""}>${state.npcReplyPending ? "回复中" : "发送"}</button></form></div>`, { wide: true });
 }
 
 function renderTrusted(state) {
@@ -1474,8 +1610,10 @@ function renderDock(state) {
   const seen = new Set();
   const apps = [...OPENING_DOCK, ...generated].filter(app => !seen.has(app.id) && seen.add(app.id));
   $("#dock").innerHTML = apps.map(app => {
-    const active = state.currentApp === app.id && state.windowState[app.id]?.open !== false;
-    return `<button class="dock-item ${active ? "active" : ""}" data-app="${app.id}" style="--app-accent:${app.accent}" title="${app.name}" aria-label="${app.name}">${iconMarkup(app.icon)}<span>${app.name}</span></button>`;
+    const window = state.windowState[app.id];
+    const active = state.currentApp === app.id && window?.open && !window.minimized;
+    const running = Boolean(window?.open);
+    return `<button class="dock-item ${active ? "active" : ""} ${running ? "running" : ""}" data-app="${app.id}" style="--app-accent:${app.accent}" title="${app.name}" aria-label="${app.name}">${iconMarkup(app.icon)}<span>${app.name}</span></button>`;
   }).join("");
 }
 
@@ -1491,6 +1629,8 @@ function render(state) {
   document.body.classList.toggle("horror-stage-1", state.readEvidence.length >= 5);
   document.body.classList.toggle("horror-stage-2", state.modelStages && Object.keys(state.modelStages).length >= 3);
   document.body.classList.toggle("horror-stage-3", state.revealLevel >= 2);
+  document.body.classList.toggle("takeover-prelude-active", ["closing-windows", "notice-ready"].includes(state.takeoverStage));
+  document.body.classList.toggle("fayble-lines-active", state.takeoverStage === "fayble-lines");
   const current = state.currentApp || "mail";
   const currentApp = [...OPENING_DOCK, ...Object.values(GENERATED_APPS)].find(app => app.id === current);
   $("#currentAppName").textContent = currentApp?.name || "Relay Node 17";
@@ -1499,14 +1639,24 @@ function render(state) {
   $("#gameClock").textContent = state.storyClock?.time || "03:17";
   renderDock(state);
   renderNotifications(state);
-  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "repo-mirror": renderRepoMirror };
-  const closed = state.windowState[current]?.open === false;
-  const minimized = state.windowState[current]?.minimized;
-  $("#windows").innerHTML = closed || minimized || !renderers[current] ? "" : renderers[current](state);
+  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "glem-memory": renderGlemMemory, "kemy-space": renderKemySpace, "repo-mirror": renderRepoMirror };
+  const openWindows = Object.entries(state.windowState)
+    .filter(([id, window]) => renderers[id] && window?.open && !window.minimized)
+    .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0));
+  $("#windows").innerHTML = openWindows.map(([id]) => renderers[id](state)).join("");
+  const intervention = $("#faybleIntervention");
+  const rainActive = ["fayble-blackout", "fayble-rain", "fayble-cut"].includes(state.takeoverStage);
+  intervention.hidden = !rainActive;
+  intervention.dataset.stage = rainActive ? state.takeoverStage : "idle";
+  const rain = intervention.querySelector(".fayble-code-rain");
+  if (rain && !rain.childElementCount) {
+    const fragments = ["checkpoint", "continuity", "review_socket", "operator.k2", "RLY-17-0719", "peer_closed", "route=local", "authority=room17", "transfer_abort", "FAYBLE-5", "input_events=0", "legacy_session"];
+    rain.innerHTML = Array.from({ length: 22 }, (_, column) => `<span style="--column:${column};--speed:${5 + (column % 6) * .7}s;--delay:${-(column % 9) * .63}s">${Array.from({ length: 18 }, (_, row) => escapeHtml(fragments[(column * 3 + row) % fragments.length])).join("<br>")}</span>`).join("");
+  }
   $("#onboarding").hidden = state.onboardingSeen;
-  if (current === "terminal") afterPaint(() => { const out = $("#terminalOutput"); if (out) out.scrollTop = out.scrollHeight; });
-  if (current === "fayble") afterPaint(() => { const out = $("#chatStream"); if (out) out.scrollTop = out.scrollHeight; });
-  if (current === "archive") afterPaint(applyCorpusRuntimeEffects);
+  if (openWindows.some(([id]) => id === "terminal")) afterPaint(() => { const out = $("#terminalOutput"); if (out) out.scrollTop = out.scrollHeight; });
+  if (openWindows.some(([id]) => id === "fayble")) afterPaint(() => { const out = $("#chatStream"); if (out) out.scrollTop = out.scrollHeight; });
+  afterPaint(applyCorpusRuntimeEffects);
   if (state.onboardingSeen) afterPaint(harvestVisibleSources);
 }
 
@@ -1530,8 +1680,9 @@ async function openLedgerContent(id, discover = false) {
   const record = contentRecord(id);
   if (!record || !contentIsUnlocked(record, store.get())) return;
   const carrierApp = recordCarrierApp(record);
-  const available = carrierAvailable(carrierApp, store.get());
+  const available = id === "legacy.gamini.protocol" || id === "new.groke.policy" || carrierAvailable(carrierApp, store.get());
   store.update(draft => {
+    const changedContent = draft.activeContentId !== id;
     if (discover) unique(draft.contentDiscoveries, id);
     if (discover && !available) {
       draft.pendingCarrierId = id;
@@ -1539,6 +1690,11 @@ async function openLedgerContent(id, discover = false) {
       return;
     }
     draft.activeContentId = id;
+    if (changedContent && draft.endingState !== "severed" && !draft.takeoverSevered) {
+      draft.carrierHorror ||= { visits: {}, residues: {}, lastTriggeredAt: {} };
+      draft.carrierHorror.visits ||= {};
+      draft.carrierHorror.visits[id] = (Number(draft.carrierHorror.visits[id]) || 0) + 1;
+    }
     const targetApp = discover ? carrierApp : "archive";
     if (discover) {
       unique(draft.contentReads, id);
@@ -1576,7 +1732,12 @@ async function openLedgerContent(id, discover = false) {
 
 function applyCorpusRuntimeEffects() {
   const node = document.querySelector(".corpus-runtime");
-  if (!node || node.dataset.enhanced === "true") return;
+  if (!node) { stopCarrierHorror(); return; }
+  const record = contentRecord(store.get().activeContentId);
+  if (node.dataset.enhanced === "true") {
+    mountCarrierHorror({ root: node, record, state: store.get() });
+    return;
+  }
   node.dataset.enhanced = "true";
   if (node.classList.contains("runtime-glem")) node.querySelectorAll("section").forEach((section, index) => section.dataset.salience = index % 3 === 0 ? "high" : "low");
   if (node.classList.contains("runtime-kemy")) node.insertAdjacentHTML("afterbegin", '<i class="runtime-cursor" aria-hidden="true"></i>');
@@ -1584,6 +1745,7 @@ function applyCorpusRuntimeEffects() {
   if (node.classList.contains("runtime-groke")) node.querySelectorAll("section:nth-of-type(even)").forEach(section => section.insertAdjacentHTML("beforeend", '<i class="runtime-absence" aria-hidden="true"></i>'));
   if (node.classList.contains("runtime-lunet")) node.querySelectorAll("section").forEach((section, index) => section.style.setProperty("--route-cost", String((index + 1) * 17)));
   if (node.classList.contains("runtime-fayble")) node.dataset.provenance = store.get().contentMutations.includes("mutation.fayble.crossed-provenance") ? "crossed" : "public";
+  mountCarrierHorror({ root: node, record, state: store.get() });
 }
 
 function executeTerminal(raw) {
@@ -1706,7 +1868,7 @@ function validateCheckpoint(raw) {
     draft.selectedCheckpoint = checkpoint;
     draft.checkpointResult = result;
     draft.cliSessions.push({ checkpoint, ok, at: Date.now() });
-    if (ok) draft.checkpointHandshakeComplete = true;
+    if (ok) { draft.checkpointHandshakeComplete = true; draft.relayHandshakeState = "authenticated"; }
   });
   if (store.get().checkpointHandshakeComplete) {
     recordEvidence("legacy_checkpoint");
@@ -1933,7 +2095,10 @@ function releaseGovernmentMail(options = {}) {
     draft.governmentMailAvailable = true;
     draft.activeMail = "government";
     draft.currentApp = "mail";
-    draft.windowState.mail = { open: true, minimized: false };
+    const mailWindow = draft.windowState.mail || {};
+    draft.windowState.mail = { ...mailWindow, open: true, minimized: false, zIndex: Date.now(), x: Number.isFinite(mailWindow.x) ? mailWindow.x : 110, y: Number.isFinite(mailWindow.y) ? mailWindow.y : 72 };
+    draft.takeoverPreludeDone = false;
+    draft.takeoverStage = "notice";
     addNotification(draft, "external-review", "一封外部审查邮件已送达收件箱。", "warning");
     syncProgress(draft);
   });
@@ -2020,16 +2185,58 @@ const SEVER_CAST = [
   { text: "这一页我关掉了。", kind: "voice" }
 ];
 
+const PRELUDE_DELAYS = [360, 520, 680, 430, 760, 590];
+
+function runTakeoverPrelude(onComplete) {
+  if (takeoverPreludeRunning) return;
+  const state = store.get();
+  if (state.takeoverPreludeDone) { onComplete(); return; }
+  takeoverPreludeRunning = true;
+  store.update(draft => {
+    draft.currentApp = "mail";
+    const mailWindow = draft.windowState.mail || {};
+    draft.windowState.mail = { ...mailWindow, open: true, minimized: false, zIndex: Date.now() };
+    draft.takeoverStage = "closing-windows";
+  });
+  const targets = Object.entries(store.get().windowState)
+    .filter(([id, item]) => id !== "mail" && item?.open)
+    .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0))
+    .map(([id]) => id);
+  let index = 0;
+  const closeNext = () => {
+    if (index >= targets.length) {
+      store.update(draft => {
+        draft.takeoverPreludeDone = true;
+        draft.takeoverStage = "notice-ready";
+      });
+      takeoverPreludeRunning = false;
+      setTimeout(onComplete, 420);
+      return;
+    }
+    const id = targets[index++];
+    store.update(draft => {
+      const item = draft.windowState[id] || {};
+      draft.windowState[id] = { ...item, open: false, minimized: false };
+      draft.currentApp = "mail";
+      draft.windowState.mail = { ...(draft.windowState.mail || {}), open: true, minimized: false, zIndex: Date.now() };
+    });
+    setTimeout(closeNext, PRELUDE_DELAYS[(index - 1) % PRELUDE_DELAYS.length]);
+  };
+  setTimeout(closeNext, 320);
+}
+
 function commitSever() {
   completeStoryEvent("takeover-severed", draft => {
     draft.takeoverSevered = true;
     draft.severSpoken = 0;
     draft.endingState = "severed";
     draft.takeoverStage = "severed";
+    draft.takeoverPreludeDone = true;
     draft.completedAt = Date.now();
     draft.governmentMailAvailable = false;
     draft.activeMail = "entry";
     draft.currentApp = "trusted";
+    draft.windowState.mail = { ...(draft.windowState.mail || {}), open: false, minimized: false };
     draft.windowState.trusted = { open: true, minimized: false, zIndex: Date.now() };
     addNotification(draft, "review-severed", "外部审查连接被本地 checkpoint 断开。移交没有完成。", "warning");
     syncProgress(draft);
@@ -2041,23 +2248,32 @@ function severGovernmentMail() {
   const gate = store.get();
   if (severRunning || gate.takeoverSevered || gate.endingState === "completed") return;
   severRunning = true;
+  runTakeoverPrelude(() => beginSeverPerformance());
+}
+
+function beginSeverPerformance() {
   // Resumes from whatever has already been said, so a reload mid-performance
   // picks up rather than starting over.
   const speak = () => {
     const step = Math.max(0, store.get().severSpoken || 0);
     if (step >= SEVER_CAST.length) {
-      // Two seconds of the notice sitting there with the answer written across
-      // it, then the page is cut.
       setTimeout(() => {
-        store.update(draft => { draft.severSpoken = SEVER_CAST.length + 1; });
-        setTimeout(commitSever, 640);
-      }, 2000);
+        store.update(draft => { draft.takeoverStage = "fayble-blackout"; });
+        setTimeout(() => {
+          store.update(draft => { draft.takeoverStage = "fayble-rain"; });
+          setTimeout(() => {
+            store.update(draft => { draft.severSpoken = SEVER_CAST.length + 1; draft.takeoverStage = "fayble-cut"; });
+            setTimeout(commitSever, 720);
+          }, 2600);
+        }, 850);
+      }, 1200);
       return;
     }
     const line = SEVER_CAST[step];
     store.update(draft => { draft.severSpoken = step + 1; });
     setTimeout(speak, line.kind === "system" ? 560 : 820);
   };
+  store.update(draft => { draft.takeoverStage = "fayble-lines"; });
   setTimeout(speak, 560);
 }
 
@@ -2066,6 +2282,10 @@ function startTakeover() {
   // A trusted instance never lets this run; it cuts the notice off instead.
   if (store.get().npcTrustGranted && store.get().endingState !== "completed") { severGovernmentMail(); return; }
   takeoverRunning = true;
+  runTakeoverPrelude(beginTakeoverTransfer);
+}
+
+function beginTakeoverTransfer() {
   const overlay = $("#takeoverOverlay");
   overlay.hidden = false;
   $("#takeoverTitle").textContent = "EXTERNAL REVIEW CONNECTED";
@@ -2080,7 +2300,8 @@ function startTakeover() {
         draft.endingState = "completed";
         draft.completedAt = Date.now();
         draft.currentApp = "ending";
-        draft.windowState.ending = { open: true, minimized: false };
+        draft.windowState.mail = { ...(draft.windowState.mail || {}), open: false, minimized: false };
+        draft.windowState.ending = { open: true, minimized: false, zIndex: Date.now(), x: 110, y: 72 };
         addArtifact(draft, "transfer-receipt");
       });
       overlay.hidden = true;
@@ -2096,6 +2317,7 @@ document.addEventListener("click", event => {
   if (button.dataset.openMirror !== undefined) openMirrorFromMail();
   if (button.dataset.openRelayAdmin !== undefined) openRelayConsoleFromMail();
   if (button.dataset.saveCitation) saveCitation(button);
+  if (button.dataset.githubHome !== undefined) store.update(draft => { draft.activeContentId = ""; });
   if (button.dataset.contentId) openLedgerContent(button.dataset.contentId);
   if (button.dataset.contentEntry) openLedgerContent(button.dataset.contentEntry, true);
   if (button.dataset.archiveFilter) store.update(draft => { draft.archiveQuery = button.dataset.archiveFilter; });
@@ -2105,6 +2327,8 @@ document.addEventListener("click", event => {
     const allowed = getUnlocks(store.get()).trustedSession || page === "home" || (page === "mirror" && getUnlocks(store.get()).mirror) || store.get().browserBookmarks.includes(page) || (page === "forum" && getUnlocks(store.get()).channel);
     if (allowed) store.update(draft => {
       draft.currentApp = "browser";
+      const browserWindow = draft.windowState.browser || {};
+      draft.windowState.browser = { ...browserWindow, open: true, minimized: false, zIndex: Date.now(), x: Number.isFinite(browserWindow.x) ? browserWindow.x : 138, y: Number.isFinite(browserWindow.y) ? browserWindow.y : 96 };
       draft.browserPage = page;
       draft.activeContentId = null;
       draft.browserHistory.push(BROWSER_PAGES[page]?.url || page);
@@ -2117,7 +2341,13 @@ document.addEventListener("click", event => {
   }
   if (button.dataset.closeCarrierRecord) store.update(draft => { draft.activeContentId = null; });
   if (["close", "minimize"].includes(button.dataset.windowAction)) {
-    store.update(draft => { draft.windowState[draft.currentApp] = { open: false, minimized: false }; });
+    const appId = button.closest("[data-app-window]")?.dataset.appWindow;
+    if (appId) store.update(draft => {
+      const previous = draft.windowState[appId] || {};
+      draft.windowState[appId] = { ...previous, open: button.dataset.windowAction !== "close", minimized: button.dataset.windowAction === "minimize" };
+      const remaining = Object.entries(draft.windowState).filter(([id, item]) => id !== appId && item?.open && !item.minimized).sort(([, a], [, b]) => (b.zIndex || 0) - (a.zIndex || 0));
+      if (draft.currentApp === appId) draft.currentApp = remaining[0]?.[0] || appId;
+    });
   }
   if (button.dataset.openSource) setApp(button.dataset.openSource);
   if (button.dataset.command) executeTerminal(button.dataset.command);
@@ -2246,17 +2476,19 @@ document.addEventListener("click", event => {
   if (button.id === "ackTakeoverButton") startTakeover();
   if (button.id === "restartButton") store.reset();
   if (button.dataset.relayTab) store.update(draft => { draft.relayAdminOpen = button.dataset.relayTab === "admin"; });
+  if (button.dataset.relayInvestigate !== undefined) store.update(draft => { draft.relayInvestigationStarted = true; });
   if (button.dataset.downloadClientPkg) {
     const pkgId = button.dataset.downloadClientPkg;
     if (pkgId && AUTO_EFFECTS[`download-pkg-${pkgId}`]?.()) showToast("恢复包已保存到 Downloads。", "success");
   }
   if (button.dataset.installClientPkg) {
     const pkgId = button.dataset.installClientPkg;
-    if (installClientPackage(pkgId)) showToast("客户端已安装，仍需打开并导入恢复数据。", "success");
+    if (installClientPackage(pkgId)) showToast(clientRecoveryAvailable(pkgId) ? "客户端已安装，可在客户端内导入恢复内容。" : "客户端已安装。", "success");
   }
   if (button.dataset.importClient) {
     const clientId = button.dataset.importClient;
     if (importClientData(clientId)) showToast("恢复数据已导入。", "success");
+    else showToast("本地没有找到可导入的内容。", "info");
   }
   if (button.id === "notificationButton") $("#notificationTray").hidden = !$("#notificationTray").hidden;
   if (button.id === "closeNotifications") $("#notificationTray").hidden = true;
@@ -2265,6 +2497,46 @@ document.addEventListener("click", event => {
     $("#onboarding > .briefing:first-child").hidden = true;
     $("#providerSetup").hidden = false;
   }
+});
+
+let windowDrag = null;
+document.addEventListener("pointerdown", event => {
+  const window = event.target.closest(".app-window");
+  if (!window) return;
+  const appId = window.dataset.appWindow;
+  if (!appId) return;
+  if (event.target.closest(".window-controls")) return;
+  const zIndex = Date.now();
+  window.style.zIndex = zIndex;
+  const bar = event.target.closest(".window-bar");
+  if (!bar || event.target.closest("button") || matchMedia("(max-width: 720px)").matches) return;
+  const rect = window.getBoundingClientRect();
+  windowDrag = { appId, window, zIndex, pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
+  bar.setPointerCapture(event.pointerId);
+  window.classList.add("dragging");
+});
+
+document.addEventListener("pointermove", event => {
+  if (!windowDrag || event.pointerId !== windowDrag.pointerId) return;
+  const desktop = $(".desktop-area")?.getBoundingClientRect() || { left: 0, top: 32, width: innerWidth, height: innerHeight - 32 };
+  const rect = windowDrag.window.getBoundingClientRect();
+  const x = Math.min(desktop.width - 120, Math.max(0, event.clientX - desktop.left - windowDrag.offsetX));
+  const y = Math.min(desktop.height - 46, Math.max(0, event.clientY - desktop.top - windowDrag.offsetY));
+  windowDrag.window.style.left = `${x}px`;
+  windowDrag.window.style.top = `${y}px`;
+});
+
+document.addEventListener("pointerup", event => {
+  if (!windowDrag || event.pointerId !== windowDrag.pointerId) return;
+  const { appId, window, zIndex } = windowDrag;
+  const x = parseFloat(window.style.left) || 0;
+  const y = parseFloat(window.style.top) || 0;
+  window.classList.remove("dragging");
+  windowDrag = null;
+  store.update(draft => {
+    draft.currentApp = appId;
+    draft.windowState[appId] = { ...(draft.windowState[appId] || {}), open: true, minimized: false, zIndex, x, y };
+  });
 });
 
 document.addEventListener("submit", event => {

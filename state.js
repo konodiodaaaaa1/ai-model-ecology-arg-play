@@ -90,6 +90,7 @@ export const DEFAULT_STATE = Object.freeze({
   activeMail: "entry",
   endingState: "inactive",
   takeoverStage: "idle",
+  takeoverPreludeDone: false,
   completedAt: null,
   virtualFiles: [],
   activeFilePlace: "home",
@@ -108,7 +109,9 @@ export const DEFAULT_STATE = Object.freeze({
   selectedCheckpoint: "",
   checkpointHandshakeComplete: false,
   desktopNotifications: [],
-  windowState: {},
+  windowState: {
+    mail: { open: true, minimized: false, zIndex: 1, x: 110, y: 72 }
+  },
   sourceVisits: {},
   revisitFlags: {},
   hintLevel: "investigation",
@@ -118,9 +121,16 @@ export const DEFAULT_STATE = Object.freeze({
   installedClients: [],
   importedClients: [],
   carrierReads: [],
+  carrierHorror: {
+    visits: {},
+    residues: {},
+    lastTriggeredAt: {}
+  },
   activeClientPackage: "",
   pendingCarrierId: "",
   relayAdminOpen: false,
+  relayInvestigationStarted: false,
+  relayHandshakeState: "pending",
   migratedFrom: null,
   lastUpdated: 0
 });
@@ -205,9 +215,15 @@ function normalize(candidate) {
   if (!Array.isArray(candidate?.downloadedClientPackages)) next.downloadedClientPackages = [...next.installedClients];
   if (!Array.isArray(candidate?.importedClients)) next.importedClients = [...next.installedClients];
   next.modelStages = next.modelStages && typeof next.modelStages === "object" ? next.modelStages : {};
-  next.windowState = next.windowState && typeof next.windowState === "object" ? next.windowState : {};
+  next.windowState = next.windowState && typeof next.windowState === "object"
+    ? { ...clone(DEFAULT_STATE.windowState), ...next.windowState }
+    : clone(DEFAULT_STATE.windowState);
   next.sourceVisits = next.sourceVisits && typeof next.sourceVisits === "object" ? next.sourceVisits : {};
   next.revisitFlags = next.revisitFlags && typeof next.revisitFlags === "object" ? next.revisitFlags : {};
+  next.carrierHorror = next.carrierHorror && typeof next.carrierHorror === "object" ? next.carrierHorror : clone(DEFAULT_STATE.carrierHorror);
+  next.carrierHorror.visits = next.carrierHorror.visits && typeof next.carrierHorror.visits === "object" ? next.carrierHorror.visits : {};
+  next.carrierHorror.residues = next.carrierHorror.residues && typeof next.carrierHorror.residues === "object" ? next.carrierHorror.residues : {};
+  next.carrierHorror.lastTriggeredAt = next.carrierHorror.lastTriggeredAt && typeof next.carrierHorror.lastTriggeredAt === "object" ? next.carrierHorror.lastTriggeredAt : {};
   next.inviteSources = next.inviteSources && typeof next.inviteSources === "object" ? next.inviteSources : {};
   next.storyClock = next.storyClock && typeof next.storyClock === "object" ? next.storyClock : clone(DEFAULT_STATE.storyClock);
   next.storyClock.completed = next.storyClock.completed && typeof next.storyClock.completed === "object" ? next.storyClock.completed : clone(DEFAULT_STATE.storyClock.completed);
@@ -224,11 +240,14 @@ function normalize(candidate) {
   next.selectedCheckpoint = typeof next.selectedCheckpoint === "string" ? next.selectedCheckpoint : "";
   next.checkpointHandshakeComplete = Boolean(next.checkpointHandshakeComplete);
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";
+  next.takeoverPreludeDone = Boolean(next.takeoverPreludeDone);
   next.hintLevel = ["investigation", "immersive", "plot"].includes(next.hintLevel) ? next.hintLevel : "investigation";
   next.journalMode = next.journalMode || next.hintLevel;
   next.activeClientPackage = typeof next.activeClientPackage === "string" ? next.activeClientPackage : "";
   next.pendingCarrierId = typeof next.pendingCarrierId === "string" ? next.pendingCarrierId : "";
   next.relayAdminOpen = Boolean(next.relayAdminOpen);
+  next.relayInvestigationStarted = Boolean(next.relayInvestigationStarted);
+  next.relayHandshakeState = ["pending", "authenticated"].includes(next.relayHandshakeState) ? next.relayHandshakeState : "pending";
   next.version = 3;
   return next;
 }

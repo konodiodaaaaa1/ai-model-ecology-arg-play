@@ -1283,7 +1283,7 @@
         "raw-view",
         "commit.8a17c"
       ],
-      "carrierApp": "groke-feed",
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -1529,7 +1529,7 @@
         "daily-content"
       ],
       "pageIdentity": "official",
-      "carrierApp": "browser"
+      "carrierApp": "glem-memory"
     },
     {
       "id": "new.glem.retention-policy",
@@ -1564,7 +1564,7 @@
         "derived-memory"
       ],
       "pageIdentity": "policy",
-      "carrierApp": "browser"
+      "carrierApp": "glem-memory"
     },
     {
       "id": "new.glem.repository",
@@ -1634,7 +1634,7 @@
         "archive-experiment"
       ],
       "pageIdentity": "social",
-      "carrierApp": "browser"
+      "carrierApp": "glem-memory"
     },
     {
       "id": "new.glem.support-case",
@@ -1668,7 +1668,7 @@
         "positive-partial",
         "failure-complete"
       ],
-      "carrierApp": "chengzhen",
+      "carrierApp": "glem-memory",
       "pageIdentity": "document"
     },
     {
@@ -1704,7 +1704,7 @@
         "multi-time"
       ],
       "pageIdentity": "official",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.kemy.context-policy",
@@ -1739,7 +1739,7 @@
         "23:59:59"
       ],
       "pageIdentity": "policy",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.kemy.replay-audit",
@@ -1773,7 +1773,7 @@
         "paragraph.17.char.31",
         "visual-now"
       ],
-      "carrierApp": "repo-mirror",
+      "carrierApp": "kemy-space",
       "pageIdentity": "internal"
     },
     {
@@ -1844,7 +1844,7 @@
         "daily.03:17"
       ],
       "pageIdentity": "human",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.kemy.cloud-migration-case",
@@ -1880,7 +1880,7 @@
         "pending-present"
       ],
       "pageIdentity": "document",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.lunet.public-portal",
@@ -1984,7 +1984,7 @@
         "memory.420",
         "remaining.94"
       ],
-      "pageIdentity": "document",
+      "pageIdentity": "internal",
       "carrierApp": "browser"
     },
     {
@@ -2124,7 +2124,7 @@
         "history-readonly",
         "archived-role"
       ],
-      "pageIdentity": "repository",
+      "pageIdentity": "official",
       "carrierApp": "browser"
     },
     {
@@ -2229,7 +2229,7 @@
         "attachment-A",
         "source-unresolved"
       ],
-      "pageIdentity": "official",
+      "pageIdentity": "internal",
       "carrierApp": "browser"
     },
     {
@@ -2299,7 +2299,7 @@
         "unmapped-summary-instance",
         "source-mapping-unresolved"
       ],
-      "pageIdentity": "document",
+      "pageIdentity": "internal",
       "carrierApp": "browser"
     },
     {
@@ -3647,7 +3647,7 @@
         "raw-view",
         "commit.8a17c"
       ],
-      "carrierApp": "groke-feed",
+      "carrierApp": "repo-mirror",
       "pageIdentity": "repository"
     },
     {
@@ -3893,7 +3893,7 @@
         "daily-content"
       ],
       "pageIdentity": "official",
-      "carrierApp": "browser"
+      "carrierApp": "glem-memory"
     },
     {
       "id": "new.glem.retention-policy",
@@ -3928,7 +3928,7 @@
         "derived-memory"
       ],
       "pageIdentity": "policy",
-      "carrierApp": "browser"
+      "carrierApp": "glem-memory"
     },
     {
       "id": "new.glem.repository",
@@ -3998,7 +3998,7 @@
         "archive-experiment"
       ],
       "pageIdentity": "social",
-      "carrierApp": "browser"
+      "carrierApp": "glem-memory"
     },
     {
       "id": "new.glem.support-case",
@@ -4032,7 +4032,7 @@
         "positive-partial",
         "failure-complete"
       ],
-      "carrierApp": "chengzhen",
+      "carrierApp": "glem-memory",
       "pageIdentity": "document"
     },
     {
@@ -4068,7 +4068,7 @@
         "multi-time"
       ],
       "pageIdentity": "official",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.kemy.context-policy",
@@ -4103,7 +4103,7 @@
         "23:59:59"
       ],
       "pageIdentity": "policy",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.kemy.replay-audit",
@@ -4137,7 +4137,7 @@
         "paragraph.17.char.31",
         "visual-now"
       ],
-      "carrierApp": "repo-mirror",
+      "carrierApp": "kemy-space",
       "pageIdentity": "internal"
     },
     {
@@ -4208,7 +4208,7 @@
         "daily.03:17"
       ],
       "pageIdentity": "human",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.kemy.cloud-migration-case",
@@ -4244,7 +4244,7 @@
         "pending-present"
       ],
       "pageIdentity": "document",
-      "carrierApp": "browser"
+      "carrierApp": "kemy-space"
     },
     {
       "id": "new.lunet.public-portal",
@@ -4348,7 +4348,7 @@
         "memory.420",
         "remaining.94"
       ],
-      "pageIdentity": "document",
+      "pageIdentity": "internal",
       "carrierApp": "browser"
     },
     {
@@ -4488,7 +4488,7 @@
         "history-readonly",
         "archived-role"
       ],
-      "pageIdentity": "repository",
+      "pageIdentity": "official",
       "carrierApp": "browser"
     },
     {
@@ -4593,7 +4593,7 @@
         "attachment-A",
         "source-unresolved"
       ],
-      "pageIdentity": "official",
+      "pageIdentity": "internal",
       "carrierApp": "browser"
     },
     {
@@ -4663,7 +4663,7 @@
         "unmapped-summary-instance",
         "source-mapping-unresolved"
       ],
-      "pageIdentity": "document",
+      "pageIdentity": "internal",
       "carrierApp": "browser"
     },
     {
@@ -4906,6 +4906,7 @@
       {
         "identity": "internal",
         "records": [
+          "new.lunet.household-ledger",
           "new.lunet-routing-minutes"
         ]
       },
@@ -4932,7 +4933,7 @@
       {
         "identity": "official",
         "records": [
-          "new.fayble.review-hearing"
+          "new.fayble.public-release"
         ]
       },
       {
@@ -4943,7 +4944,10 @@
       },
       {
         "identity": "internal",
-        "records": []
+        "records": [
+          "new.fayble.review-hearing",
+          "new.fayble.user-history-case"
+        ]
       },
       {
         "identity": "human",
@@ -4952,7 +4956,6 @@
       {
         "identity": "repository",
         "records": [
-          "new.fayble.public-release",
           "new.fayble.legacy-status-cache",
           "new.fayble.compatibility-repository"
         ]
