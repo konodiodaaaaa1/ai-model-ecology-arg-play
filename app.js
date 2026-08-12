@@ -887,17 +887,26 @@ function renderSoftware(state) {
   const twoSourcesConfirmed = hasStoryEvent(state, "package-verified");
   const checked = state.packageChecks.some(item => item.ok);
   const installed = hasPackage(state);
-  const availableClients = CLIENT_PACKAGES.filter(pkg => hasMilestone(state, pkg.unlock));
-  const fayblePanel = packageAvailable ? `<section class="software-package-detail"><div class="package-hero"><div class="package-logo">${iconMarkup("fayble-cli")}</div><div><span class="document-kicker">LOCAL ARCHIVE / UNSIGNED</span><h2>Fayble CLI</h2><p>旧版本会话工具</p></div><span class="version-pill">0.9.7-legacy</span></div><dl class="detail-grid"><dt>文件</dt><dd>${PACKAGE_NAME}</dd><dt>来源</dt><dd>Downloads / local archive</dd><dt>状态</dt><dd>${installed ? "已安装" : checked ? "校验通过，等待安装" : twoSourcesConfirmed ? "两个来源已对照" : "等待 release 与本地结果对照"}</dd></dl>${twoSourcesConfirmed ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form>` : ""}<div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div><button class="install-button" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装到本地沙盒"}</button></section>` : "";
-  const clientPanel = `<section class="client-package-catalog"><header><div><span class="document-kicker">LOCAL PACKAGE SOURCE</span><h3>工作站软件</h3></div><small>room17-local · ${availableClients.length} 个项目</small></header>${availableClients.length ? availableClients.map(pkg => {
+  const category = pkg => pkg.id === "repo-mirror" ? "开发工具" : ["gamini-ws", "groke-feed", "glem-memory", "kemy-space"].includes(pkg.id) ? "生产力" : "系统工具";
+  const stateLabel = pkg => {
+    if (state.installedClients.includes(pkg.id)) return "已安装";
+    if (!hasMilestone(state, pkg.unlock)) return "暂不可用";
+    return "获取";
+  };
+  const clientCards = CLIENT_PACKAGES.map(pkg => {
     const ready = state.installedClients.includes(pkg.id);
-    const active = state.activeClientPackage === pkg.id;
-    const action = ready ? `<button disabled>已安装</button>` : `<button data-install-client-pkg="${pkg.id}">安装</button>`;
-    return `<article class="client-package-card ${active ? "active" : ""}">${iconMarkup(pkg.icon)}<div><strong>${pkg.name}</strong><small>${pkg.vendor} · ${pkg.size}</small><p>由 room17-local 软件源提供</p></div>${action}</article>`;
-  }).join("") : `<div class="software-empty">目录正在等待本地索引同步。调查中确认的客户端会出现在这里。</div>`}</section>`;
-  return windowFrame("software", "软件中心", `<div class="utility-page software-page software-catalog">${fayblePanel}${clientPanel}<p class="sandbox-note">所有安装仅修改游戏内虚拟文件系统，不会调用真实 apt。</p></div>`, { iconKey: "package" });
+    const unlocked = hasMilestone(state, pkg.unlock);
+    const action = ready
+      ? `<button class="store-action installed" disabled>已安装</button>`
+      : unlocked
+        ? `<button class="store-action" data-install-client-pkg="${pkg.id}">获取</button>`
+        : `<button class="store-action unavailable" disabled>暂不可用</button>`;
+    return `<article class="store-app-card ${ready ? "is-installed" : ""}"><div class="store-app-icon">${iconMarkup(pkg.icon)}</div><div class="store-app-info"><div class="store-app-title"><h3>${pkg.name}</h3><span>${stateLabel(pkg)}</span></div><p>${pkg.vendor}</p><small>${category(pkg)} · ${pkg.size} · 版本随本地目录更新</small></div>${action}</article>`;
+  }).join("");
+  const faybleCard = packageAvailable ? `<article class="store-feature-card"><div class="store-feature-icon">${iconMarkup("fayble-cli")}</div><div><span class="store-eyebrow">已下载项目</span><h2>Fayble CLI</h2><p>旧版会话工具 · 0.9.7-legacy</p><small>${installed ? "已安装在本机" : twoSourcesConfirmed ? "可以安装" : "等待完成安全检查"}</small></div><button class="store-feature-action" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装"}</button></article>` : "";
+  const categories = ["全部", "生产力", "系统工具", "开发工具"].map((label, index) => `<button class="store-category ${index === 0 ? "active" : ""}" data-store-category="${label}">${label}</button>`).join("");
+  return windowFrame("software", "软件中心", `<div class="software-store"><header class="store-header"><div><span class="store-eyebrow">本机软件中心</span><h1>发现适合这台工作站的应用</h1><p>从本地目录获取、安装和管理应用。</p></div><div class="store-account"><span class="store-account-avatar">R</span><span>room17</span></div></header><nav class="store-categories">${categories}</nav>${faybleCard ? `<section class="store-section"><h2>继续使用</h2>${faybleCard}</section>` : ""}<section class="store-section"><div class="store-section-heading"><div><h2>推荐应用</h2><p>来自本机软件目录</p></div><button class="store-link-button">查看全部</button></div><div class="store-app-list">${clientCards}</div></section><footer class="store-footer">应用会安装到本地沙盒 · 不会调用真实系统包管理器</footer></div>`, { iconKey: "package", wide: true });
 }
-
 function renderNetwork(state) {
   const imported = state.proxyProfiles.includes("relay-node17");
   const probed = state.proxyStatus === "probed" || state.proxyStatus === "verified";
