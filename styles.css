@@ -368,10 +368,6 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 #legacyKeyForm { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
 #legacyKeyForm output { grid-column: 1 / -1; color: var(--amber); font-size: 9px; }
 
-.journal-page { min-height: 100%; padding: clamp(20px, 4vw, 38px); background: #191e1c; }
-.journal-page > header { display: flex; align-items: end; justify-content: space-between; }
-.journal-page h2 { margin: 6px 0 0; font: 600 26px/1.2 Ubuntu, Cantarell, "Noto Sans SC", sans-serif; }
-.journal-page select { padding: 7px; border: 1px solid var(--line); background: #252c29; color: var(--text); }
 .applications-page { min-height: 100%; padding: 30px 42px; overflow: auto; background: #242424; }
 .applications-page header { text-align: center; }
 .applications-page .document-kicker { display: none; }
@@ -603,17 +599,8 @@ code, pre { overflow-wrap: anywhere; white-space: pre-wrap; font-family: "Ubuntu
 .runtime-compatible { background: #e7e8e4; font-family: Consolas, "Noto Sans SC", monospace; }
 .runtime-compatible section { border-top: 1px solid #a9aeaa; }
 @keyframes cursor-lag { 0%, 86%, 100% { opacity: .85; transform: translateY(0); } 87%, 91% { opacity: .25; transform: translateY(2px); } 92% { opacity: .85; transform: translateY(0); } }
-.case-note-grid { display: grid; gap: 10px; margin-top: 20px; }
-.case-note { padding: 16px; border: 1px solid var(--line); background: #222825; }
-.case-note blockquote { margin: 0 0 14px; padding-left: 12px; border-left: 2px solid var(--amber); font-family: Consolas, monospace; white-space: pre-wrap; }
-.case-note dl { display: grid; grid-template-columns: 72px 1fr; gap: 5px 10px; color: var(--muted); font-size: 11px; }
-.case-note dd { margin: 0; overflow-wrap: anywhere; }
-.case-note button { padding: 6px 9px; border: 1px solid var(--line); background: transparent; }
 .cli-status { align-content: start; gap: 10px; padding: 28px; }
 .cli-status code { display: block; padding: 8px 0; border-bottom: 1px solid #26302b; }
-.journal-tabs { display: flex; gap: 4px; margin: 18px 0; border-bottom: 1px solid var(--line); }
-.journal-tabs button { padding: 8px 11px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); }
-.journal-tabs button.active { border-color: var(--amber); color: var(--text); }
 .evidence-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .evidence-grid article { min-height: 130px; padding: 14px; border: 1px solid var(--line); background: #222925; }
 .evidence-grid small { color: var(--amber); font-size: 11px; }

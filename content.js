@@ -90,7 +90,6 @@ export const DESKTOP_APPS = [
   { id: "software", name: "软件中心", icon: "package", accent: "#c96e61" },
   { id: "network", name: "网络设置", icon: "network", accent: "#a895c5" },
   { id: "relay", name: "Relay Console", icon: "radio", accent: "#9bcf8d" },
-  { id: "journal", name: "证据日志", icon: "notebook", accent: "#d8d2c4" },
   { id: "trash", name: "回收站", icon: "trash", accent: "#858d91" }
 ];
 
@@ -168,7 +167,7 @@ export const MUTATION_RECORDS = [
   },
   {
     id: "mutation.record.github.k2-comment", mutationId: "mutation.github.k2-comment",
-    title: "Issue / k2-maint 后加评论", sourceApp: "github", sourceRef: "github://k2-maint/release-mirror/issues/1#comment-k2",
+    title: "Issue / k2-maint 后加评论", sourceApp: "repo-mirror", sourceRef: "github://k2-maint/release-mirror/issues/1#comment-k2",
     carrierType: "repository-comment-comparison", displayTimestamp: "04:50:09",
     body: "k2-maint 于 04:50:09 评论：“包没有签名。只认本地校验；装完以后别让系统替你配置代理。”这条评论不在公开导出的那份里。",
     comparison: { before: "comments=0", after: "comments=1; signature=unsigned" }

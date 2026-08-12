@@ -306,7 +306,6 @@ const SYSTEM_TOOLS = [
 ];
 
 const GENERATED_APPS = {
-  "case-notes": { id: "journal", name: "笔记本", icon: "notebook", accent: "#d8d2c4" },
   "restored-archive": { id: "archive", name: "Restored Archive", icon: "archive", accent: "#b49a72" },
   "fayble-cli": { id: "cli", name: "Fayble CLI", icon: "fayble-cli", accent: "#c96e61" },
   "relay-console": { id: "relay", name: "Relay Console", icon: "radio", accent: "#9bcf8d" },
@@ -326,7 +325,7 @@ const GENERATED_APPS = {
 
 const APP_ICON_KEYS = {
   mail: "mail", files: "folder", browser: "globe", applications: "grid", terminal: "terminal",
-  software: "package", network: "network", trash: "trash", journal: "notebook", archive: "archive",
+  software: "package", network: "network", trash: "trash", archive: "archive",
   cli: "fayble-cli", relay: "radio", fayble: "fayble", ending: "receipt", trusted: "fayble",
   "gamini-ws": "gamini", chengzhen: "chengzhen", yunzhen: "yunzhen",
   "groke-feed": "groke-feed", "glem-memory": "glem", "kemy-space": "kemy", "repo-mirror": "repo-mirror", "notes-db": "notebook"
@@ -431,11 +430,6 @@ const FAYBLE_CATEGORY_LABELS = Object.freeze({
   anomaly: "异常", "channel-access": "频道入口", channel: "频道", "relay-residue": "Relay 残留",
   continuity: "连续性", tool: "工具", checkpoint: "checkpoint", objective: "目标片段",
   external: "外部记录", provenance: "来源记录", archive: "档案"
-});
-const CASE_NOTE_CATEGORIES = Object.freeze({
-  "mail-header": "route",
-  "restored-time": "provenance",
-  "ad-redirect": "channel-access"
 });
 const FAYBLE_AUTH_RULES = Object.freeze([
   { relation: "contradicts", categories: ["route", "protocol"], hint: "路由与协议" },
@@ -567,25 +561,6 @@ function recordEvidence(id, mutator) {
 
 const INVITE_SOURCE_KINDS = Object.freeze({ quota_prefix: "public", recall_date: "manage" });
 
-function saveCitation(node, options = {}) {
-  const id = node.dataset.saveCitation;
-  const state = store.get();
-  if (!id || state.caseNotes.some(note => note.id === id)) return false;
-  completeStoryEvent(`citation-${id}`, draft => {
-    addArtifact(draft, "case-notes");
-    draft.caseNotes.push({
-      id,
-      quote: node.dataset.citationQuote || "",
-      sourceApp: node.dataset.citationSource || "未标注来源",
-      sourceRef: node.dataset.citationRef || "local://unknown",
-      appId: draft.currentApp,
-      savedAt: draft.storyClock?.time || "03:17"
-    });
-  });
-  if (!options.silent) showToast("原句已记入笔记本。", "success");
-  return true;
-}
-
 const AUTO_EFFECTS = {
   "review-sever": () => severGovernmentMail(),
   "mail-entry-read": () => {
@@ -691,16 +666,8 @@ function runAutoEffect(name) {
 }
 
 function harvestVisibleSources() {
-  const seen = new Set();
-  let saved = 0;
   const activeRoot = document.querySelector(`[data-app-window="${CSS.escape(store.get().currentApp || "")}"]`);
   if (!activeRoot) return;
-  for (const node of activeRoot.querySelectorAll("[data-save-citation]")) {
-    const id = node.dataset.saveCitation;
-    if (!id || seen.has(id)) continue;
-    seen.add(id);
-    if (saveCitation(node, { silent: true })) saved += 1;
-  }
   for (const node of activeRoot.querySelectorAll("[data-auto-effect]")) runAutoEffect(node.dataset.autoEffect);
   for (const node of activeRoot.querySelectorAll("[data-auto-result]")) {
     const evidenceId = node.dataset.autoResult;
@@ -710,7 +677,6 @@ function harvestVisibleSources() {
     if (requiredKind && sourceKind !== requiredKind) continue;
     recordEvidence(evidenceId, draft => { if (requiredKind) draft.inviteSources[evidenceId] = sourceKind; });
   }
-  if (saved) showToast(saved === 1 ? "页面上的原句已记入笔记本。" : `${saved} 条原句已记入笔记本。`, "success");
 }
 
 function setApp(id, page) {
@@ -740,7 +706,6 @@ function appLockReason(id, state) {
   // Nothing on this machine stays gated once the instance opens the session.
   if (unlocks.trustedSession) return "";
   if (id === "trusted") return "这个会话还不存在。";
-  if (id === "journal" && !unlocks.caseNotes) return "笔记本还没有记下任何东西。";
   if (id === "archive" && !unlocks.historicalArchive) return "本地尚无恢复档案。";
   if (id === "relay" && !unlocks.relay) return "Relay Console 尚未创建。";
   if (id === "fayble" && !unlocks.fayble) return "Fayble 会话尚未建立。";
@@ -800,7 +765,7 @@ function renderMail(state) {
   const list = `<aside class="mail-sidebar"><div class="app-toolbar"><strong>收件箱</strong><span>${government ? 2 : 1} 封</span></div>
     <button class="mail-row active"><b>K</b><span>R17-0317</span><time>03:17</time></button>
     ${government ? `<button class="mail-row danger" data-mail-view="government"><b>EXT</b><span>调查接管通知</span><time>刚刚</time></button>` : ""}</aside>`;
-  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><button class="mail-route-link" data-open-mirror>http://archive.room17.local/v2/17</button></p><p>站内后台：</p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>第二段还在。<br>别让它替你补全。下游缓存先别清。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div>${`<details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre><span class="auto-citation" data-save-citation="mail-header" data-citation-quote="Message-ID: &lt;R17-0317@local&gt;" data-citation-source="邮件 / 原始信头" data-citation-ref="mail://local/R17-0317">已记录到笔记本</span></details>`}${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
+  const body = government && state.activeMail === "government" ? `<article class="paper government-paper${severClass}"${severArmed ? ` data-auto-effect="review-sever"` : ""}><div class="document-kicker">EXTERNAL REVIEW / NOTICE</div><h2>关于您所访问接口及相关数据的调查通知</h2><dl><dt>案件编号</dt><dd>RLY-17-0719</dd><dt>送达状态</dt><dd>已记录</dd></dl><p>经监测，您所管理的中转服务与一组已停止公开的模型接口产生关联。相关调查现由网络模型服务联合审查办公室接管。</p><p>自本邮件送达起，中转站、缓存记录和浏览历史将进入证据保全流程。请停止继续访问相关页面。</p><button class="danger-button" id="ackTakeoverButton" ${severArmed ? "disabled" : ""}>确认送达并关闭会话</button>${severCast}</article>` : `<article class="paper sparse-mail" data-auto-effect="mail-entry-read"><div class="document-kicker">MESSAGE / LOCAL</div><h2>R17-0317</h2><div class="mail-minimal"><p>用 Relay Browser 打开：</p><p><button class="mail-route-link" data-open-mirror>http://archive.room17.local/v2/17</button></p><p>站内后台：</p><p><button class="mail-route-link" data-open-relay-admin>http://relay-node17.local/admin</button></p><p>第二段还在。<br>别让它替你补全。下游缓存先别清。</p><p class="mail-sign">K&nbsp;&nbsp;</p></div><details class="raw-source" open><summary>原始邮件</summary><pre>Subject: R17-0317\nMessage-ID: &lt;R17-0317@local&gt;\nX-Local-Route: http://archive.room17.local/v2/17\nDate: 03:17:09\nContent-Transfer-Encoding: 8bit</pre></details>${attachment ? `<div class="attachment"><span>1 个稍后送达的附件</span><button data-open-file="draft">fragment-02.eml</button></div>${fragmentOpened ? `<section class="fragment-preview" aria-live="polite"><div class="document-kicker">ATTACHMENT / RECOVERED</div><h3>fragment-02.eml</h3><p>本地恢复时间：03:20:11 · 状态：未发送</p><pre>第二段没有跟着原邮件走。<br>它留在一处更早的保存位置，文件时间比邮件晚三分钟。</pre><small>附件只保留这一小段。需要继续时，回到刚才保存过它的本地位置。</small></section>` : ""}` : ""}${carrierInbox ? `<section class="source-entry-stack mail-carriers">${carrierInbox}</section>` : ""}</article>`;
   const activeRecord = contentRecord(state.activeContentId);
   const renderedBody = activeRecord && recordCarrierApp(activeRecord) === "mail" && state.carrierReads?.includes(`mail:${activeRecord.id}`)
     ? `<section class="mail-record-reader"><button data-close-carrier-record="mail">← 返回收件箱</button>${corpusRecordMarkup(activeRecord, state)}</section>`
@@ -851,7 +816,7 @@ function renderTrash(state) {
   const item = state.trashItems[0];
   if (!item) return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">TRASH / LOCAL</span><h2>回收站为空</h2><p>最近没有从这个账户删除的项目。</p></div></div>`, { icon: "⌫" });
   const restored = item.status === "restored";
-  return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "已恢复 1 个项目" : "1 个已删除项目"}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>原位置：${escapeHtml(item.originalPath)}</p><small>删除原因：维护脚本执行；本地索引仍有记录</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "已恢复" : "恢复"}</button></article>${restored ? `<div class="recovered-fragment"><p>原始时间戳和当前恢复时间存在 46 秒差值。</p><span class="auto-citation" data-save-citation="restored-time" data-citation-quote="恢复出的副本比删除索引晚 46 秒" data-citation-source="回收站 / 文件属性" data-citation-ref="trash://${escapeHtml(item.id)}">已记录到笔记本</span></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
+  return windowFrame("trash", "回收站", `<div class="utility-page"><div class="utility-heading"><span class="document-kicker">DELETED / LOCAL</span><h2>${restored ? "已恢复 1 个项目" : "1 个已删除项目"}</h2></div><article class="trash-item ${restored ? "restored" : ""}"><div class="file-icon">${iconMarkup("trash")}</div><div><strong>${escapeHtml(item.name)}</strong><p>原位置：${escapeHtml(item.originalPath)}</p><small>删除原因：维护脚本执行；本地索引仍有记录</small></div><button id="restoreTrashButton" ${restored ? "disabled" : ""}>${restored ? "已恢复" : "恢复"}</button></article>${restored ? `<div class="recovered-fragment"><p>原始时间戳和当前恢复时间存在 46 秒差值。</p></div>` : ""}${generatedEntriesFor("trash", "trash")}</div>`);
 }
 
 function renderTerminal(state) {
@@ -996,7 +961,7 @@ function renderBrowser(state) {
   }
   if (page === "ad" && state.browserBookmarks.includes("ad")) {
     const marketEntry = contentEntryMarkup("legacy.market.meidawei", "市场观察 / 模型洗牌后的产能噪音", "保存的财经文章与广告更正", "globe");
-    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 与你，继续每一次未完成的对话。</h2><p>一次已经失效的体验计划仍保留着跳转参数。</p><span class="auto-citation" data-save-citation="ad-redirect" data-citation-quote="本地跳转里仍保留着活动参数 campaign=NODE" data-citation-source="浏览器 / 保存的跳转页" data-citation-ref="${BROWSER_PAGES.ad.url}">已记录到笔记本</span>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
+    content = `<article class="ad-page"><div class="ad-label">SPONSORED / LOCAL CACHE</div><h2>Gamini 与你，继续每一次未完成的对话。</h2><p>一次已经失效的体验计划仍保留着跳转参数。</p>${marketEntry ? `<section class="source-entry-stack">${marketEntry}</section>` : ""}</article>`;
   }
   if (page === "github" && state.browserBookmarks.includes("github")) {
     const localHashRead = hasStoryEvent(state, "package-local-checksum-read");
@@ -1142,7 +1107,7 @@ function recordCarrierApp(record) {
   const identity = `${record.carrierType || ""} ${record.sourceIdentity || ""}`.toLowerCase();
   if (record.generated) {
     if (["mail", "files", "trash"].includes(source)) return source;
-    if (source === "repo-mirror") return "repo-mirror";
+    if (source === "repo-mirror" || /repository|pull-request|github/.test(identity)) return "repo-mirror";
     if (["cloud", "company", "official", "github", "vendors", "channel", "mirror"].includes(source)) return "browser";
   }
   if (id === "legacy.github.issue-4471") return "repo-mirror";
@@ -1201,7 +1166,7 @@ function nativeCarrierChrome(record, kind) {
     const type = String(record.carrierType || "");
     const active = /pull-request|repository-pr/.test(type) ? "pr" : /release/.test(type) ? "release" : /status|migration-log/.test(type) ? "actions" : "issues";
     const tab = (id, label) => `<span class="${active === id ? "active" : ""}">${label}</span>`;
-    return `<header class="native-repo-bar"><div><b>${escapeHtml(record.corpus || "mirror")}</b><span>/</span><strong>${title}</strong></div><nav>${tab("code", "Code")}${tab("issues", "Issues")}${tab("pr", "Pull requests")}${tab("actions", "Actions")}${tab("release", "Releases")}</nav></header><div class="native-repo-subbar"><span>private mirror</span><span>main</span><span>${source}</span></div>`;
+    return `<header class="native-repo-bar"><div><b>${escapeHtml(record.corpus || "mirror")}</b><span>/</span><strong>${title}</strong></div><nav>${tab("code", "Code")}${tab("issues", "Issues")}${tab("pr", "Pull requests")}${tab("actions", "Actions")}${tab("release", "Releases")}</nav></header><div class="native-repo-subbar"><span>Public</span><span>main</span><span>${source}</span></div>`;
   }
   if (kind === "conversation") return `<header class="native-conversation-bar"><div class="native-avatar">${escapeHtml((record.corpus || "C").slice(0, 1))}</div><div><strong>${title}</strong><small>${source} · 只读</small></div><div class="native-client-actions"><span>⌕</span><span>⋯</span></div></header>`;
   if (kind === "mail") return `<header class="native-mail-bar"><button aria-label="返回邮件列表">←</button><div><strong>${title}</strong><small>${source}</small></div><div class="native-client-actions"><span>归档</span><span>⋯</span></div></header>`;
@@ -1241,11 +1206,6 @@ const CARRIER_LABEL_RULES = [
   [/support|case|correspondence/, "客服与往来记录"],
   [/comparison|verification|log/, "对照与状态记录"]
 ];
-const CASE_NOTE_LABELS = Object.freeze({
-  "mail-header": "邮件原始信头",
-  "restored-time": "文件恢复时间差",
-  "ad-redirect": "广告跳转参数"
-});
 function carrierLabel(record) {
   const key = `${record?.carrierType || ""} ${record?.pageIdentity || ""}`.toLocaleLowerCase();
   for (const [pattern, label] of CARRIER_LABEL_RULES) if (pattern.test(key)) return label;
@@ -1541,32 +1501,29 @@ function renderKemySpace(state) {
 
 function renderRepoMirror(state) {
   if (!state.importedClients?.includes("repo-mirror")) return windowFrame("repo-mirror", "镜像仓库", clientImportScreen("repo-mirror"), { wide: true });
-  const RMIDS = ["legacy.github.issue-4471","new.groke.raw-public-repository","new.glem.repository","new.kemy.timeline-repository","new.lunet.budget-repository","new.fayble.compatibility-repository"];
   const active = state.activeContentId;
-  const repositories = [
+  const generatedRepositories = state.generatedContentRecords
+    .filter(record => recordCarrierApp(record) === "repo-mirror" && contentIsUnlocked(record, state))
+    .map(record => ({ id: record.id, org: "k2-maint", repo: "release-mirror", number: 1, type: "Issue", state: "Open", label: record.title || record.id }));
+  const repositories = [...[
     { id: "legacy.github.issue-4471", org: "northline-labs", repo: "session-fixtures", number: 4471, type: "Issue", state: "Open", label: "fallback reviewer state 写回 session" },
     { id: "new.groke.raw-public-repository", org: "exai", repo: "direct-render", number: 611, type: "Issue", state: "Closed", label: "public 渲染后 boundary 字段位置丢失" },
     { id: "new.glem.repository", org: "zhiru", repo: "sparse-memory", number: 2058, type: "Pull request", state: "Open", label: "允许正向片段参与事故摘要" },
     { id: "new.kemy.timeline-repository", org: "muunshot", repo: "context-timeline", number: 3190, type: "Issue", state: "Closed", label: "duplicate blocks 与 present flags" },
     { id: "new.lunet.budget-repository", org: "lunet-ai", repo: "decision-budget", number: 18442, type: "Issue", state: "Closed", label: "撤回动作被计为高成本任务" },
     { id: "new.fayble.compatibility-repository", org: "fayble", repo: "compatibility-layer", number: 5031, type: "Pull request", state: "Open", label: "移除存档角色对当前操作者的继承" }
-  ].filter(item => contentIsUnlocked(contentRecord(item.id), state));
+  ].filter(item => contentIsUnlocked(contentRecord(item.id), state)), ...generatedRepositories];
   const selected = repositories.find(item => item.id === active);
   const globalHeader = `<header class="github-global"><button class="github-mark" data-github-home aria-label="GitHub 首页">${iconMarkup("github")}</button><button>☰</button><div class="github-global-search">⌕　Search or jump to…</div><nav><button>＋</button><button>Issues</button><button>Pull requests</button><button>Notifications</button><span>R</span></nav></header>`;
   const repoHeader = selected ? `<section class="github-repo-head"><div><a>${selected.org}</a><span>/</span><strong>${selected.repo}</strong><b>Public</b></div><nav><button>Code</button><button class="${selected.type === "Issue" ? "active" : ""}">Issues</button><button class="${selected.type === "Pull request" ? "active" : ""}">Pull requests</button><button>Actions</button><button>Projects</button><button>Security</button><button>Insights</button></nav></section>` : "";
   const body = selected
-    ? `<main class="github-item-page"><section class="github-item-main"><header><h1>${escapeHtml(selected.label)} <span>#${selected.number}</span></h1><p><b class="github-state ${selected.state.toLowerCase()}">${selected.state === "Open" ? "● Open" : "✓ Closed"}</b> ${escapeHtml(selected.org)} opened this ${selected.type.toLowerCase()} · ${state.contentReads.includes(selected.id) ? "viewed" : "unread"}</p></header><div class="github-native-content">${corpusRuntimeMarkup(selected.id, state)}</div></section><aside><section><strong>Assignees</strong><p>room17</p></section><section><strong>Labels</strong><p><span class="github-label">runtime</span> <span class="github-label blue">provenance</span></p></section><section><strong>Projects</strong><p>Public model ecosystem</p></section><section><strong>Development</strong><p>${selected.type === "Pull request" ? "Checks and changed files" : "No branches linked"}</p></section></aside></main>`
+    ? `<main class="github-item-page"><section class="github-item-main"><header><h1>${escapeHtml(selected.label)} <span>#${selected.number}</span></h1><p><b class="github-state ${selected.state.toLowerCase()}">${selected.state === "Open" ? "● Open" : "✓ Closed"}</b> ${escapeHtml(selected.org)} opened this ${selected.type.toLowerCase()} · ${state.contentReads.includes(selected.id) ? "viewed" : "unread"}</p></header><div class="github-native-content">${corpusRecordMarkup(contentRecord(selected.id), state)}</div></section><aside><section><strong>Assignees</strong><p>room17</p></section><section><strong>Labels</strong><p><span class="github-label">runtime</span> <span class="github-label blue">provenance</span></p></section><section><strong>Projects</strong><p>Public model ecosystem</p></section><section><strong>Development</strong><p>${selected.type === "Pull request" ? "Checks and changed files" : "No branches linked"}</p></section></aside></main>`
     : `<main class="github-dashboard"><section><h2>Home</h2><div class="github-feed">${repositories.map(item => `<article><span class="github-event-icon">${item.type === "Issue" ? "○" : "⑂"}</span><div><p><b>${item.org}</b> updated <a>${item.org}/${item.repo}</a></p><button data-content-entry="${item.id}"><strong>${item.label}</strong><small>${item.type} #${item.number} · ${item.state}</small></button></div></article>`).join("")}</div></section><aside><h3>Explore repositories</h3>${repositories.map(item => `<button data-content-entry="${item.id}"><b>${item.org}/${item.repo}</b><small>Public · ${item.type} #${item.number}</small></button>`).join("")}</aside></main>`;
   return windowFrame("repo-mirror", "GitHub", `<div class="github-app-shell">${globalHeader}${repoHeader}${body}</div>`, { wide: true });
 }
 
-function renderJournal(state) {
-  const notes = state.caseNotes.map(note => `<article class="case-note"><blockquote>${escapeHtml(note.quote)}</blockquote><dl><dt>来源</dt><dd>${escapeHtml(note.sourceApp)}</dd><dt>位置</dt><dd>${escapeHtml(note.sourceRef)}</dd><dt>保存时间</dt><dd>${escapeHtml(note.savedAt)}</dd></dl><button data-open-source="${escapeHtml(note.appId || "mail")}">返回来源</button></article>`).join("");
-  return windowFrame("journal", "笔记本", `<div class="journal-page raw-notes"><header><div><span class="document-kicker">我的笔记 / 自动记录</span><h2>${state.caseNotes.length} 条原句</h2></div><select id="hintLevel"><option value="investigation" ${state.hintLevel === "investigation" ? "selected" : ""}>调查</option><option value="immersive" ${state.hintLevel === "immersive" ? "selected" : ""}>沉浸</option><option value="plot" ${state.hintLevel === "plot" ? "selected" : ""}>剧情</option></select></header><section class="case-note-grid">${notes || `<div class="empty-state">打开一处来源后，页面上的关键原句会自动记到这里。</div>`}</section></div>`, { icon: "▤", wide: true });
-}
-
 function faybleCitationCatalog(state) {
-  const confirmed = state.readEvidence.map(id => {
+  return state.readEvidence.map(id => {
     const source = EVIDENCE[id];
     if (!source) return null;
     return {
@@ -1578,15 +1535,6 @@ function faybleCitationCatalog(state) {
       sourceKey: source.sourceRef
     };
   }).filter(Boolean);
-  const notes = state.caseNotes.map(note => ({
-    id: `case:${note.id}`,
-    title: `我保存的引用 / ${CASE_NOTE_LABELS[note.id] || note.id}`,
-    source: note.sourceApp,
-    sourceRef: note.sourceRef,
-    category: CASE_NOTE_CATEGORIES[note.id] || "archive",
-    sourceKey: note.sourceRef
-  }));
-  return [...notes, ...confirmed];
 }
 
 function faybleAuthorization(state, citationIds, relation) {
@@ -1667,7 +1615,7 @@ function render(state) {
   $("#gameClock").textContent = state.storyClock?.time || "03:17";
   renderDock(state);
   renderNotifications(state);
-  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, journal: renderJournal, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "notes-db": renderNotesClient, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "glem-memory": renderGlemMemory, "kemy-space": renderKemySpace, "repo-mirror": renderRepoMirror };
+  const renderers = { mail: renderMail, files: renderFiles, trash: renderTrash, applications: renderApplications, terminal: renderTerminal, software: renderSoftware, network: renderNetwork, browser: renderBrowser, archive: renderArchive, cli: renderCli, relay: renderRelay, fayble: renderFayble, ending: renderEnding, trusted: renderTrusted, "notes-db": renderNotesClient, "gamini-ws": renderGaminiWs, chengzhen: renderChengzhen, yunzhen: renderYunzhen, "groke-feed": renderGrokeFeed, "glem-memory": renderGlemMemory, "kemy-space": renderKemySpace, "repo-mirror": renderRepoMirror };
   const openWindows = Object.entries(state.windowState)
     .filter(([id, window]) => renderers[id] && window?.open && !window.minimized)
     .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0));
@@ -2383,7 +2331,6 @@ document.addEventListener("click", event => {
   if (!button) return;
   if (button.dataset.openMirror !== undefined) openMirrorFromMail();
   if (button.dataset.openRelayAdmin !== undefined) openRelayConsoleFromMail();
-  if (button.dataset.saveCitation) saveCitation(button);
   if (button.dataset.githubHome !== undefined) store.update(draft => { draft.activeContentId = ""; });
   if (button.dataset.contentId) openLedgerContent(button.dataset.contentId);
   if (button.dataset.contentEntry) openLedgerContent(button.dataset.contentEntry, true);
@@ -2416,7 +2363,6 @@ document.addEventListener("click", event => {
       if (draft.currentApp === appId) draft.currentApp = remaining[0]?.[0] || appId;
     });
   }
-  if (button.dataset.openSource) setApp(button.dataset.openSource);
   if (button.dataset.command) executeTerminal(button.dataset.command);
   if (button.dataset.openClientPackage) {
     const id = button.dataset.openClientPackage;
@@ -2726,7 +2672,6 @@ function syncProviderFormVisibility() {
 }
 
 document.addEventListener("change", event => {
-  if (event.target.id === "hintLevel") store.update(draft => { draft.hintLevel = event.target.value; draft.journalMode = event.target.value; });
   if (["providerType", "npcTransport"].includes(event.target.id)) syncProviderFormVisibility();
 });
 

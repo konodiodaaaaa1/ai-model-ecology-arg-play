@@ -9,7 +9,7 @@ The following application icons are adapted from the Ubuntu Yaru icon theme:
 - `software.png`
 - `network.png`
 - `trash.png`
-- `case-notes.png`
+- `notebook.png`
 - `restored-archive.png`
 - `transfer-receipt.png`
 - `cloud-drive.png`

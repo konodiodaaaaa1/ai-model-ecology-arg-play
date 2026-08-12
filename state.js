@@ -64,7 +64,6 @@ export const DEFAULT_STATE = Object.freeze({
   discoveredRoutes: [],
   browserBookmarks: [],
   desktopArtifacts: [],
-  caseNotes: [],
   contentDiscoveries: [],
   contentReads: [],
   contentMutations: [],
@@ -114,8 +113,6 @@ export const DEFAULT_STATE = Object.freeze({
   },
   sourceVisits: {},
   revisitFlags: {},
-  hintLevel: "investigation",
-  journalMode: "investigation",
   legacyLedgerCursor: 0,
   downloadedClientPackages: [],
   installedClients: [],
@@ -179,7 +176,6 @@ export function getUnlocks(state) {
     terminalTrace: hasMilestone(state, "local-script-run"),
     trashRecovery: hasMilestone(state, "cache-index-opened"),
     historicalArchive: hasMilestone(state, "legacy-restored"),
-    caseNotes: hasArtifact(state, "case-notes"),
     packageTools: hasMilestone(state, "repository-recovered"),
     packageInstall: hasMilestone(state, "package-verified"),
     proxyTools: hasMilestone(state, "proxy-profile-opened"),
@@ -213,16 +209,23 @@ const clone = value => JSON.parse(JSON.stringify(value));
 function normalize(candidate) {
   const next = { ...clone(DEFAULT_STATE), ...(candidate || {}) };
   next.unlockedViews = { ...DEFAULT_STATE.unlockedViews, ...(candidate?.unlockedViews || {}) };
-  for (const key of ["openedViews", "readEvidence", "unlockedArtifacts", "solvedPuzzles", "handledEvents", "terminalHistory", "searchQueries", "chat", "faybleCitationAttempts", "objectiveFragments", "virtualFiles", "trashItems", "browserTabs", "browserHistory", "browserBookmarks", "discoveredRoutes", "desktopArtifacts", "caseNotes", "contentDiscoveries", "contentReads", "contentMutations", "generatedContentRecords", "installedPackages", "packageChecks", "proxyProfiles", "proxyProbeLog", "cliSessions", "relayKeyAttempts", "desktopNotifications", "downloadedClientPackages", "installedClients", "importedClients", "carrierReads"]) {
+  for (const key of ["openedViews", "readEvidence", "unlockedArtifacts", "solvedPuzzles", "handledEvents", "terminalHistory", "searchQueries", "chat", "faybleCitationAttempts", "objectiveFragments", "virtualFiles", "trashItems", "browserTabs", "browserHistory", "browserBookmarks", "discoveredRoutes", "desktopArtifacts", "contentDiscoveries", "contentReads", "contentMutations", "generatedContentRecords", "installedPackages", "packageChecks", "proxyProfiles", "proxyProbeLog", "cliSessions", "relayKeyAttempts", "desktopNotifications", "downloadedClientPackages", "installedClients", "importedClients", "carrierReads"]) {
     next[key] = Array.isArray(next[key]) ? next[key] : clone(DEFAULT_STATE[key]);
   }
+  next.unlockedArtifacts = next.unlockedArtifacts.filter(id => id !== "case-notes");
+  next.desktopArtifacts = next.desktopArtifacts.filter(id => id !== "case-notes");
+  next.openedViews = next.openedViews.filter(id => id !== "journal");
+  next.handledEvents = next.handledEvents.filter(id => !id.startsWith("story:citation-") && !id.startsWith("citation-"));
   if (!Array.isArray(candidate?.downloadedClientPackages)) next.downloadedClientPackages = [...next.installedClients];
   if (!Array.isArray(candidate?.importedClients)) next.importedClients = [...next.installedClients];
   next.modelStages = next.modelStages && typeof next.modelStages === "object" ? next.modelStages : {};
   next.windowState = next.windowState && typeof next.windowState === "object"
     ? { ...clone(DEFAULT_STATE.windowState), ...next.windowState }
     : clone(DEFAULT_STATE.windowState);
+  delete next.windowState.journal;
+  if (next.currentApp === "journal") next.currentApp = "mail";
   next.sourceVisits = next.sourceVisits && typeof next.sourceVisits === "object" ? next.sourceVisits : {};
+  delete next.sourceVisits.journal;
   next.revisitFlags = next.revisitFlags && typeof next.revisitFlags === "object" ? next.revisitFlags : {};
   next.carrierHorror = next.carrierHorror && typeof next.carrierHorror === "object" ? next.carrierHorror : clone(DEFAULT_STATE.carrierHorror);
   next.carrierHorror.visits = next.carrierHorror.visits && typeof next.carrierHorror.visits === "object" ? next.carrierHorror.visits : {};
@@ -245,8 +248,9 @@ function normalize(candidate) {
   next.checkpointHandshakeComplete = Boolean(next.checkpointHandshakeComplete);
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";
   next.takeoverPreludeDone = Boolean(next.takeoverPreludeDone);
-  next.hintLevel = ["investigation", "immersive", "plot"].includes(next.hintLevel) ? next.hintLevel : "investigation";
-  next.journalMode = next.journalMode || next.hintLevel;
+  delete next.caseNotes;
+  delete next.hintLevel;
+  delete next.journalMode;
   next.activeClientPackage = typeof next.activeClientPackage === "string" ? next.activeClientPackage : "";
   next.storeCategory = ["全部", "生产力", "系统工具", "开发工具"].includes(next.storeCategory) ? next.storeCategory : "全部";
   next.pendingCarrierId = typeof next.pendingCarrierId === "string" ? next.pendingCarrierId : "";
@@ -262,8 +266,6 @@ function normalize(candidate) {
 
 function migrateLegacyState(candidate, key) {
   const migrated = clone(DEFAULT_STATE);
-  migrated.hintLevel = ["investigation", "immersive", "plot"].includes(candidate?.hintLevel) ? candidate.hintLevel : "investigation";
-  migrated.journalMode = migrated.hintLevel;
   migrated.migratedFrom = key;
   return migrated;
 }
