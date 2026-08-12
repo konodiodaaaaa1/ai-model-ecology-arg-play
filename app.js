@@ -768,10 +768,10 @@ function fileIconKey(file) {
 
 function windowFrame(appId, title, body, options = {}) {
   const placement = store.get().windowState[appId] || {};
-  const style = `left:${Number.isFinite(placement.x) ? placement.x : 110}px;top:${Number.isFinite(placement.y) ? placement.y : 72}px;z-index:${Number.isFinite(placement.zIndex) ? placement.zIndex : 30}`;
+  const style = `left:${Number.isFinite(placement.x) ? placement.x : 110}px;top:${Number.isFinite(placement.y) ? placement.y : 72}px;width:${Number.isFinite(placement.width) ? placement.width + "px" : ""};height:${Number.isFinite(placement.height) ? placement.height + "px" : ""};z-index:${Number.isFinite(placement.zIndex) ? placement.zIndex : 30}`;
   return `<section class="app-window app-${appId} ${options.wide ? "wide" : ""}" data-app-window="${appId}" style="${style}">
     <header class="window-bar"><div class="window-title">${iconMarkup(options.iconKey || APP_ICON_KEYS[appId])}<span>${title}</span></div><div class="window-controls"><button data-window-action="minimize" aria-label="退出当前窗口">−</button><button data-window-action="close" aria-label="退出当前窗口">×</button></div></header>
-    <div class="window-body">${body}</div></section>`;
+    <div class="window-body">${body}</div><span class="window-resize-handle resize-nw" data-resize="nw"></span><span class="window-resize-handle resize-ne" data-resize="ne"></span><span class="window-resize-handle resize-sw" data-resize="sw"></span><span class="window-resize-handle resize-se" data-resize="se"></span></section>`;
 }
 
 function renderMail(state) {
@@ -2550,6 +2550,7 @@ document.addEventListener("click", event => {
 });
 
 let windowDrag = null;
+let windowResize = null;
 document.addEventListener("pointerdown", event => {
   const window = event.target.closest(".app-window");
   if (!window) return;
@@ -2558,6 +2559,15 @@ document.addEventListener("pointerdown", event => {
   if (event.target.closest(".window-controls")) return;
   const zIndex = Date.now();
   window.style.zIndex = zIndex;
+  document.querySelectorAll(".app-window.is-focused").forEach(item => item.classList.remove("is-focused"));
+  window.classList.add("is-focused");
+  const resizeHandle = event.target.closest(".window-resize-handle");
+  if (resizeHandle && !matchMedia("(max-width: 720px)").matches) {
+    const rect = window.getBoundingClientRect();
+    windowResize = { appId, window, zIndex, pointerId: event.pointerId, edge: resizeHandle.dataset.resize, startX: event.clientX, startY: event.clientY, startLeft: rect.left, startTop: rect.top, startWidth: rect.width, startHeight: rect.height };
+    resizeHandle.setPointerCapture(event.pointerId);
+    return;
+  }
   const bar = event.target.closest(".window-bar");
   if (!bar || event.target.closest("button") || matchMedia("(max-width: 720px)").matches) return;
   const rect = window.getBoundingClientRect();
@@ -2567,6 +2577,18 @@ document.addEventListener("pointerdown", event => {
 });
 
 document.addEventListener("pointermove", event => {
+  if (windowResize && event.pointerId === windowResize.pointerId) {
+    const r = windowResize;
+    const dx = event.clientX - r.startX, dy = event.clientY - r.startY;
+    const minW = 360, minH = 240;
+    let left = r.startLeft, top = r.startTop, width = r.startWidth, height = r.startHeight;
+    if (r.edge.includes("e")) width = Math.max(minW, r.startWidth + dx);
+    if (r.edge.includes("s")) height = Math.max(minH, r.startHeight + dy);
+    if (r.edge.includes("w")) { width = Math.max(minW, r.startWidth - dx); left = r.startLeft + (r.startWidth - width); }
+    if (r.edge.includes("n")) { height = Math.max(minH, r.startHeight - dy); top = r.startTop + (r.startHeight - height); }
+    r.window.style.left = `${left}px`; r.window.style.top = `${top}px`; r.window.style.width = `${width}px`; r.window.style.height = `${height}px`;
+    return;
+  }
   if (!windowDrag || event.pointerId !== windowDrag.pointerId) return;
   const desktop = $(".desktop-area")?.getBoundingClientRect() || { left: 0, top: 32, width: innerWidth, height: innerHeight - 32 };
   const rect = windowDrag.window.getBoundingClientRect();
@@ -2577,6 +2599,12 @@ document.addEventListener("pointermove", event => {
 });
 
 document.addEventListener("pointerup", event => {
+  if (windowResize && event.pointerId === windowResize.pointerId) {
+    const r = windowResize, rect = r.window.getBoundingClientRect();
+    windowResize = null;
+    store.update(draft => { draft.currentApp = r.appId; draft.windowState[r.appId] = { ...(draft.windowState[r.appId] || {}), open: true, minimized: false, zIndex: r.zIndex, x: rect.left, y: rect.top, width: rect.width, height: rect.height }; });
+    return;
+  }
   if (!windowDrag || event.pointerId !== windowDrag.pointerId) return;
   const { appId, window, zIndex } = windowDrag;
   const x = parseFloat(window.style.left) || 0;
