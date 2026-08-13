@@ -48,6 +48,7 @@ function temporaryClass(runtime, element, className, duration) {
   if (!element || element.matches(protectedSelector) || element.closest(protectedSelector)) return false;
   const previousClass = element.getAttribute("class");
   element.classList.add(className);
+  runtime.effectId ||= className;
   let restored = false;
   const cleanup = () => {
     if (restored) return;
@@ -87,6 +88,7 @@ function temporaryMutation(runtime, elements, duration, mutate) {
 function markMemoEffect(runtime, name, duration) {
   const previous = runtime.root.getAttribute("data-memo-horror-effect");
   runtime.root.setAttribute("data-memo-horror-effect", name);
+  runtime.effectId = `memo:${name}`;
   let restored = false;
   const cleanup = () => {
     if (restored) return;
@@ -138,6 +140,7 @@ function waveMemoCharacters(element, frequency, amplitude) {
 function addGhost(runtime, text, className, duration) {
   const ghost = document.createElement("span");
   ghost.className = `carrier-horror-ghost ${className}`;
+  runtime.effectId ||= `ghost:${className}`;
   ghost.textContent = text;
   ghost.setAttribute("aria-hidden", "true");
   runtime.root.appendChild(ghost);
@@ -208,7 +211,9 @@ function memoEffect(runtime) {
       : runtime.level === 4
         ? ["drift-more", "line-crush", "date-spiral", "mirror-horizontal", "mirror-vertical", "line-wave", "character-scale"]
         : ["date-spiral", "mirror-horizontal", "mirror-vertical", "line-wave", "character-scale", "reverse"];
-  const pool = runtime.policy === "full" ? fullEffects : controlledEffects;
+  const effectPool = runtime.policy === "full" ? fullEffects : controlledEffects;
+  const availableEffects = effectPool.filter(effect => !runtime.residues.includes(`memo:${effect}`));
+  const pool = availableEffects.length ? availableEffects : effectPool;
   const effect = pool[Math.floor(runtime.random() * pool.length)];
   const paragraph = paragraphs[Math.floor(runtime.random() * paragraphs.length)] || null;
   let applied = false;
@@ -293,8 +298,9 @@ function genericEffect(runtime) {
     .filter(element => !element.matches(protectedSelector) && !element.closest(protectedSelector));
   const target = candidates[Math.floor(runtime.random() * candidates.length)] || runtime.root;
   const heavyClasses = ["horror-native-heavy", "horror-native-giant", "horror-native-upside", "horror-native-wave"];
+  const availableHeavyClasses = heavyClasses.filter(className => !runtime.residues.includes(className));
   const className = runtime.policy === "full" && runtime.level >= 4
-    ? heavyClasses[Math.floor(runtime.random() * heavyClasses.length)]
+    ? (availableHeavyClasses.length ? availableHeavyClasses : heavyClasses)[Math.floor(runtime.random() * (availableHeavyClasses.length || heavyClasses.length))]
     : "horror-native-slip";
   return temporaryClass(runtime, target, className, runtime.level >= 4 ? 5200 : 1500);
 }
@@ -321,7 +327,7 @@ export function stopCarrierHorror() {
   document.documentElement.classList.remove("carrier-horror-running");
 }
 
-export function mountCarrierHorror({ root, record, state, random = Math.random }) {
+export function mountCarrierHorror({ root, record, state, random = Math.random, onEffectTriggered = null }) {
   clearRuntime();
   if (!root || !record || hiddenEndingReached(state)) {
     stopCarrierHorror();
@@ -332,7 +338,9 @@ export function mountCarrierHorror({ root, record, state, random = Math.random }
   const level = horrorLevel(visits);
   const config = horrorConfig(visits);
   const policy = stagePolicy(embeddedAuthorshipStage(root, record));
-  const runtime = { root, record, level, policy, timers: [], cleanup: [], triggers: 0, random };
+  const residues = Array.isArray(state?.carrierHorror?.residues?.[record.id]) ? state.carrierHorror.residues[record.id] : [];
+  const lastTriggeredAt = Number(state?.carrierHorror?.lastTriggeredAt?.[record.id]) || 0;
+  const runtime = { root, record, level, policy, timers: [], cleanup: [], triggers: 0, random, residues: [...residues], lastTriggeredAt };
   activeRuntime = runtime;
   root.dataset.horrorLevel = String(level);
   root.dataset.horrorPolicy = policy;
@@ -349,7 +357,17 @@ export function mountCarrierHorror({ root, record, state, random = Math.random }
   // establishes the lifecycle without changing the current document.
   const arm = () => {
     if (activeRuntime !== runtime || document.hidden || runtime.triggers >= config.maxTriggers) return;
-    if (random() < config.probability && runEffect(runtime)) runtime.triggers += 1;
+    const now = Date.now();
+    runtime.effectId = "";
+    if (now - runtime.lastTriggeredAt >= config.minGapMs && random() < config.probability && runEffect(runtime)) {
+      runtime.triggers += 1;
+      runtime.lastTriggeredAt = now;
+      const effectId = runtime.effectId;
+      if (effectId) {
+        runtime.residues = [...new Set([...runtime.residues, effectId])].slice(-12);
+        onEffectTriggered?.({ id: record.id, effectId, at: now, residues: runtime.residues });
+      }
+    }
     if (runtime.triggers < config.maxTriggers) {
       runtime.timers.push(setTimeout(arm, 7000 + Math.floor(random() * 5000)));
     }

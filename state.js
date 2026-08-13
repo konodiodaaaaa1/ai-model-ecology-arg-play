@@ -322,7 +322,7 @@ export class GameStore {
     draft.lastUpdated = Date.now();
     this.state = normalize(draft);
     this.persist(options.broadcast !== false);
-    this.emit();
+    if (options.emit !== false) this.emit();
     return this.state;
   }
 

@@ -689,14 +689,14 @@ const AUTO_EFFECTS = {
     recordEvidence("channel_log");
   },
   "relay-nodes": () => {
-    const unread = MODELS.map(model => model.id).filter(id => !store.get().modelStages[id]);
-    if (!unread.length) return;
-    store.update(draft => {
+    const before = store.get();
+    const unread = MODELS.map(model => model.id).filter(id => !before.modelStages[id]);
+    if (unread.length || !before.relayComplete) store.update(draft => {
       for (const id of unread) draft.modelStages[id] = "read";
       if (allModelsRead(draft)) { draft.relayComplete = true; addNotification(draft, "models-read", "六个残留节点的索引状态已经更新。", "warning"); }
     });
-    if (unread.includes("groke")) recordEvidence("raw_checksum");
-    if (unread.includes("kemy")) recordEvidence("replay_order");
+    if (store.get().modelStages.groke) recordEvidence("raw_checksum");
+    if (store.get().modelStages.kemy) recordEvidence("replay_order");
     if (allModelsRead(store.get())) {
       completeStoryEvent("node-residues-read");
       if (allRelaySourcesRead(store.get())) recordEvidence("model_convergence");
@@ -1412,7 +1412,7 @@ function renderRelayAdmin(state) {
   const auditPage = `<div class="relay-audit-page"><section class="relay-audit-toolbar"><div><input value="" placeholder="搜索请求 ID、渠道或模型"><button>筛选</button></div><span>过去 24 小时 · 159 条</span></section><div class="relay-audit-layout"><section class="relay-audit-list"><header><span>时间</span><span>请求 / 渠道</span><span>状态</span><span>耗时</span></header><button class="relay-audit-row ${state.relayAuditSelected === "R17-KM-31" ? "active" : ""}" data-relay-audit-select="R17-KM-31"><code>03:17:31</code><span><strong>R17-KM-31</strong><small>Kemy K3 · /v1/chat/completions</small></span><b class="status-review">字段缺失</b><small>3.1s</small></button><button class="relay-audit-row ${state.relayAuditSelected === "R17-GM-27" ? "active" : ""}" data-relay-audit-select="R17-GM-27"><code>02:47:13</code><span><strong>R17-GM-27</strong><small>Gamini · /v1/chat/completions</small></span><b class="status-degraded">retry</b><small>4.8s</small></button><button class="relay-audit-row ${state.relayAuditSelected === "R17-GR-44" ? "active" : ""}" data-relay-audit-select="R17-GR-44"><code>02:43:09</code><span><strong>R17-GR-44</strong><small>Groke · /v1/responses</small></span><b class="status-active">200</b><small>1.2s</small></button></section>${auditDetail}</div></div>`;
   const monitorPage = `<div class="relay-monitor-page"><section class="relay-monitor-toolbar"><div><strong>渠道监控</strong><small>最近一次探针与上游响应汇总</small></div><div class="relay-monitor-actions"><button class="relay-monitor-action" data-relay-monitor-refresh>刷新监控</button><button class="relay-monitor-action" data-relay-monitor-export>导出当前视图</button></div></section><section class="relay-monitor-summary"><article><span>在线渠道</span><strong>4 / 6</strong><small>1 个降级 · 1 个归档</small></article><article><span>监控批次</span><strong>RR-0719</strong><small>03:18:02 完成</small></article><article><span>共同字段</span><strong>continuity</strong><small>跨 6 个节点出现</small></article><article><span>待核对</span><strong>1</strong><small>Kemy / Groke 尾段差异</small></article></section><section class="relay-monitor-card"><header><div><strong>最近监控批次</strong><span>六个上游渠道 · 响应与字段健康度</span></div><button class="quiet-button">查看历史批次</button></header><div class="relay-channel-cards">${vendorRows.map((row, index) => `<article class="relay-channel-monitor-card"><header><div><span class="channel-dot status-${row.status}"></span><strong>${row.name}</strong><small>${row.domain}</small></div><span class="relay-status status-${row.status}">${row.status}</span></header><dl><div><dt>请求</dt><dd>R17-${["GR-44","GM-27","GL-09","KM-31","DP-18","LN-52"][index]}</dd></div><div><dt>响应</dt><dd>${["200","retry","200","200","review","archived"][index]}</dd></div><div><dt>字段</dt><dd>${index === 3 ? "operator / tag 缺失" : index === 0 ? "tag=0317" : "continuity"}</dd></div></dl></article>`).join("")}</div><section class="relay-monitor-reconciliation"><div><strong>RR-0719 · 六节点对账</strong><span>六条请求共享 continuity；Kemy 行与 Groke raw 流存在末段差异。对账来源已挂接到各渠道监控卡。</span></div><button class="quiet-button" data-relay-monitor-detail>${state.relayMonitorDetailOpen ? "收起" : "展开详情"}</button></section>${state.relayMonitorDetailOpen ? `<section class="relay-monitor-detail"><header><strong>字段关系 / 来源覆盖</strong></header><div class="relay-monitor-detail-grid"><div><span>共同字段</span><code>continuity</code><small>六节点均出现，供应商 schema 未声明 owner</small></div><div><span>冲突字段</span><code>operator / tag</code><small>Kemy 回放保留顺序，Groke raw 流保留 0317 尾段</small></div><div><span>下一步</span><code>回到原生客户端</code><small>具体证据仍需在 Kemy、Groke 与公共仓库中分别核对</small></div></div></section>` : ""}</section></div>`;
   const overview = `<div class="relay-admin-content"><section class="relay-metrics"><article><span>今日请求</span><strong>${totalRequests}</strong><small>较昨日 +12.4%</small></article><article><span>活跃渠道</span><strong>4 / 6</strong><small>1 个降级，1 个归档</small></article><article><span>异常率</span><strong>2.7%</strong><small>3 条待审计</small></article><article><span>Token 用量</span><strong>1.84M</strong><small>额度使用 63%</small></article></section><section class="relay-admin-grid"><article class="relay-admin-card relay-usage-card"><header><div><strong>Token 使用趋势</strong><span>最近 24 小时</span></div><button>24 小时⌄</button></header><div class="relay-trend" aria-label="Token 使用趋势图"><span style="height:28%"></span><span style="height:42%"></span><span style="height:36%"></span><span style="height:61%"></span><span style="height:48%"></span><span style="height:76%"></span><span style="height:68%"></span><span style="height:88%"></span><span style="height:71%"></span><span style="height:55%"></span><span style="height:64%"></span><span style="height:79%"></span></div><div class="relay-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>现在</span></div></article><article class="relay-admin-card relay-pool-card"><header><div><strong>账号池</strong><span>运行状态</span></div><button>查看全部</button></header><dl><dt><span class="status-active"></span>可用账号</dt><dd>23</dd><dt><span class="status-degraded"></span>冷却中</dt><dd>4</dd><dt><span class="status-review"></span>待检查</dt><dd>2</dd></dl></article>${channelSection}${logSection}</section></div>`;
-  return `<div class="relay-admin-page"><aside class="relay-admin-sidebar"><div class="relay-admin-brand"><span>R</span><div><strong>Relay</strong><small>管理控制台</small></div></div><nav>${nav}</nav><footer><span class="relay-operator">K2</span><div><strong>room17</strong><small>系统管理员</small></div><button>⋮</button></footer></aside><main class="relay-admin-main"><header class="relay-admin-topbar"><div><h2>${activeSection === "audit" ? "审计日志" : activeSection === "monitor" ? "渠道监控" : "概览"}</h2><small>Relay Node 17 / production</small></div><div><span class="relay-health-dot"></span>服务运行中<button>通知</button></div></header>${activeSection === "audit" ? auditPage : activeSection === "monitor" ? monitorPage : overview}</main></div>`;
+  return `<div class="relay-admin-page"><aside class="relay-admin-sidebar"><div class="relay-admin-brand"><span>R</span><div><strong>Relay</strong><small>管理控制台</small></div></div><nav>${nav}</nav><footer><span class="relay-operator">K2</span><div><strong>room17</strong><small>系统管理员</small></div><button>⋮</button></footer></aside><main class="relay-admin-main"><header class="relay-admin-topbar"><div><h2>${activeSection === "audit" ? "审计日志" : activeSection === "monitor" ? "渠道监控" : "概览"}</h2><small>Relay Node 17 / production</small></div><div><span class="relay-health-dot"></span>服务运行中<button>通知</button></div></header>${activeSection === "audit" ? auditPage : activeSection === "monitor" ? `<div data-auto-effect="relay-nodes">${monitorPage}</div>` : overview}</main></div>`;
 }
 
 function renderGaminiWs(state) {
@@ -1821,7 +1821,21 @@ function applyCorpusRuntimeEffects() {
   if (node.classList.contains("runtime-groke")) node.querySelectorAll("section:nth-of-type(even)").forEach(section => section.insertAdjacentHTML("beforeend", '<i class="runtime-absence" aria-hidden="true"></i>'));
   if (node.classList.contains("runtime-lunet")) node.querySelectorAll("section").forEach((section, index) => section.style.setProperty("--route-cost", String((index + 1) * 17)));
   if (node.classList.contains("runtime-fayble")) node.dataset.provenance = store.get().contentMutations.includes("mutation.fayble.crossed-provenance") ? "crossed" : "public";
-  mountCarrierHorror({ root: node, record, state: store.get() });
+  mountCarrierHorror({
+    root: node,
+    record,
+    state: store.get(),
+    onEffectTriggered: ({ id, at, residues }) => {
+      store.update(draft => {
+        if (draft.endingState === "severed" || draft.takeoverSevered) return;
+        draft.carrierHorror ||= { visits: {}, residues: {}, lastTriggeredAt: {} };
+        draft.carrierHorror.residues ||= {};
+        draft.carrierHorror.lastTriggeredAt ||= {};
+        draft.carrierHorror.residues[id] = residues;
+        draft.carrierHorror.lastTriggeredAt[id] = at;
+      }, { emit: false });
+    }
+  });
 }
 
 function executeTerminal(raw) {
