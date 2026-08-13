@@ -44,7 +44,7 @@ export const TERMINAL_COMMANDS = {
   "inspect cache/index": ["public alias: NODE relay channel", "operator alias: room17 -> k2", "withdrawn checkpoint: FAYBLE-5", "archive index unlocked"],
   "inspect users/symptom-summary": ["records: 6 / route families: 6", "comparison fields: response time, source, revision, operator", "source file: archive/symptom-summary"],
   "compare model-aliases": ["history.sqlite actor=k2-maint", "release mirror owner=k2-maint", "route.log owner=operator.local", "local account alias=room17:k2"],
-  "open note --id 07": ["[cold-memory / unsent]", "第一次转发跑通时宿舍停电三分钟。你把手机灯扣在风扇上，光一直转。", "你说 retry=17 很蠢，后来每个脚本都保留了它。", "夜宵那次我还欠你三十八。先记这儿，免得又说算了。"],
+  "open note --id 07": ["[cold-memory / unsent]", "还记得我们第一次把转发跑通后闹的宿舍停了三分钟电，我现在有些东西不记得了模糊了，但你那时候拿着灯隔那风扇边瞎比恍，我还记得说是你当时还骂我就是17次retry害得，那种整法太蠢了，结果后面还不是一直用的挺好，另外我还有件事记着呢，我欠你38的，给你记着的，不会说算了"],
   status: ["docs-mirror/legacy    最后一次响应 200（缓存 03:17）", "archive/symptom-summary  6 条记录 / 4 条可读", "本机账号 room17    3 段旧会话引用同一别名", "session-audit.log  上次自检 07-18 22:24"]
 };
 
