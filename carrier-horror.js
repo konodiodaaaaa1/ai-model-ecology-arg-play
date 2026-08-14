@@ -31,7 +31,7 @@ function embeddedAuthorshipStage(root, record) {
   if (memoIndex) {
     const index = Number(memoIndex);
     if (index <= 4) return "H0";
-    if (index <= 10) return "H1";
+    if (index <= 9) return "H1";
     if (index <= 12) return "H2";
     return "H3";
   }

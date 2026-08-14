@@ -872,7 +872,7 @@ function renderFiles(state) {
   const notesRestored = state.importedClients?.includes("notes-db");
   const noteRecords = notesRestored && ["recent", "documents"].includes(place)
     ? [...(runtimeLedger?.entries || []), ...state.generatedContentRecords]
-      .filter(record => isNotesRecord(record) && contentIsUnlocked(record, state))
+      .filter(record => isNotesRecord(record) && record.sourceVisibility !== "carrier-only" && contentIsUnlocked(record, state))
       .map(record => contentEntryMarkup(record.id, record.title, `${record.displayTimestamp || "时间不详"} · 在通用备忘录中打开`, "notebook"))
       .filter(Boolean).join("")
     : "";
@@ -953,7 +953,10 @@ function renderSoftware(state) {
         : `<button class="store-action unavailable" disabled>安装</button>`;
     return `<article class="store-app-card ${ready ? "is-installed" : ""}"><div class="store-app-icon store-bundled-icon">${iconMarkup(pkg.icon)}</div><div class="store-app-info"><div class="store-app-title"><h3>${pkg.name}</h3>${stateLabel(pkg) ? `<span>${stateLabel(pkg)}</span>` : ""}</div><p>${pkg.vendor}</p><small>${category(pkg)} · ${pkg.size} · 免费</small></div>${action}</article>`;
   });
-  const faybleCard = packageAvailable ? `<article class="store-feature-card"><div class="store-feature-icon">${iconMarkup("fayble-cli")}</div><div><span class="store-eyebrow">已下载项目</span><h2>Fayble CLI</h2><p>旧版会话工具 · 0.9.7-legacy</p><small>${installed ? "已安装在本机" : twoSourcesConfirmed ? "可以安装" : "等待完成安全检查"}</small></div><button class="store-feature-action" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装"}</button></article>` : "";
+  const packageCheckForm = twoSourcesConfirmed && !installed
+    ? `<form id="packageCheckForm" class="stack-form"><label>本地校验值<input id="packageChecksumInput" value="${escapeHtml(state.lastPackageInput || "")}" placeholder="输入已对照的完整值" autocomplete="off"></label><button class="primary-button">核对校验</button></form><div id="packageResult" class="inline-result">${escapeHtml(state.packageResult || "")}</div>`
+    : "";
+  const faybleCard = packageAvailable ? `<article class="store-feature-card"><div class="store-feature-icon">${iconMarkup("fayble-cli")}</div><div class="store-feature-info"><span class="store-eyebrow">已下载项目</span><h2>Fayble CLI</h2><p>旧版会话工具 · 0.9.7-legacy</p><small>${installed ? "已安装在本机" : twoSourcesConfirmed ? "可以安装" : "等待完成安全检查"}</small>${packageCheckForm}</div><button class="store-feature-action" id="installPackageButton" ${checked && !installed ? "" : "disabled"}>${installed ? "已安装" : "安装"}</button></article>` : "";
   const categories = ["全部", "生产力", "系统工具", "开发工具"].map(label => `<button class="store-category ${state.storeCategory === label ? "active" : ""}" data-store-category="${label}">${label}</button>`).join("");
   const everydayCards = EVERYDAY_STORE_APPS.map(app => `<article class="store-app-card"><div class="store-app-icon store-external-icon">${iconMarkup({ icon: resourceUrl(app.icon) })}</div><div class="store-app-info"><div class="store-app-title"><h3>${app.name}</h3></div><p>${app.vendor}</p><small>${app.category} · ${app.size} · ${app.version}</small></div><button class="store-action unavailable" disabled>安装</button></article>`);
   const mixedCards = [];
@@ -1335,7 +1338,7 @@ function renderArchive(state) {
   if (!runtimeLedger) return windowFrame("archive", "Restored Archive", `<div class="snapshot-adapter loading"><p>正在读取本地内容账本…</p></div>`, { icon: "▥", wide: true });
   const query = (state.archiveQuery || "").trim().toLocaleLowerCase();
   const allEntries = [...runtimeLedger.entries, ...state.generatedContentRecords];
-  const unlockedEntries = allEntries.filter(record => (record.route || record.generated) && contentIsUnlocked(record, state));
+  const unlockedEntries = allEntries.filter(record => (record.route || record.generated) && record.sourceVisibility !== "carrier-only" && contentIsUnlocked(record, state));
   const entries = unlockedEntries.filter(record => state.contentDiscoveries.includes(record.id) || state.contentReads.includes(record.id));
   const filtered = entries.filter(record => !query || [record.id, record.title, record.carrierType, record.corpus, record.narratorId, record.pageIdentity].some(value => String(value || "").toLocaleLowerCase().includes(query)));
   const cards = filtered.map(record => `<button class="ledger-row ${state.contentReads.includes(record.id) ? "read" : ""} ${state.activeContentId === record.id ? "active" : ""}" data-content-id="${escapeHtml(record.id)}"><span>${escapeHtml(carrierLabel(record))}</span><strong>${escapeHtml(record.title || carrierLabel(record))}</strong><small>${escapeHtml(record.displayTimestamp || record.chronologyKey || "时间不详")}</small></button>`).join("");
@@ -2480,7 +2483,6 @@ document.addEventListener("click", event => {
       draft.browserPage = "official";
       draft.browserHistory.push(BROWSER_PAGES.official.url);
     });
-    if (id === "memo") recordEvidence("compatible");
     if (id === "draft") {
       store.update(draft => { draft.sourceVisits["mail-fragment"] = true; });
       showToast("附件片段已在邮件窗口中展开。", "info");
@@ -2568,7 +2570,7 @@ document.addEventListener("click", event => {
     draft.proxyProbeLog = ["docs-mirror.local = 200", "relay.local = degraded", "fayble-legacy.local = checkpoint pending", `route host = ${RELAY_PROXY}`, "certificate = relay-node17-local"];
     applyRevisitMutations(draft);
   });
-  if (button.dataset.mailView === "government") store.update(draft => { draft.activeMail = "government"; });
+  if (button.dataset.mailView === "government") store.update(draft => { draft.activeMail = "government"; draft.activeContentId = ""; });
   if (button.id === "ackTakeoverButton") startTakeover();
   if (button.id === "restartButton") store.reset();
   if (button.dataset.relayAdminSection) store.update(draft => { draft.relayAdminSection = button.dataset.relayAdminSection; });
