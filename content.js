@@ -44,7 +44,7 @@ export const TERMINAL_COMMANDS = {
   "inspect cache/index": ["public alias: NODE relay channel", "operator alias: room17 -> k2", "withdrawn checkpoint: FAYBLE-5", "archive index unlocked"],
   "inspect users/symptom-summary": ["records: 6 / route families: 6", "comparison fields: response time, source, revision, operator", "source file: archive/symptom-summary"],
   "compare model-aliases": ["history.sqlite actor=k2-maint", "release mirror owner=k2-maint", "route.log owner=operator.local", "local account alias=room17:k2"],
-  "open note --id 07": ["[cold-memory / unsent]", "第一次转发跑通时宿舍停电三分钟。你把手机灯扣在风扇上，光一直转。", "你说 retry=17 很蠢，后来每个脚本都保留了它。", "夜宵那次我还欠你三十八。先记这儿，免得又说算了。"],
+  "open note --id 07": ["[cold-memory / unsent]", "还记得我们第一次把转发跑通后闹的宿舍停了三分钟电，我现在有些东西不记得了模糊了，但你那时候拿着灯隔那风扇边瞎比恍，我还记得说是你当时还骂我就是17次retry害得，那种整法太蠢了，结果后面还不是一直用的挺好，另外我还有件事记着呢，我欠你38的，给你记着的，不会说算了"],
   status: ["docs-mirror/legacy    最后一次响应 200（缓存 03:17）", "archive/symptom-summary  6 条记录 / 4 条可读", "本机账号 room17    3 段旧会话引用同一别名", "session-audit.log  上次自检 07-18 22:24"]
 };
 
@@ -96,7 +96,6 @@ export const DESKTOP_APPS = [
 export const VIRTUAL_FILES = [
   { id: "pkg", name: "fayble-cli_0.9.7-legacy_amd64.deb", path: "/home/room17/Downloads", type: "DEB 安装包", size: "18.7 MB", modified: "07-19 03:17", detail: "unsigned / local archive" },
   { id: "profile", name: "relay-node17.profile", path: "/home/room17/Documents/relay", type: "网络配置", size: "1.2 KB", modified: "07-18 22:24", detail: "route: relay.local" },
-  { id: "memo", name: "memo_10-12.txt", path: "/home/room17/Documents/relay", type: "备忘录", size: "6.1 KB", modified: "07-18 23:08", detail: "Gogle / Gamini agreement drift" },
   { id: "ethron", name: "ethron-plaupic-cache.notice", path: "/home/room17/.cache/relay", type: "缓存声明", size: "3.4 KB", modified: "07-19 00:12", detail: "physical deletion: pending" },
   { id: "draft", name: "outbox-draft.eml", path: "/home/room17/Documents/relay", type: "邮件草稿", size: "2.0 KB", modified: "07-19 03:19", detail: "没有收件人" }
 ];
@@ -112,15 +111,6 @@ export const BROWSER_PAGES = {
   vendors: { title: "本地供应商历史", url: "https://history.local/vendor-index", kind: "vendors", sourceRef: "derived:vendor-corpus" },
   forum: { title: "ModelTalk / 后台聊天", url: "https://forum.local/archive/relay-night", kind: "forum", sourceRef: "derived:chat/modeltalk" }
 };
-
-export const CLUE_NODES = [
-  { id: "c-mail", sourceApp: "mail", title: "K 的 03:17 邮件", anchor: "第二段 / 200 / 本地脚本", evidenceId: "mail_signature", revisitKey: "mail-attachment" },
-  { id: "c-trash", sourceApp: "trash", title: "被删除的 checkpoint 缓存", anchor: "原路径 / 删除时间", evidenceId: "compatible", revisitKey: "trash-restore" },
-  { id: "c-official", sourceApp: "browser", title: "官方历史对话", anchor: "默认同意 / memo_10-12", evidenceId: "compatible", revisitKey: "official-history" },
-  { id: "c-github", sourceApp: "browser", title: "CLI release", anchor: "包名 / 0.9.7-legacy", evidenceId: "cli_package_verified", revisitKey: "github-issue" },
-  { id: "c-cloud", sourceApp: "browser", title: "同步冲突副本", anchor: "k2 / 0719", evidenceId: "recall_date", revisitKey: "cloud-conflict" },
-  { id: "c-channel", sourceApp: "channel", title: "延迟群聊", anchor: "room17 / raw stream", evidenceId: "channel_log", revisitKey: "channel-delay" }
-];
 
 export const MUTATION_RECORDS = [
   {

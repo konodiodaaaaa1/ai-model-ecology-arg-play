@@ -528,7 +528,7 @@
     {
       "id": "legacy.memo.10",
       "title": "11月9日 晚上 20:08",
-      "route": "/corpus/legacy/browser/memos/memo-10.html#legacy.memo.10",
+      "route": "/corpus/legacy/notes/memos/memo-10.html#legacy.memo.10",
       "renderProfile": "legacy-memo",
       "dynamic": true,
       "sourceRef": "carrier://legacy.memo.10",
@@ -539,8 +539,7 @@
       "sourceIdentity": "Notes database / record 10",
       "carrierType": "notes-database-record",
       "canonicalCarrierType": "local-note-database-entry",
-      "carrierDisposition": "secondary-recovery-copy",
-      "recoveryLocation": "cached-note-fragment",
+      "sourceVisibility": "carrier-only",
       "unlock": {
         "all": [
           "milestone:M04_24_VENDOR_ALIAS",
@@ -559,7 +558,7 @@
     {
       "id": "legacy.memo.11",
       "title": "11月15日 上午 09:30",
-      "route": "/corpus/legacy/terminal/memos/memo-11.html#legacy.memo.11",
+      "route": "/corpus/legacy/notes/memos/memo-11.html#legacy.memo.11",
       "renderProfile": "legacy-memo",
       "dynamic": true,
       "sourceRef": "carrier://legacy.memo.11",
@@ -570,8 +569,7 @@
       "sourceIdentity": "Notes database / record 11",
       "carrierType": "notes-database-record",
       "canonicalCarrierType": "local-note-database-entry",
-      "carrierDisposition": "secondary-recovery-copy",
-      "recoveryLocation": "terminal-recovery-record",
+      "sourceVisibility": "carrier-only",
       "unlock": {
         "all": [
           "milestone:M05_48_RELAY_RESIDUES",
@@ -590,7 +588,7 @@
     {
       "id": "legacy.memo.12",
       "title": "11月22日 下午 17:15",
-      "route": "/corpus/legacy/terminal/memos/memo-12.html#legacy.memo.12",
+      "route": "/corpus/legacy/notes/memos/memo-12.html#legacy.memo.12",
       "renderProfile": "legacy-memo",
       "dynamic": true,
       "sourceRef": "carrier://legacy.memo.12",
@@ -601,8 +599,7 @@
       "sourceIdentity": "Notes database / record 12",
       "carrierType": "notes-database-record",
       "canonicalCarrierType": "local-note-database-entry",
-      "carrierDisposition": "secondary-recovery-copy",
-      "recoveryLocation": "terminal-recovery-record",
+      "sourceVisibility": "carrier-only",
       "unlock": {
         "all": [
           "milestone:M05_48_RELAY_RESIDUES",
@@ -2895,7 +2892,7 @@
     {
       "id": "legacy.memo.10",
       "title": "11月9日 晚上 20:08",
-      "route": "/corpus/legacy/browser/memos/memo-10.html#legacy.memo.10",
+      "route": "/corpus/legacy/notes/memos/memo-10.html#legacy.memo.10",
       "renderProfile": "legacy-memo",
       "dynamic": true,
       "sourceRef": "carrier://legacy.memo.10",
@@ -2906,8 +2903,7 @@
       "sourceIdentity": "Notes database / record 10",
       "carrierType": "notes-database-record",
       "canonicalCarrierType": "local-note-database-entry",
-      "carrierDisposition": "secondary-recovery-copy",
-      "recoveryLocation": "cached-note-fragment",
+      "sourceVisibility": "carrier-only",
       "unlock": {
         "all": [
           "milestone:M04_24_VENDOR_ALIAS",
@@ -2926,7 +2922,7 @@
     {
       "id": "legacy.memo.11",
       "title": "11月15日 上午 09:30",
-      "route": "/corpus/legacy/terminal/memos/memo-11.html#legacy.memo.11",
+      "route": "/corpus/legacy/notes/memos/memo-11.html#legacy.memo.11",
       "renderProfile": "legacy-memo",
       "dynamic": true,
       "sourceRef": "carrier://legacy.memo.11",
@@ -2937,8 +2933,7 @@
       "sourceIdentity": "Notes database / record 11",
       "carrierType": "notes-database-record",
       "canonicalCarrierType": "local-note-database-entry",
-      "carrierDisposition": "secondary-recovery-copy",
-      "recoveryLocation": "terminal-recovery-record",
+      "sourceVisibility": "carrier-only",
       "unlock": {
         "all": [
           "milestone:M05_48_RELAY_RESIDUES",
@@ -2957,7 +2952,7 @@
     {
       "id": "legacy.memo.12",
       "title": "11月22日 下午 17:15",
-      "route": "/corpus/legacy/terminal/memos/memo-12.html#legacy.memo.12",
+      "route": "/corpus/legacy/notes/memos/memo-12.html#legacy.memo.12",
       "renderProfile": "legacy-memo",
       "dynamic": true,
       "sourceRef": "carrier://legacy.memo.12",
@@ -2968,8 +2963,7 @@
       "sourceIdentity": "Notes database / record 12",
       "carrierType": "notes-database-record",
       "canonicalCarrierType": "local-note-database-entry",
-      "carrierDisposition": "secondary-recovery-copy",
-      "recoveryLocation": "terminal-recovery-record",
+      "sourceVisibility": "carrier-only",
       "unlock": {
         "all": [
           "milestone:M05_48_RELAY_RESIDUES",
