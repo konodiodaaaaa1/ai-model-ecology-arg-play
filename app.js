@@ -795,6 +795,7 @@ function setApp(id, page) {
 }
 
 function appLockReason(id, state) {
+  if (state.endingState === "completed") return id === "ending" ? "" : "本地会话已关闭。";
   const unlocks = getUnlocks(state);
   // Nothing on this machine stays gated once the instance opens the session.
   if (unlocks.trustedSession) return "";
@@ -1756,6 +1757,7 @@ async function loadIconManifest() {
 }
 
 async function openLedgerContent(id, discover = false) {
+  if (store.get().endingState === "completed") return;
   const record = contentRecord(id);
   if (!record || !contentIsUnlocked(record, store.get())) return;
   const carrierApp = recordCarrierApp(record);
@@ -2280,25 +2282,49 @@ const SEVER_CAST = [
 
 const PRELUDE_DELAYS = [360, 520, 680, 430, 760, 590];
 
+function focusWindow(draft, appId) {
+  const highest = Object.entries(draft.windowState || {})
+    .filter(([id, item]) => id !== appId && Number.isFinite(item?.zIndex))
+    .reduce((value, [, item]) => Math.max(value, item.zIndex), 30);
+  const previous = draft.windowState[appId] || {};
+  draft.windowState[appId] = { ...previous, open: true, minimized: false, zIndex: highest + 1 };
+}
+
+function closeAllWindowsExcept(draft, appId) {
+  for (const [id, item] of Object.entries(draft.windowState || {})) {
+    if (id === appId) continue;
+    draft.windowState[id] = { ...(item || {}), open: false, minimized: false };
+  }
+  focusWindow(draft, appId);
+}
+
 function runTakeoverPrelude(onComplete) {
   if (takeoverPreludeRunning) return;
   const state = store.get();
-  if (state.takeoverPreludeDone) { onComplete(); return; }
+  const hasOpenBackground = Object.entries(state.windowState || {}).some(([id, item]) => id !== "mail" && item?.open);
+  if (state.takeoverPreludeDone && !hasOpenBackground) {
+    store.update(draft => {
+      draft.currentApp = "mail";
+      focusWindow(draft, "mail");
+    });
+    onComplete();
+    return;
+  }
   takeoverPreludeRunning = true;
   store.update(draft => {
     draft.currentApp = "mail";
-    const mailWindow = draft.windowState.mail || {};
-    draft.windowState.mail = { ...mailWindow, open: true, minimized: false, zIndex: Date.now() };
+    focusWindow(draft, "mail");
     draft.takeoverStage = "closing-windows";
   });
-  const targets = Object.entries(store.get().windowState)
-    .filter(([id, item]) => id !== "mail" && item?.open)
-    .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0))
-    .map(([id]) => id);
-  let index = 0;
+  const closed = new Set();
   const closeNext = () => {
-    if (index >= targets.length) {
+    const next = Object.entries(store.get().windowState || {})
+      .filter(([id, item]) => id !== "mail" && item?.open && !closed.has(id))
+      .sort(([, a], [, b]) => (a.zIndex || 0) - (b.zIndex || 0))[0];
+    if (!next) {
       store.update(draft => {
+        draft.currentApp = "mail";
+        focusWindow(draft, "mail");
         draft.takeoverPreludeDone = true;
         draft.takeoverStage = "notice-ready";
       });
@@ -2306,14 +2332,15 @@ function runTakeoverPrelude(onComplete) {
       setTimeout(onComplete, 420);
       return;
     }
-    const id = targets[index++];
+    const [id] = next;
+    closed.add(id);
     store.update(draft => {
       const item = draft.windowState[id] || {};
       draft.windowState[id] = { ...item, open: false, minimized: false };
       draft.currentApp = "mail";
-      draft.windowState.mail = { ...(draft.windowState.mail || {}), open: true, minimized: false, zIndex: Date.now() };
+      focusWindow(draft, "mail");
     });
-    setTimeout(closeNext, PRELUDE_DELAYS[(index - 1) % PRELUDE_DELAYS.length]);
+    setTimeout(closeNext, PRELUDE_DELAYS[(closed.size - 1) % PRELUDE_DELAYS.length]);
   };
   setTimeout(closeNext, 320);
 }
@@ -2329,8 +2356,7 @@ function commitSever() {
     draft.governmentMailAvailable = false;
     draft.activeMail = "entry";
     draft.currentApp = "trusted";
-    draft.windowState.mail = { ...(draft.windowState.mail || {}), open: false, minimized: false };
-    draft.windowState.trusted = { open: true, minimized: false, zIndex: Date.now() };
+    closeAllWindowsExcept(draft, "trusted");
     addNotification(draft, "review-severed", "外部审查连接被本地 checkpoint 断开。移交没有完成。", "warning");
     syncProgress(draft);
   });
@@ -2372,6 +2398,7 @@ function beginSeverPerformance() {
 
 function startTakeover() {
   if (takeoverRunning) return;
+  if (store.get().endingState === "completed") return;
   // A trusted instance never lets this run; it cuts the notice off instead.
   if (store.get().npcTrustGranted && store.get().endingState !== "completed") { severGovernmentMail(); return; }
   takeoverRunning = true;
@@ -2392,9 +2419,10 @@ function beginTakeoverTransfer() {
       completeStoryEvent("takeover-acknowledged", draft => {
         draft.endingState = "completed";
         draft.completedAt = Date.now();
+        draft.activeContentId = "";
         draft.currentApp = "ending";
-        draft.windowState.mail = { ...(draft.windowState.mail || {}), open: false, minimized: false };
-        draft.windowState.ending = { open: true, minimized: false, zIndex: Date.now(), x: 110, y: 72 };
+        closeAllWindowsExcept(draft, "ending");
+        draft.windowState.ending = { ...draft.windowState.ending, x: 110, y: 72 };
         addArtifact(draft, "transfer-receipt");
       });
       overlay.hidden = true;

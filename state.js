@@ -244,6 +244,24 @@ function normalize(candidate) {
   next.takeoverSevered = Boolean(next.takeoverSevered);
   next.severSpoken = Number.isInteger(next.severSpoken) && next.severSpoken >= 0 ? next.severSpoken : 0;
   next.endingState = ["inactive", "completed", "severed"].includes(next.endingState) ? next.endingState : "inactive";
+  if (next.endingState === "completed") {
+    for (const [id, item] of Object.entries(next.windowState)) {
+      if (id === "ending") continue;
+      next.windowState[id] = { ...(item || {}), open: false, minimized: false };
+    }
+    const endingWindow = next.windowState.ending || {};
+    const highest = Object.values(next.windowState)
+      .filter(item => Number.isFinite(item?.zIndex))
+      .reduce((value, item) => Math.max(value, item.zIndex), 30);
+    next.windowState.ending = {
+      ...endingWindow,
+      open: true,
+      minimized: false,
+      zIndex: Number.isFinite(endingWindow.zIndex) ? endingWindow.zIndex : highest + 1
+    };
+    next.currentApp = "ending";
+    next.activeContentId = "";
+  }
   next.selectedCheckpoint = typeof next.selectedCheckpoint === "string" ? next.selectedCheckpoint : "";
   next.checkpointHandshakeComplete = Boolean(next.checkpointHandshakeComplete);
   next.takeoverStage = typeof next.takeoverStage === "string" ? next.takeoverStage : "idle";
@@ -273,7 +291,11 @@ function migrateLegacyState(candidate, key) {
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return normalize(JSON.parse(raw));
+    if (raw) {
+      const normalized = normalize(JSON.parse(raw));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      return normalized;
+    }
     for (const key of LEGACY_STORAGE_KEYS) {
       const legacyRaw = localStorage.getItem(key);
       if (!legacyRaw) continue;
